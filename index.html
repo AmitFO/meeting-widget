@@ -144,7 +144,7 @@ function processMeetingAction(targetStage) {
 
   getCurrentLocation()
     .then(function(location) {
-      var gpsValue = location.latitude.toFixed(7) + "," + location.longitude.toFixed(7);
+      var gpsValue = "https://www.google.com/maps?q=" + location.latitude.toFixed(7) + "," + location.longitude.toFixed(7);
       gpsEl.textContent = "GPS: " + gpsValue + " | Accuracy: " + Math.round(location.accuracy) + "m";
       gpsEl.style.display = "block";
 
