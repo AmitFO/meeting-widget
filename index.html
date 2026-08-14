@@ -51,7 +51,7 @@
 const MODULE_API_NAME      = "Events";
 const FIELD_STAGE          = "Meeting_Stage";
 const FIELD_ACTION_DATETIME= "Action_Date_Time";
-const FIELD_COMPLETION_GPS = "Completion_GPS_Location";
+const FIELD_COMPLETION_GPS = "Meeting_Location";
 const STAGE_COMPLETED      = "Completed";
 const STAGE_CANCELLED      = "Cancelled";
 // ────────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ function processMeetingAction(targetStage) {
   getCurrentLocation()
     .then(function(location) {
       var gpsValue = "https://www.google.com/maps?q=" + location.latitude.toFixed(7) + "," + location.longitude.toFixed(7);
-      gpsEl.textContent = "GPS: " + gpsValue + " | Accuracy: " + Math.round(location.accuracy) + "m";
+      gpsEl.textContent = "GPS captured | Accuracy: " + Math.round(location.accuracy) + "m";
       gpsEl.style.display = "block";
 
       var updateData = { id: meetingId };
