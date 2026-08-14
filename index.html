@@ -21,6 +21,7 @@
     background:#fff;color:#222;outline:none;
   }
   select:focus, textarea:focus{border-color:#2e7d32;}
+  .field-error{border-color:#c62828 !important;background:#fff8f8 !important;}
   textarea{resize:vertical;min-height:90px}
   button{
     width:100%;padding:14px;margin-bottom:12px;
@@ -43,8 +44,6 @@
 </head>
 <body>
 <div class="container">
-
-  <h2>Mark Meeting</h2>
 
   <div class="status">
     <div class="status-label">Current Meeting Stage</div>
@@ -74,6 +73,7 @@
 
   <div class="divider"></div>
 
+  <h2>Mark Meeting</h2>
   <div id="loader">Please wait...</div>
   <button id="completeBtn" onclick="completeMeeting()" disabled>&#10003; Completed</button>
   <button id="cancelBtn" onclick="cancelMeeting()" disabled>&#10005; Cancelled</button>
@@ -170,6 +170,23 @@ function processMeetingAction(targetStage) {
 
   if (currentStage === STAGE_COMPLETED || currentStage === STAGE_CANCELLED) {
     showMessage("This meeting is already " + currentStage + ".", "info");
+    return;
+  }
+
+  // Mandatory field validation
+  purposeEl.classList.remove("field-error");
+  descEl.classList.remove("field-error");
+
+  if (!purposeEl.value || purposeEl.value === "") {
+    showMessage("Please select a Meeting Purpose before proceeding.", "error");
+    purposeEl.classList.add("field-error");
+    purposeEl.focus();
+    return;
+  }
+  if (!descEl.value || descEl.value.trim() === "") {
+    showMessage("Please enter a Description before proceeding.", "error");
+    descEl.classList.add("field-error");
+    descEl.focus();
     return;
   }
 
