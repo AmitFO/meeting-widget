@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Meeting Action</title>
+<!-- FIX: Use stable SDK version 1.0.5 instead of 1.2 -->
+<script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#fff;color:#222}
+  .container{max-width:500px;margin:auto}
+  h2{margin:0 0 15px;font-size:18px}
+  .status{background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:20px}
+  .status-label{font-size:13px;color:#666}
+  .status-value{font-size:17px;font-weight:bold;margin-top:4px}
+  button{
+    width:100%;padding:14px;margin-bottom:12px;
+    border:0;border-radius:8px;font-size:16px;font-weight:bold;
+    cursor:pointer;-webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  #completeBtn{background:#2e7d32;color:white}
+  #cancelBtn{background:#c62828;color:white}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button:active:not(:disabled){opacity:0.8}
+  #message{display:none;padding:12px;margin-top:10px;border-radius:8px;font-size:14px}
+  .info{display:block!important;background:#eef5ff;color:#174a7e}
+  .success{display:block!important;background:#edf7ed;color:#1b5e20}
+  .error{display:block!important;background:#ffefef;color:#8b1a1a}
+  #gpsInfo{display:none;margin-top:12px;padding:10px;background:#f5f5f5;border-radius:8px;font-size:12px;word-break:break-all}
+  #loader{display:none;text-align:center;padding:10px;color:#555;font-size:13px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Meeting Action</h2>
+  <div class="status">
+    <div class="status-label">Current Meeting Stage</div>
+    <div class="status-value" id="stage">Loading...</div>
+  </div>
+  <div id="loader">Please wait...</div>
+  <button id="completeBtn" onclick="completeMeeting()" disabled>✓ Complete Meeting</button>
+  <button id="cancelBtn" onclick="cancelMeeting()" disabled>✕ Cancel Meeting</button>
+  <div id="message"></div>
+  <div id="gpsInfo"></div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const MODULE_API_NAME      = "Events";
+const FIELD_STAGE          = "Meeting_Stage";
+const FIELD_ACTION_DATETIME= "Action_Date_Time";
+const FIELD_COMPLETION_GPS = "Completion_GPS_Location";
+const STAGE_COMPLETED      = "Completed";
+const STAGE_CANCELLED      = "Cancelled";
+// ────────────────────────────────────────────────────────
+
+let meetingId    = null;
+let currentStage = "";
+let isProcessing = false;
+
+const stageEl   = document.getElementById("stage");
+const completeBtn = document.getElementById("completeBtn");
+const cancelBtn   = document.getElementById("cancelBtn");
+const messageEl   = document.getElementById("message");
+const gpsEl       = document.getElementById("gpsInfo");
+const loaderEl    = document.getElementById("loader");
+
+function showMessage(msg, type) {
+  messageEl.textContent = msg;
+  messageEl.className   = type || "info";
+  messageEl.style.display = "block";
+}
+function enableButtons()  { completeBtn.disabled = false; cancelBtn.disabled = false; }
+function disableButtons() { completeBtn.disabled = true;  cancelBtn.disabled = true;  }
+
+// FIX: Format DateTime correctly for Zoho CRM (YYYY-MM-DDTHH:mm:ss+00:00)
+function getZohoDateTime() {
+  var now = new Date();
+  var pad = function(n){ return n < 10 ? "0" + n : n; };
+  return now.getFullYear() + "-" +
+         pad(now.getMonth() + 1) + "-" +
+         pad(now.getDate()) + "T" +
+         pad(now.getHours()) + ":" +
+         pad(now.getMinutes()) + ":" +
+         pad(now.getSeconds());
+}
+
+function getCurrentLocation() {
+  return new Promise(function(resolve, reject) {
+    if (!navigator.geolocation) {
+      reject(new Error("GPS/location is not supported on this device."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        resolve({
+          latitude:  position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy:  position.coords.accuracy
+        });
+      },
+      function(error) {
+        var msg = "Unable to capture location.";
+        if (error.code === error.PERMISSION_DENIED)
+          msg = "Location permission denied. Please allow location and retry.";
+        else if (error.code === error.POSITION_UNAVAILABLE)
+          msg = "Location unavailable. Check GPS/location services.";
+        else if (error.code === error.TIMEOUT)
+          msg = "Location request timed out. Please try again.";
+        reject(new Error(msg));
+      },
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+    );
+  });
+}
+
+function updateMeeting(data) {
+  return ZOHO.CRM.API.updateRecord({
+    Entity:  MODULE_API_NAME,
+    APIData: data,
+    Trigger: []
+  });
+}
+
+function closeWidget() {
+  try { ZOHO.CRM.UI.Popup.close(); }
+  catch(e) { console.log("Popup close unavailable", e); }
+}
+
+function processMeetingAction(targetStage) {
+  if (isProcessing || !meetingId) return;
+
+  if (currentStage === STAGE_COMPLETED || currentStage === STAGE_CANCELLED) {
+    showMessage("This meeting is already " + currentStage + ".", "info");
+    return;
+  }
+
+  isProcessing = true;
+  disableButtons();
+  loaderEl.style.display = "block";
+  showMessage("Capturing your current location...", "info");
+
+  getCurrentLocation()
+    .then(function(location) {
+      var gpsValue = location.latitude.toFixed(7) + "," + location.longitude.toFixed(7);
+      gpsEl.textContent = "GPS: " + gpsValue + " | Accuracy: " + Math.round(location.accuracy) + "m";
+      gpsEl.style.display = "block";
+
+      var updateData = { id: meetingId };
+      updateData[FIELD_STAGE]           = targetStage;
+      updateData[FIELD_ACTION_DATETIME] = getZohoDateTime(); // FIX: proper format
+      updateData[FIELD_COMPLETION_GPS]  = gpsValue;
+
+      showMessage("Updating Meeting...", "info");
+      return updateMeeting(updateData);
+    })
+    .then(function(response) {
+      console.log("Update response:", response);
+
+      // FIX: Check for API-level errors in the response
+      if (response && response.data && response.data[0] && response.data[0].code === "SUCCESS") {
+        currentStage = targetStage;
+        stageEl.textContent = targetStage;
+        showMessage("Meeting marked as " + targetStage + " with GPS captured successfully.", "success");
+        isProcessing = false;
+        loaderEl.style.display = "none";
+        setTimeout(closeWidget, 1500);
+      } else {
+        var errMsg = (response && response.data && response.data[0] && response.data[0].message)
+                     ? response.data[0].message
+                     : "Update failed. Check field API names.";
+        throw new Error(errMsg);
+      }
+    })
+    .catch(function(error) {
+      console.error("Meeting action error:", error);
+      showMessage(error && error.message ? error.message : "Unable to update the meeting.", "error");
+      isProcessing = false;
+      loaderEl.style.display = "none";
+      enableButtons();
+    });
+}
+
+function completeMeeting() { processMeetingAction(STAGE_COMPLETED); }
+function cancelMeeting()   { processMeetingAction(STAGE_CANCELLED);  }
+
+// ── ZOHO INIT ────────────────────────────────────────────
+ZOHO.embeddedApp.on("PageLoad", function(data) {
+  console.log("Zoho PageLoad data:", data);
+
+  // FIX: Handle both EntityId formats Zoho may send
+  if (data && data.EntityId) {
+    meetingId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
+  } else if (data && data.recordId) {
+    meetingId = data.recordId;
+  }
+
+  if (!meetingId) {
+    stageEl.textContent = "Record ID not found";
+    showMessage("Unable to identify the current Meeting record.", "error");
+    return;
+  }
+
+  ZOHO.CRM.API.getRecord({ Entity: MODULE_API_NAME, RecordID: meetingId })
+    .then(function(response) {
+      console.log("Current Meeting:", response);
+
+      if (!response || !response.data || !response.data.length)
+        throw new Error("Unable to load the Meeting record.");
+
+      var meeting = response.data[0];
+      currentStage = meeting[FIELD_STAGE] || "";
+      stageEl.textContent = currentStage || "Not Set";
+
+      if (currentStage === STAGE_COMPLETED) {
+        disableButtons();
+        showMessage("This Meeting is already Completed.", "info");
+        return;
+      }
+      if (currentStage === STAGE_CANCELLED) {
+        disableButtons();
+        showMessage("This Meeting is already Cancelled.", "info");
+        return;
+      }
+      enableButtons();
+    })
+    .catch(function(error) {
+      console.error("Get Meeting Error:", error);
+      stageEl.textContent = "Error";
+      showMessage(error && error.message ? error.message : "Unable to load Meeting.", "error");
+    });
+});
+
+ZOHO.embeddedApp.init();
+</script>
+</body>
+</html>
