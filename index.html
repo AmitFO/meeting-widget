@@ -3,17 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Meeting Action</title>
-<!-- FIX: Use stable SDK version 1.0.5 instead of 1.2 -->
+<title>Mark Meeting</title>
 <script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
 <style>
   *{box-sizing:border-box}
   body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#fff;color:#222}
   .container{max-width:500px;margin:auto}
-  h2{margin:0 0 15px;font-size:18px}
-  .status{background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:20px}
+  h2{margin:0 0 15px;font-size:18px;font-weight:bold}
+  .status{background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:16px}
   .status-label{font-size:13px;color:#666}
   .status-value{font-size:17px;font-weight:bold;margin-top:4px}
+  .field-group{margin-bottom:14px}
+  .field-label{font-size:13px;color:#555;font-weight:600;margin-bottom:5px}
+  select, textarea{
+    width:100%;padding:10px 12px;border:1px solid #ddd;
+    border-radius:8px;font-size:14px;font-family:Arial,sans-serif;
+    background:#fff;color:#222;outline:none;
+  }
+  select:focus, textarea:focus{border-color:#2e7d32;}
+  textarea{resize:vertical;min-height:90px}
   button{
     width:100%;padding:14px;margin-bottom:12px;
     border:0;border-radius:8px;font-size:16px;font-weight:bold;
@@ -28,44 +36,73 @@
   .info{display:block!important;background:#eef5ff;color:#174a7e}
   .success{display:block!important;background:#edf7ed;color:#1b5e20}
   .error{display:block!important;background:#ffefef;color:#8b1a1a}
-  #gpsInfo{display:none;margin-top:12px;padding:10px;background:#f5f5f5;border-radius:8px;font-size:12px;word-break:break-all}
+  #gpsInfo{display:none;margin-top:12px;padding:10px;background:#f5f5f5;border-radius:8px;font-size:12px}
   #loader{display:none;text-align:center;padding:10px;color:#555;font-size:13px}
+  .divider{height:1px;background:#eee;margin:14px 0}
 </style>
 </head>
 <body>
 <div class="container">
-  <h2>Meeting Action</h2>
+
+  <h2>Mark Meeting</h2>
+
   <div class="status">
     <div class="status-label">Current Meeting Stage</div>
     <div class="status-value" id="stage">Loading...</div>
   </div>
+
+  <div class="field-group">
+    <div class="field-label">Meeting Purpose</div>
+    <select id="meetingPurpose">
+      <option value="">-None-</option>
+      <option value="Demo">Demo</option>
+      <option value="Followup">Followup</option>
+      <option value="Installation">Installation</option>
+      <option value="Negotiation">Negotiation</option>
+      <option value="Others">Others</option>
+      <option value="Partner Meeting">Partner Meeting</option>
+      <option value="Prospecting">Prospecting</option>
+      <option value="Service">Service</option>
+      <option value="Training">Training</option>
+    </select>
+  </div>
+
+  <div class="field-group">
+    <div class="field-label">Description</div>
+    <textarea id="meetingDescription" placeholder="Enter meeting description..."></textarea>
+  </div>
+
+  <div class="divider"></div>
+
   <div id="loader">Please wait...</div>
-  <button id="completeBtn" onclick="completeMeeting()" disabled>✓ Complete Meeting</button>
-  <button id="cancelBtn" onclick="cancelMeeting()" disabled>✕ Cancel Meeting</button>
+  <button id="completeBtn" onclick="completeMeeting()" disabled>&#10003; Completed</button>
+  <button id="cancelBtn" onclick="cancelMeeting()" disabled>&#10005; Cancelled</button>
   <div id="message"></div>
   <div id="gpsInfo"></div>
 </div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────
-const MODULE_API_NAME      = "Events";
-const FIELD_STAGE          = "Meeting_Stage";
-const FIELD_ACTION_DATETIME= "Action_Date_Time";
-const FIELD_COMPLETION_GPS = "Meeting_Location";
-const STAGE_COMPLETED      = "Completed";
-const STAGE_CANCELLED      = "Cancelled";
-// ────────────────────────────────────────────────────────
+const MODULE_API_NAME       = "Events";
+const FIELD_STAGE           = "Meeting_Stage";
+const FIELD_ACTION_DATETIME = "Action_Date_Time";
+const FIELD_COMPLETION_GPS  = "Meeting_Location";
+const FIELD_PURPOSE         = "Meeting_Purpose";
+const FIELD_DESCRIPTION     = "Description";
+const STAGE_COMPLETED       = "Completed";
+const STAGE_CANCELLED       = "Cancelled";
 
-let meetingId    = null;
-let currentStage = "";
-let isProcessing = false;
+var meetingId    = null;
+var currentStage = "";
+var isProcessing = false;
 
-const stageEl   = document.getElementById("stage");
-const completeBtn = document.getElementById("completeBtn");
-const cancelBtn   = document.getElementById("cancelBtn");
-const messageEl   = document.getElementById("message");
-const gpsEl       = document.getElementById("gpsInfo");
-const loaderEl    = document.getElementById("loader");
+var stageEl       = document.getElementById("stage");
+var completeBtn   = document.getElementById("completeBtn");
+var cancelBtn     = document.getElementById("cancelBtn");
+var messageEl     = document.getElementById("message");
+var gpsEl         = document.getElementById("gpsInfo");
+var loaderEl      = document.getElementById("loader");
+var purposeEl     = document.getElementById("meetingPurpose");
+var descEl        = document.getElementById("meetingDescription");
 
 function showMessage(msg, type) {
   messageEl.textContent = msg;
@@ -75,7 +112,6 @@ function showMessage(msg, type) {
 function enableButtons()  { completeBtn.disabled = false; cancelBtn.disabled = false; }
 function disableButtons() { completeBtn.disabled = true;  cancelBtn.disabled = true;  }
 
-// FIX: Format DateTime correctly for Zoho CRM (YYYY-MM-DDTHH:mm:ss+00:00)
 function getZohoDateTime() {
   var now = new Date();
   var pad = function(n){ return n < 10 ? "0" + n : n; };
@@ -90,7 +126,7 @@ function getZohoDateTime() {
 function getCurrentLocation() {
   return new Promise(function(resolve, reject) {
     if (!navigator.geolocation) {
-      reject(new Error("GPS/location is not supported on this device."));
+      reject(new Error("GPS not supported on this device."));
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -106,7 +142,7 @@ function getCurrentLocation() {
         if (error.code === error.PERMISSION_DENIED)
           msg = "Location permission denied. Please allow location and retry.";
         else if (error.code === error.POSITION_UNAVAILABLE)
-          msg = "Location unavailable. Check GPS/location services.";
+          msg = "Location unavailable. Check GPS settings.";
         else if (error.code === error.TIMEOUT)
           msg = "Location request timed out. Please try again.";
         reject(new Error(msg));
@@ -150,20 +186,25 @@ function processMeetingAction(targetStage) {
 
       var updateData = { id: meetingId };
       updateData[FIELD_STAGE]           = targetStage;
-      updateData[FIELD_ACTION_DATETIME] = getZohoDateTime(); // FIX: proper format
+      updateData[FIELD_ACTION_DATETIME] = getZohoDateTime();
       updateData[FIELD_COMPLETION_GPS]  = gpsValue;
+
+      if (purposeEl.value && purposeEl.value !== "") {
+        updateData[FIELD_PURPOSE] = purposeEl.value;
+      }
+      if (descEl.value && descEl.value.trim() !== "") {
+        updateData[FIELD_DESCRIPTION] = descEl.value.trim();
+      }
 
       showMessage("Updating Meeting...", "info");
       return updateMeeting(updateData);
     })
     .then(function(response) {
       console.log("Update response:", response);
-
-      // FIX: Check for API-level errors in the response
       if (response && response.data && response.data[0] && response.data[0].code === "SUCCESS") {
         currentStage = targetStage;
         stageEl.textContent = targetStage;
-        showMessage("Meeting marked as " + targetStage + " with GPS captured successfully.", "success");
+        showMessage("Meeting marked as " + targetStage + " successfully.", "success");
         isProcessing = false;
         loaderEl.style.display = "none";
         setTimeout(closeWidget, 1500);
@@ -186,11 +227,9 @@ function processMeetingAction(targetStage) {
 function completeMeeting() { processMeetingAction(STAGE_COMPLETED); }
 function cancelMeeting()   { processMeetingAction(STAGE_CANCELLED);  }
 
-// ── ZOHO INIT ────────────────────────────────────────────
 ZOHO.embeddedApp.on("PageLoad", function(data) {
   console.log("Zoho PageLoad data:", data);
 
-  // FIX: Handle both EntityId formats Zoho may send
   if (data && data.EntityId) {
     meetingId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
   } else if (data && data.recordId) {
@@ -205,14 +244,19 @@ ZOHO.embeddedApp.on("PageLoad", function(data) {
 
   ZOHO.CRM.API.getRecord({ Entity: MODULE_API_NAME, RecordID: meetingId })
     .then(function(response) {
-      console.log("Current Meeting:", response);
-
       if (!response || !response.data || !response.data.length)
         throw new Error("Unable to load the Meeting record.");
 
       var meeting = response.data[0];
       currentStage = meeting[FIELD_STAGE] || "";
       stageEl.textContent = currentStage || "Not Set";
+
+      if (meeting[FIELD_PURPOSE]) {
+        purposeEl.value = meeting[FIELD_PURPOSE];
+      }
+      if (meeting[FIELD_DESCRIPTION]) {
+        descEl.value = meeting[FIELD_DESCRIPTION];
+      }
 
       if (currentStage === STAGE_COMPLETED) {
         disableButtons();
