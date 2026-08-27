@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Domestic Check In</title>
+<script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #fff; color: #222; }
+  .container { max-width: 500px; margin: auto; padding: 30px 20px; text-align: center; }
+
+  /* Loading State */
+  .loading { padding: 40px 20px; }
+  .loading-text { font-size: 15px; color: #666; margin-top: 10px; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid #f0f0f0;
+    border-top: 4px solid #2e7d32;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Success State */
+  .success { display: none; padding: 40px 20px; }
+  .success-circle {
+    width: 90px; height: 90px;
+    background: #2e7d32;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: popIn 0.4s ease;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .checkmark {
+    color: white;
+    font-size: 45px;
+    line-height: 1;
+  }
+  .success-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2e7d32;
+    margin-bottom: 8px;
+  }
+  .success-sub {
+    font-size: 14px;
+    color: #666;
+  }
+
+  /* Error State */
+  .error-state { display: none; padding: 40px 20px; }
+  .error-circle {
+    width: 90px; height: 90px;
+    background: #c62828;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: popIn 0.4s ease;
+  }
+  .error-mark {
+    color: white;
+    font-size: 45px;
+    line-height: 1;
+  }
+  .error-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #c62828;
+    margin-bottom: 8px;
+  }
+  .error-sub {
+    font-size: 14px;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Loading State -->
+  <div class="loading" id="loadingState">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Initializing...</div>
+  </div>
+
+  <!-- Success State -->
+  <div class="success" id="successState">
+    <div class="success-circle">
+      <span class="checkmark">&#10003;</span>
+    </div>
+    <div class="success-title">Location Captured</div>
+    <div class="success-sub">Check-in recorded successfully!</div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" id="errorState">
+    <div class="error-circle">
+      <span class="error-mark">&#10007;</span>
+    </div>
+    <div class="error-title" id="errorTitle">Error</div>
+    <div class="error-sub" id="errorSub"></div>
+  </div>
+
+</div>
+
+<script>
+var MODULE_API_NAME      = "Events";
+var FIELD_UNIQUE_NUMBER  = "Meeting_Unique_Number";
+var FIELD_LATITUDE       = "Meeting_Latitude";
+var FIELD_LONGITUDE      = "Meeting_Longitude";
+
+var meetingId = null;
+
+function showLoading(text) {
+  document.getElementById("loadingState").style.display = "block";
+  document.getElementById("successState").style.display = "none";
+  document.getElementById("errorState").style.display   = "none";
+  document.getElementById("loadingText").textContent = text;
+}
+
+function showSuccess() {
+  document.getElementById("loadingState").style.display = "block";
+  document.getElementById("loadingState").style.display = "none";
+  document.getElementById("successState").style.display = "block";
+  document.getElementById("errorState").style.display   = "none";
+  setTimeout(function() {
+    try { ZOHO.CRM.UI.Popup.close(); } catch(e) {}
+  }, 2000);
+}
+
+function showError(title, sub) {
+  document.getElementById("loadingState").style.display = "none";
+  document.getElementById("successState").style.display = "none";
+  document.getElementById("errorState").style.display   = "block";
+  document.getElementById("errorTitle").textContent = title;
+  document.getElementById("errorSub").textContent  = sub;
+}
+
+function getLocation() {
+  return new Promise(function(resolve, reject) {
+    if (!navigator.geolocation) {
+      reject(new Error("GPS not supported on this device."));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        resolve({
+          latitude:  pos.coords.latitude,
+          longitude: pos.coords.longitude
+        });
+      },
+      function(err) {
+        var msg = "Unable to capture location.";
+        if (err.code === err.PERMISSION_DENIED)
+          msg = "Location permission denied. Please allow location access.";
+        else if (err.code === err.POSITION_UNAVAILABLE)
+          msg = "Location unavailable. Check GPS settings.";
+        else if (err.code === err.TIMEOUT)
+          msg = "Location request timed out. Please try again.";
+        reject(new Error(msg));
+      },
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+    );
+  });
+}
+
+ZOHO.embeddedApp.on("PageLoad", function(data) {
+  if (data && data.EntityId) {
+    meetingId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
+  } else if (data && data.recordId) {
+    meetingId = data.recordId;
+  }
+
+  if (!meetingId) {
+    showError("Error", "Unable to identify the Meeting record.");
+    return;
+  }
+
+  showLoading("Checking meeting details...");
+
+  ZOHO.CRM.API.getRecord({ Entity: MODULE_API_NAME, RecordID: meetingId })
+    .then(function(response) {
+      if (!response || !response.data || !response.data.length) {
+        showError("Error", "Unable to load Meeting record.");
+        return;
+      }
+
+      var meeting = response.data[0];
+      var uniqueNumber = meeting[FIELD_UNIQUE_NUMBER];
+
+      // Check if Meeting_Unique_Number exists
+      if (!uniqueNumber || uniqueNumber === "" || uniqueNumber === null) {
+        showError(
+          "This is not a Check-In meeting.",
+          "GPS cannot be captured."
+        );
+        return;
+      }
+
+      // Valid Check-In meeting — capture GPS
+      showLoading("Capturing your location...");
+
+      getLocation()
+        .then(function(location) {
+          showLoading("Saving location...");
+
+          var updateData = { id: meetingId };
+          updateData[FIELD_LATITUDE]  = location.latitude;
+          updateData[FIELD_LONGITUDE] = location.longitude;
+
+          return ZOHO.CRM.API.updateRecord({
+            Entity:  MODULE_API_NAME,
+            APIData: updateData,
+            Trigger: []
+          });
+        })
+        .then(function(updateResponse) {
+          if (updateResponse && updateResponse.data &&
+              updateResponse.data[0] && updateResponse.data[0].code === "SUCCESS") {
+            showSuccess();
+          } else {
+            showError("Update Failed", "Could not save location. Please try again.");
+          }
+        })
+        .catch(function(error) {
+          showError("Location Error", error.message || "Unable to capture GPS.");
+        });
+    })
+    .catch(function(error) {
+      showError("Error", "Unable to load Meeting record.");
+    });
+});
+
+ZOHO.embeddedApp.init();
+</script>
+</body>
+</html>
