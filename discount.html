@@ -264,6 +264,11 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
               <input type="text" id="i-account" placeholder="Search" autocomplete="off">
               <div class="lst"></div>
             </div>
+            <div class="f" id="wd" style="display:none">
+              <label for="i-dealer">Sub-dealer</label>
+              <input type="text" id="i-dealer" placeholder="Search" autocomplete="off">
+              <div class="lst"></div>
+            </div>
             <div class="f" id="ws">
               <label for="i-subaccount">Sub-account</label>
               <input type="text" id="i-subaccount" placeholder="Search" autocomplete="off">
@@ -271,7 +276,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
             </div>
             <div class="f">
               <label for="i-gstin">GSTIN</label>
-              <input type="text" id="i-gstin" maxlength="15" placeholder="—" style="text-transform:uppercase;font-size:14px">
+              <input type="text" id="i-gstin" class="ro" readonly tabindex="-1" placeholder="—" style="text-transform:uppercase;font-size:14px">
             </div>
             <div class="mst" id="mst"><span id="mtxt"></span><button type="button" class="sw" id="swap">Change</button></div>
           </div>
@@ -382,6 +387,9 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       <button type="button" class="mc" data-mode="via">
         <span class="t">Via</span>
       </button>
+      <button type="button" class="mc" data-mode="both">
+        <span class="t">Both</span>
+      </button>
     </div>
   </div>
 </div>
@@ -393,7 +401,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const BASE={"RASHI PERIPHERALS LIMITED":17.29,"IRIS GLOBAL SERVICES LIMITED":16};
 const GST=18, SC=40, DEFAULT_BASE=15.29;
 
-const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,sub:null,ready:false};
+const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false};
 const inr=v=>"₹"+Math.round(v).toLocaleString("en-IN");
 const baseOf=()=>S.acc?(BASE[S.acc.name]??DEFAULT_BASE):DEFAULT_BASE;
 
@@ -470,7 +478,7 @@ combo($("#i-account"),$("#wa .lst"),"Accounts",
   o=>{
     S.acc=o?{id:o.id,name:o.Account_Name}:null;
     if(o){$("#i-gstin").value=o.GST_Number||"";ask()}
-    else{S.mode=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#lbl-acc").textContent="Account Name"}
+    else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#lbl-acc").textContent="Account Name";$("#wd").style.display="none";$("#i-dealer").value=""}
   });
 
 combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
@@ -481,6 +489,10 @@ combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
   },
   o=>{S.sub=o?{id:o.id,name:o.Full_Name||o.Last_Name}:null});
 
+combo($("#i-dealer"),$("#wd .lst"),"Accounts",
+  o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
+  o=>{S.dlr=o?{id:o.id,name:o.Account_Name}:null});
+
 /* ── mode ── */
 const veil=$("#veil");
 function ask(){
@@ -489,8 +501,14 @@ function ask(){
 }
 function mode(m){
   S.mode=m;veil.classList.remove("open");
-  $("#lbl-acc").textContent = m==="via" ? "Sub-dealer" : "Account Name";
-  $("#mtxt").innerHTML=m==="direct"?"Checks <b>Account Name</b> on the order":"Checks <b>Sub-dealer</b> on the order";
+  const both=(m==="both");
+  $("#wd").style.display = both ? "" : "none";
+  if(!both){ S.dlr=null; $("#i-dealer").value=""; }
+  $("#lbl-acc").textContent = (m==="via") ? "Sub-dealer" : "Account Name";
+  $("#mtxt").innerHTML =
+      m==="direct" ? "Checks <b>Account Name</b> on the order"
+    : m==="via"    ? "Checks <b>Sub-dealer</b> on the order"
+                   : "Checks <b>Account Name</b> and <b>Sub-dealer</b> on the order";
   $("#mst").classList.add("show");paint();
 }
 $$(".mc").forEach(b=>b.onclick=()=>mode(b.dataset.mode));
@@ -572,6 +590,7 @@ function paint(){
 function chips(){
   const p=[];
   if(S.acc)p.push([S.mode==="via"?"Sub-dealer":"Account",S.acc.name]);
+  if(S.mode==="both"&&S.dlr)p.push(["Sub-dealer",S.dlr.name]);
   if(S.sub)p.push(["Sub-acc",S.sub.name]);
   if($("#i-payment").value)p.push(["Pay",$("#i-payment").value]);
   if($("#i-zone").value)p.push(["Zone",$("#i-zone").value]);
@@ -620,7 +639,7 @@ function review(){
     `${l._sku.name} ${(b+(+l.querySelector(".ed").value||0)).toFixed(2)}% ×${l.querySelector(".qty").value}`);
   const it=[
     ["Account Name",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
-    ["Sub-dealer",S.mode==="via"&&S.acc?S.acc.name:"—"],
+    ["Sub-dealer",S.mode==="via"?(S.acc?S.acc.name:"—"):(S.mode==="both"&&S.dlr?S.dlr.name:"—")],
     ["Sub-account",S.sub?S.sub.name:"—"],
     ["GSTIN",$("#i-gstin").value.trim()||"—"],
     ["Payment Terms",$("#i-payment").value||"—"],
@@ -648,7 +667,9 @@ btn.onclick=()=>{
     Status:"Pending",
     Attempt_Number:1,
     Account_Name : (S.mode==="via"||!S.acc)?null:{id:S.acc.id},
-    Sub_dealer   : (S.mode==="via"&&S.acc)?{id:S.acc.id}:null,
+    Sub_dealer   : S.mode==="via" ? (S.acc?{id:S.acc.id}:null)
+                 : S.mode==="both"? (S.dlr?{id:S.dlr.id}:null)
+                 : null,
     Sub_account1 : S.sub?{id:S.sub.id}:null,
     GSTIN        : $("#i-gstin").value.trim()||null,
     Payment_Terms: $("#i-payment").value||null,
