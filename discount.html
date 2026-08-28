@@ -401,34 +401,22 @@ const baseOf=()=>S.acc?(BASE[S.acc.name]??DEFAULT_BASE):DEFAULT_BASE;
 ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; });
 ZOHO.embeddedApp.init();
 
-/* search: starts_with (only operator Zoho search supports besides equals), then word */
-function crit(module,q){
-  if(module==="Accounts")  return `(Account_Name:starts_with:${q})`;
-  if(module==="Contacts")  return `((Last_Name:starts_with:${q})or(First_Name:starts_with:${q}))`;
-  return `((Product_Name:starts_with:${q})or(Product_Code:starts_with:${q}))`;
-}
-function byWord(module,q){
-  return ZOHO.CRM.API.searchRecord({Entity:module,Type:"word",Query:q,delay:false})
-    .then(r=>(r&&r.data)?r.data:[]).catch(()=>[]);
+/* search: word search only (criteria operators are unreliable), filtered locally */
+function txtOf(o){
+  return [o.Account_Name && (o.Account_Name.name||o.Account_Name),
+          o.Full_Name,o.Last_Name,o.First_Name,
+          o.Product_Name,o.Product_Code]
+         .filter(v=>typeof v==="string").join(" ").toLowerCase();
 }
 function search(module,term){
   const q=term.replace(/[()<>,:]/g,"").trim();
   if(!q)return Promise.resolve([]);
-  return ZOHO.CRM.API.searchRecord({Entity:module,Type:"criteria",Query:crit(module,q),delay:false})
-    .then(r=>(r&&r.data)?r.data:[])
-    .catch(()=>[])
-    .then(rows=>{
-      // word search finds mid-string matches that starts_with cannot
-      return byWord(module,q).then(w=>{
-        const seen={},out=[];
-        rows.concat(w).forEach(o=>{if(o&&o.id&&!seen[o.id]){seen[o.id]=1;out.push(o)}});
-        const t=q.toLowerCase();
-        return out.filter(o=>{
-          const hay=[o.Account_Name,o.Full_Name,o.Last_Name,o.First_Name,
-                     o.Product_Name,o.Product_Code].filter(Boolean).join(" ").toLowerCase();
-          return hay.indexOf(t)>-1;
-        });
-      });
+  return ZOHO.CRM.API.searchRecord({Entity:module,Type:"word",Query:q,delay:false})
+    .then(r=>{
+      const rows=(r&&r.data)?r.data:[];
+      const t=q.toLowerCase();
+      const hit=rows.filter(o=>txtOf(o).indexOf(t)>-1);
+      return hit.length?hit:rows;
     })
     .catch(e=>{console.warn("search failed",module,q,e);return []});
 }
