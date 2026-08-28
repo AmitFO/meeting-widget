@@ -260,7 +260,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
           <div class="st">Parties</div>
           <div class="grid">
             <div class="f" id="wa">
-              <label for="i-account">Account Name</label>
+              <label for="i-account" id="lbl-acc">Account Name</label>
               <input type="text" id="i-account" placeholder="Search" autocomplete="off">
               <div class="lst"></div>
             </div>
@@ -401,10 +401,17 @@ const baseOf=()=>S.acc?(BASE[S.acc.name]??DEFAULT_BASE):DEFAULT_BASE;
 ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; });
 ZOHO.embeddedApp.init();
 
-function search(module,term,fields){
-  return ZOHO.CRM.API.searchRecord({Entity:module,Type:"word",Query:term,delay:false})
+/* criteria search — contains match on named fields */
+function search(module,term){
+  const q=term.replace(/[()]/g,"").trim();
+  if(!q)return Promise.resolve([]);
+  let crit;
+  if(module==="Accounts")      crit=`(Account_Name:contains:${q})`;
+  else if(module==="Contacts") crit=`((Last_Name:contains:${q})or(First_Name:contains:${q}))`;
+  else                         crit=`((Product_Name:contains:${q})or(Product_Code:contains:${q}))`;
+  return ZOHO.CRM.API.searchRecord({Entity:module,Type:"criteria",Query:crit,delay:false})
     .then(r=>(r&&r.data)?r.data:[])
-    .catch(()=>[]);
+    .catch(e=>{console.warn("search failed",module,q,e);return []});
 }
 
 /* ── combobox (live CRM search) ── */
@@ -426,11 +433,15 @@ function combo(inp,list,module,render,onPick){
   }
   function go(q){
     clearTimeout(timer);
-    if(!q||q.length<2){draw([],"Type at least 2 characters");return}
+    if(!q||q.trim().length<3){draw([],"Type at least 3 characters");return}
     draw([],"Searching…");
     timer=setTimeout(()=>{
-      search(module,q).then(rows=>draw(rows.slice(0,25),"No match in CRM"));
-    },320);
+      const asked=q;
+      search(module,q).then(rows=>{
+        if(inp.value!==asked)return;           // a newer keystroke won
+        draw(rows.slice(0,30),"No match in CRM");
+      });
+    },350);
   }
   inp.onfocus=()=>{if(inp.value)go(inp.value)};
   inp.oninput=()=>{onPick&&onPick(null);go(inp.value);paint()};
@@ -452,12 +463,16 @@ combo($("#i-account"),$("#wa .lst"),"Accounts",
   o=>{
     S.acc=o?{id:o.id,name:o.Account_Name}:null;
     if(o){$("#i-gstin").value=o.GST_Number||"";ask()}
-    else{S.mode=null;$("#mst").classList.remove("show");$("#i-gstin").value=""}
+    else{S.mode=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#lbl-acc").textContent="Account Name"}
   });
 
 combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
-  o=>`${o.Full_Name}${o.Account_Name?`<span class="sm">${o.Account_Name.name}</span>`:""}`,
-  o=>{S.sub=o?{id:o.id,name:o.Full_Name}:null});
+  o=>{
+    const nm=o.Full_Name||o.Last_Name||"";
+    const par=(o.Account_Name&&o.Account_Name.name)?o.Account_Name.name:"";
+    return nm+(par&&par!==nm?`<span class="sm">${par}</span>`:"");
+  },
+  o=>{S.sub=o?{id:o.id,name:o.Full_Name||o.Last_Name}:null});
 
 /* ── mode ── */
 const veil=$("#veil");
@@ -467,6 +482,7 @@ function ask(){
 }
 function mode(m){
   S.mode=m;veil.classList.remove("open");
+  $("#lbl-acc").textContent = m==="via" ? "Sub-dealer" : "Account Name";
   $("#mtxt").innerHTML=m==="direct"?"Checks <b>Account Name</b> on the order":"Checks <b>Sub-dealer</b> on the order";
   $("#mst").classList.add("show");paint();
 }
