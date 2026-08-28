@@ -231,6 +231,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
 </head>
 <body>
 
@@ -389,42 +390,51 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 (function(){
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
-/* mock data — replace with ZOHO.CRM.API.searchRecord on deploy */
-const ACC=[
- {n:"RASHI PERIPHERALS LIMITED",g:"27AACCR1436F1ZY"},{n:"IRIS GLOBAL SERVICES LIMITED",g:"36AACCI0718A1Z8"},
- {n:"KAMALVEER SYSTEMS",g:"09AAEFK7845M1ZB"},{n:"M/S I.T. WORLD",g:"07AABFI2214K1ZQ"},
- {n:"ICONIC TECHNO VISION",g:"29AAGFI9012P1ZL"},{n:"Team One Tech Solutions LLP",g:"27AAWFT3391R1ZK"},
- {n:"Baliosoft Solutions Private Limited",g:"24AAHCB8827J1ZE"},{n:"ALPHA TECHNOLOGY SOLUTIONS",g:"33AAKFA5567H1ZP"},
- {n:"CANDOUR INDIA SERVICES",g:"36AAJCC2290L1ZD"},{n:"NetCom Computers",g:"08AAFCN4471E1ZM"},
- {n:"Gurudev Infotech",g:"27AAJFG6612T1ZW"},{n:"SHAH AND CO DISTRIBUTORS PVT LTD.",g:"24AAECS3348N1ZR"},
- {n:"DCC INFOTECH PRIVATE LIMITED",g:"27AABCD5591Q1ZN"}
-];
-const SUB=["Shri Vakeshwar Vidyalaya","Delhi Public School Megacity","NARAYANA JUNIOR COLLEGE",
- "GYAN BHARTI PUBLIC SCHOOL","IIMT Engineering","INFUTURE EDUCATION PRIVATE LIMITED"];
-const SKU=[
- {c:"X2086PB14",n:"Teachmint X 86 Pro",p:131000},{c:"X2075PCI14",n:"Teachmint X 75 Pro",p:299990},
- {c:"X2075LC14D",n:"Teachmint X 75 Lite",p:299990},{c:"X2065UA14S",n:"Teachmint X 65 Ultra",p:259990},
- {c:"X2065LS14",n:"Teachmint X 65 Standard",p:100000},{c:"X2075LB14",n:"Teachmint X 75 Base",p:200000}
-];
 const BASE={"RASHI PERIPHERALS LIMITED":17.29,"IRIS GLOBAL SERVICES LIMITED":16};
-const GST=18,SC=40;
+const GST=18, SC=40, DEFAULT_BASE=15.29;
 
-const S={mode:null,to:[],cc:[],bcc:[],n:0};
+const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,sub:null,ready:false};
 const inr=v=>"₹"+Math.round(v).toLocaleString("en-IN");
-const baseOf=()=>BASE[$("#i-account").value]??15.29;
+const baseOf=()=>S.acc?(BASE[S.acc.name]??DEFAULT_BASE):DEFAULT_BASE;
 
-function combo(inp,list,items,onPick){
-  let cur=[],hi=-1;const T=o=>typeof o==="string"?o:o.n;
-  function open(q){
-    cur=items.filter(o=>(T(o)+" "+(o.c||"")).toLowerCase().includes((q||"").toLowerCase()));
-    list.innerHTML=cur.length?cur.map((o,x)=>`<div class="opt" data-i="${x}">${T(o)}${o.c?`<span class="sm">${o.c} · ${inr(o.p)}</span>`:""}</div>`).join(""):`<div class="non">No match</div>`;
+/* ── Zoho SDK ── */
+ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; });
+ZOHO.embeddedApp.init();
+
+function search(module,term,fields){
+  return ZOHO.CRM.API.searchRecord({Entity:module,Type:"word",Query:term,delay:false})
+    .then(r=>(r&&r.data)?r.data:[])
+    .catch(()=>[]);
+}
+
+/* ── combobox (live CRM search) ── */
+function combo(inp,list,module,render,onPick){
+  let cur=[],hi=-1,timer=null;
+  function draw(rows,msg){
+    cur=rows;
+    list.innerHTML=rows.length
+      ? rows.map((o,x)=>`<div class="opt" data-i="${x}">${render(o)}</div>`).join("")
+      : `<div class="non">${msg||"No match"}</div>`;
     list.classList.add("open");hi=-1;
     list.querySelectorAll(".opt").forEach(e=>e.onmousedown=ev=>{ev.preventDefault();sel(+e.dataset.i)});
   }
-  function sel(x){const o=cur[x];if(!o)return;inp.value=T(o);list.classList.remove("open");onPick&&onPick(o);paint()}
-  inp.onfocus=()=>open(inp.value);
-  inp.oninput=()=>{open(inp.value);onPick&&onPick(null);paint()};
-  inp.onblur=()=>setTimeout(()=>list.classList.remove("open"),140);
+  function sel(x){
+    const o=cur[x];if(!o)return;
+    inp.value=o.Product_Name||o.Account_Name||o.Full_Name||o.Name||"";
+    list.classList.remove("open");
+    onPick&&onPick(o);paint();
+  }
+  function go(q){
+    clearTimeout(timer);
+    if(!q||q.length<2){draw([],"Type at least 2 characters");return}
+    draw([],"Searching…");
+    timer=setTimeout(()=>{
+      search(module,q).then(rows=>draw(rows.slice(0,25),"No match in CRM"));
+    },320);
+  }
+  inp.onfocus=()=>{if(inp.value)go(inp.value)};
+  inp.oninput=()=>{onPick&&onPick(null);go(inp.value);paint()};
+  inp.onblur=()=>setTimeout(()=>list.classList.remove("open"),160);
   inp.onkeydown=e=>{
     const os=list.querySelectorAll(".opt");if(!os.length)return;
     if(e.key==="ArrowDown"){e.preventDefault();hi=Math.min(hi+1,os.length-1)}
@@ -436,15 +446,25 @@ function combo(inp,list,items,onPick){
     if(os[hi]){os[hi].classList.add("hi");os[hi].scrollIntoView({block:"nearest"})}
   };
 }
-combo($("#i-account"),$("#wa .lst"),ACC,o=>{
-  if(o){$("#i-gstin").value=o.g;ask()}
-  else{S.mode=null;$("#mst").classList.remove("show");$("#i-gstin").value=""}
-});
-combo($("#i-subaccount"),$("#ws .lst"),SUB);
 
+combo($("#i-account"),$("#wa .lst"),"Accounts",
+  o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
+  o=>{
+    S.acc=o?{id:o.id,name:o.Account_Name}:null;
+    if(o){$("#i-gstin").value=o.GST_Number||"";ask()}
+    else{S.mode=null;$("#mst").classList.remove("show");$("#i-gstin").value=""}
+  });
+
+combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
+  o=>`${o.Full_Name}${o.Account_Name?`<span class="sm">${o.Account_Name.name}</span>`:""}`,
+  o=>{S.sub=o?{id:o.id,name:o.Full_Name}:null});
+
+/* ── mode ── */
 const veil=$("#veil");
-function ask(){$("#mh").textContent="How does "+$("#i-account").value.split(" ")[0]+" buy?";
-  veil.classList.add("open");setTimeout(()=>$(".mc").focus(),140)}
+function ask(){
+  $("#mh").textContent="How does "+(S.acc?S.acc.name.split(" ")[0]:"this partner")+" buy?";
+  veil.classList.add("open");setTimeout(()=>$(".mc").focus(),140);
+}
 function mode(m){
   S.mode=m;veil.classList.remove("open");
   $("#mtxt").innerHTML=m==="direct"?"Checks <b>Account Name</b> on the order":"Checks <b>Sub-dealer</b> on the order";
@@ -455,6 +475,7 @@ $("#swap").onclick=ask;
 veil.onclick=e=>{if(e.target===veil&&S.mode)veil.classList.remove("open")};
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.mode)veil.classList.remove("open")});
 
+/* ── lines ── */
 function addLine(){
   const i=S.n++;const el=document.createElement("div");el.className="li";
   el.innerHTML=`
@@ -484,7 +505,10 @@ function addLine(){
       <div class="rc"><div class="k">Total</div><div class="v tl">—</div></div>
     </div>`;
   $("#lines").appendChild(el);
-  combo(el.querySelector(".sku"),el.querySelector(".lst"),SKU);
+  el._sku=null;
+  combo(el.querySelector(".sku"),el.querySelector(".lst"),"Products",
+    o=>`${o.Product_Name}${o.Product_Code?`<span class="sm">${o.Product_Code} · ${inr(o.Unit_Price||o.MRP||0)}</span>`:""}`,
+    o=>{el._sku=o?{id:o.id,name:o.Product_Name,price:+(o.Unit_Price||o.MRP||0)}:null});
   el.querySelector(".kill").onclick=()=>{if($$(".li").length===1)return;el.remove();renum();paint()};
   el.querySelectorAll(".qty,.ed").forEach(f=>f.addEventListener("input",paint));
   paint();
@@ -495,10 +519,10 @@ $("#addl").onclick=addLine;
 function paint(){
   const b=baseOf();let sa=0,se=0;
   $$(".li").forEach(l=>{
-    const s=SKU.find(x=>x.n===l.querySelector(".sku").value);
+    const s=l._sku;
     const q=Math.max(1,+l.querySelector(".qty").value||1);
     const ex=Math.max(0,+l.querySelector(".ed").value||0);
-    l.querySelector(".lp").value=s?inr(s.p):"—";
+    l.querySelector(".lp").value=s?inr(s.price):"—";
     l.querySelector(".ad").value=s?b.toFixed(2)+"%":"—";
     l.querySelector(".sa").style.width=(s?Math.min(b,SC)/SC*100:0)+"%";
     l.querySelector(".se").style.width=(s?Math.min(ex,SC-b)/SC*100:0)+"%";
@@ -507,7 +531,7 @@ function paint(){
     l.querySelector(".tv").textContent=(s?(b+ex).toFixed(2):"0")+"%";
     if(!s){["fp","lip","tx","tl"].forEach(c=>l.querySelector("."+c).textContent="—");
       l.querySelector(".gv").textContent="₹0";return}
-    const p=s.p,lip=p*(1-(b+ex)/100),tx=lip*q*GST/100;
+    const p=s.price,lip=p*(1-(b+ex)/100),tx=lip*q*GST/100;
     l.querySelector(".fp").textContent=inr(p*(1-b/100));
     l.querySelector(".lip").textContent=inr(lip);
     l.querySelector(".tx").textContent=inr(tx);
@@ -517,18 +541,18 @@ function paint(){
   });
   $("#tT").textContent=inr(sa+se);$("#tA").textContent=inr(sa);$("#tE").textContent=inr(se);
   chips();
-  const sk=$$(".li").map(l=>l.querySelector(".sku").value.trim()).filter(Boolean);
+  const n=$$(".li").filter(l=>l._sku).length;
   const top=Math.max(0,...$$(".li").map(l=>b+(+l.querySelector(".ed").value||0)));
-  $("#subj").textContent=`Discount approval · ${$("#i-account").value.trim()||"Any"} · ${sk.length} SKU · up to ${top.toFixed(2)}%`;
+  $("#subj").textContent=`Discount approval · ${S.acc?S.acc.name:"Any"} · ${n} SKU · up to ${top.toFixed(2)}%`;
 }
 
 function chips(){
-  const p=[],a=$("#i-account").value.trim();
-  if(a)p.push([S.mode==="via"?"Sub-dealer":"Account",a]);
-  const s=$("#i-subaccount").value.trim();if(s)p.push(["Sub-acc",s]);
+  const p=[];
+  if(S.acc)p.push([S.mode==="via"?"Sub-dealer":"Account",S.acc.name]);
+  if(S.sub)p.push(["Sub-acc",S.sub.name]);
   if($("#i-payment").value)p.push(["Pay",$("#i-payment").value]);
   if($("#i-zone").value)p.push(["Zone",$("#i-zone").value]);
-  $$(".li").forEach(l=>{const v=l.querySelector(".sku").value.trim();if(v)p.push(["SKU",v])});
+  $$(".li").forEach(l=>{if(l._sku)p.push(["SKU",l._sku.name])});
   const v=$("#i-validtill").value;
   if(v)p.push(["Till",new Date(v+"T00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short"})]);
   const c=$("#combo");
@@ -538,6 +562,7 @@ function chips(){
     e.innerHTML=`<span class="k">${k}</span><span class="v">${x}</span>`;c.appendChild(e)});
 }
 
+/* ── recipient chips ── */
 $$(".chips").forEach(box=>{
   const key=box.dataset.for,inp=box.querySelector("input");
   box.onclick=()=>inp.focus();
@@ -556,6 +581,7 @@ $$(".chips").forEach(box=>{
       box.insertBefore(c,inp)})}
 });
 
+/* ── tabs ── */
 function show(n){
   $$(".pane").forEach(p=>p.classList.remove("on"));$("#p"+n).classList.add("on");
   $("#t1").className="tab"+(n===1?" on":"");$("#t2").className="tab"+(n===2?" on":"");
@@ -567,68 +593,98 @@ $("#go2").onclick=()=>show(2);$("#back").onclick=()=>show(1);
 
 function review(){
   const b=baseOf();
-  const r=$$(".li").filter(l=>l.querySelector(".sku").value.trim()).map(l=>
-    `${l.querySelector(".sku").value} ${(b+(+l.querySelector(".ed").value||0)).toFixed(2)}% ×${l.querySelector(".qty").value}`);
+  const r=$$(".li").filter(l=>l._sku).map(l=>
+    `${l._sku.name} ${(b+(+l.querySelector(".ed").value||0)).toFixed(2)}% ×${l.querySelector(".qty").value}`);
   const it=[
-    ["Account Name",S.mode==="via"?"—":($("#i-account").value.trim()||"Any")],
-    ["Sub-dealer",S.mode==="via"?$("#i-account").value.trim():"—"],
-    ["Sub-account",$("#i-subaccount").value.trim()||"Any"],
+    ["Account Name",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
+    ["Sub-dealer",S.mode==="via"&&S.acc?S.acc.name:"—"],
+    ["Sub-account",S.sub?S.sub.name:"—"],
     ["GSTIN",$("#i-gstin").value.trim()||"—"],
     ["Payment Terms",$("#i-payment").value||"—"],
     ["Zone",$("#i-zone").value||"—"],
-    ["Date",$("#i-date").textContent],
     ["Valid till",$("#i-validtill").value||"—"],
     ["Concession",$("#tT").textContent]
   ];
-  $("#rev").innerHTML=it.map(([k,v])=>`<div class="rv"><div class="k">${k}</div><div class="v${(v==="—"||v==="Any")?" em":""}">${v}</div></div>`).join("")
+  $("#rev").innerHTML=it.map(([k,v])=>`<div class="rv"><div class="k">${k}</div><div class="v${v==="—"?" em":""}">${v}</div></div>`).join("")
     +`<div class="rv wide"><div class="k">Item detail</div><div class="v${r.length?"":" em"}">${r.join(" · ")||"—"}</div></div>`;
 }
 
-$("#send").onclick=()=>{
-  const e=$("#e2"),lines=$$(".li").filter(l=>l.querySelector(".sku").value.trim());
+/* ── submit → create record in CRM ── */
+const btn=$("#send");
+btn.onclick=()=>{
+  const e=$("#e2");
+  const lines=$$(".li").filter(l=>l._sku);
   if(!lines.length){e.textContent="Add a SKU";e.classList.add("show");return}
   if(!$("#i-validtill").value){e.textContent="Set Valid till";e.classList.add("show");return}
   if(!$("#i-justification").value.trim()){e.textContent="Add a justification";e.classList.add("show");return}
   if(!S.to.length){e.textContent="Add a recipient";e.classList.add("show");return}
   e.classList.remove("show");
+
   const b=baseOf();
-  const p={Status:"Pending",
-    Account_Name:S.mode==="via"?null:($("#i-account").value.trim()||null),
-    Sub_dealer:S.mode==="via"?($("#i-account").value.trim()||null):null,
-    Sub_account:$("#i-subaccount").value.trim()||null,GSTIN:$("#i-gstin").value.trim()||null,
-    Payment_Terms:$("#i-payment").value||null,Zone:$("#i-zone").value||null,
-    Date:isoToday,
-    Valid_till:$("#i-validtill").value,Justification:$("#i-justification").value.trim(),
-    to:S.to.join(","),cc:S.cc.join(","),bcc:S.bcc.join(","),
-    Mail_Subject:$("#subj").textContent,Mail_Body:$("#i-justification").value.trim(),
-    Item_Detail:lines.map((l,i)=>{
-      const s=SKU.find(x=>x.n===l.querySelector(".sku").value);
-      const q=+l.querySelector(".qty").value||1,ex=+l.querySelector(".ed").value||0;
-      const pr=s?s.p:0,lip=pr*(1-(b+ex)/100),tx=lip*q*GST/100;
-      return{Sl_No:i+1,SKU:s?s.c:l.querySelector(".sku").value,List_Price:pr,Qty:q,
-        Allowed_Discount:b,Extra_Discount:ex,Final_Price:+(pr*(1-b/100)).toFixed(2),
-        Lock_in_Price:+lip.toFixed(2),Tax:+tx.toFixed(2),Total:+(lip*q+tx).toFixed(2)};
-    })};
-  $("#ref").textContent=String(Math.floor(Math.random()*9000)+1000);
-  $("#pl").innerHTML=JSON.stringify(p,null,2)
-    .replace(/"([^"]+)":/g,'<span class="pk">"$1"</span>:')
-    .replace(/: (".*?"|-?\d+\.?\d*|null)/g,': <span class="pv">$1</span>');
-  $$(".pane").forEach(x=>x.classList.remove("on"));$("#p3").classList.add("on");
-  $("#t1").className="tab";$("#t2").className="tab";
-  window.scrollTo({top:0,behavior:"smooth"});
+  const rec={
+    Status:"Pending",
+    Attempt_Number:1,
+    Account_Name : (S.mode==="via"||!S.acc)?null:{id:S.acc.id},
+    Sub_dealer   : (S.mode==="via"&&S.acc)?{id:S.acc.id}:null,
+    Sub_account1 : S.sub?{id:S.sub.id}:null,
+    GSTIN        : $("#i-gstin").value.trim()||null,
+    Payment_Terms: $("#i-payment").value||null,
+    Zone         : $("#i-zone").value||null,
+    Valid_till   : $("#i-validtill").value,
+    Context      : $("#i-justification").value.trim(),
+    to           : S.to.join(","),
+    cc           : S.cc.join(","),
+    bcc          : S.bcc.join(","),
+    Subject      : $("#subj").textContent,
+    Item_Detail  : lines.map((l,i)=>{
+      const s=l._sku,q=+l.querySelector(".qty").value||1,ex=+l.querySelector(".ed").value||0;
+      const lip=s.price*(1-(b+ex)/100),tx=lip*q*GST/100;
+      return{
+        Sl_No:i+1,
+        SKU:{id:s.id},
+        List_Price:s.price,
+        Qty:q,
+        Allowed_Discount:b,
+        Extra_Discount:ex,
+        Final_Price:+(s.price*(1-b/100)).toFixed(2),
+        Lock_in_Price:+lip.toFixed(2),
+        Tax:+tx.toFixed(2),
+        Total:+(lip*q+tx).toFixed(2)
+      };
+    })
+  };
+  Object.keys(rec).forEach(k=>{if(rec[k]===null)delete rec[k]});
+
+  btn.disabled=true;btn.textContent="Saving…";
+  ZOHO.CRM.API.insertRecord({Entity:"Discount_Requisitions",APIData:rec,Trigger:["workflow"]})
+    .then(r=>{
+      const d=r&&r.data&&r.data[0];
+      if(d&&d.code==="SUCCESS"){
+        $("#ref").textContent=(d.details&&d.details.id)?"created":"created";
+        $("#pl").textContent="Record ID "+(d.details?d.details.id:"—");
+        $$(".pane").forEach(x=>x.classList.remove("on"));$("#p3").classList.add("on");
+        $("#t1").className="tab";$("#t2").className="tab";
+        window.scrollTo({top:0,behavior:"smooth"});
+      }else{
+        e.textContent="CRM rejected it: "+((d&&d.message)||"unknown error");
+        e.classList.add("show");
+        console.log("insert failed",r);
+      }
+    })
+    .catch(err=>{
+      e.textContent="Could not save. Check console.";e.classList.add("show");
+      console.error(err);
+    })
+    .finally(()=>{btn.disabled=false;btn.textContent="Send for approval"});
 };
 $("#again").onclick=()=>location.reload();
 
+/* ── init ── */
 const today=new Date();
 $("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
-const isoToday=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
 
 const dv=$("#i-validtill");
-function dtoggle(){
-  const has=!!dv.value;
-  dv.classList.toggle("empty",!has);
-  $("#dph").classList.toggle("on",!has);
-}
+function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
 dv.addEventListener("focus",()=>{dv.classList.remove("empty");$("#dph").classList.remove("on")});
 dv.addEventListener("blur",dtoggle);
@@ -636,6 +692,7 @@ dtoggle();
 ["#i-payment","#i-zone","#i-validtill","#i-gstin"].forEach(s=>$(s).addEventListener("input",paint));
 addLine();
 })();
+
 </script>
 </body>
 </html>
