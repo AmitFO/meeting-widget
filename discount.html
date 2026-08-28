@@ -401,16 +401,27 @@ const baseOf=()=>S.acc?(BASE[S.acc.name]??DEFAULT_BASE):DEFAULT_BASE;
 ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; });
 ZOHO.embeddedApp.init();
 
-/* criteria search — contains match on named fields */
-function search(module,term){
-  const q=term.replace(/[()]/g,"").trim();
-  if(!q)return Promise.resolve([]);
-  let crit;
-  if(module==="Accounts")      crit=`(Account_Name:contains:${q})`;
-  else if(module==="Contacts") crit=`((Last_Name:contains:${q})or(First_Name:contains:${q}))`;
-  else                         crit=`((Product_Name:contains:${q})or(Product_Code:contains:${q}))`;
+/* search: try contains, fall back to starts_with, then word */
+function runSearch(module,crit){
   return ZOHO.CRM.API.searchRecord({Entity:module,Type:"criteria",Query:crit,delay:false})
-    .then(r=>(r&&r.data)?r.data:[])
+    .then(r=>(r&&r.data)?r.data:[]);
+}
+function search(module,term){
+  const q=term.replace(/[()<>,]/g,"").trim();
+  if(!q)return Promise.resolve([]);
+  const F = module==="Accounts" ? ["Account_Name"]
+          : module==="Contacts" ? ["Last_Name","First_Name"]
+          : ["Product_Name","Product_Code"];
+  const build=op=>F.length===1
+    ? `(${F[0]}:${op}:${q})`
+    : "("+F.map(f=>`(${f}:${op}:${q})`).join("or")+")";
+  return runSearch(module,build("contains"))
+    .then(r=>r.length?r:runSearch(module,build("starts_with")))
+    .then(r=>{
+      if(r.length)return r;
+      return ZOHO.CRM.API.searchRecord({Entity:module,Type:"word",Query:q,delay:false})
+        .then(x=>(x&&x.data)?x.data:[]);
+    })
     .catch(e=>{console.warn("search failed",module,q,e);return []});
 }
 
