@@ -204,16 +204,16 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .mc .t{font-size:14px;font-weight:600;color:var(--ink)}
 
 .done{text-align:center;padding:40px 20px}
-.tick{width:48px;height:48px;margin:0 auto 14px;border-radius:50%;background:var(--gns);
-  color:var(--gn);display:grid;place-items:center;font-size:22px;animation:pp .35s cubic-bezier(.2,.9,.3,1.3)}
+.tick{width:62px;height:62px;margin:0 auto 18px;border-radius:50%;
+  background:linear-gradient(145deg,#16a34a,#047a37);color:#fff;display:grid;place-items:center;
+  font-size:30px;font-weight:700;box-shadow:0 8px 20px -6px rgba(4,122,55,.55),0 0 0 6px rgba(22,163,74,.12);
+  animation:pp .4s cubic-bezier(.2,.9,.3,1.35)}
 .done h2{font-size:17px;font-weight:700;margin-bottom:4px}
 .done p{color:var(--ink3);font-size:12.5px;margin-bottom:14px}
-.ref{display:inline-block;font-size:12px;font-weight:600;padding:6px 14px;
-  background:var(--acs);color:var(--ac2);border-radius:100px}
-.pl{margin-top:18px;text-align:left;background:#1a1d23;color:#c5cad3;border-radius:8px;
-  padding:13px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;line-height:1.65;
-  overflow-x:auto;max-height:240px}
-.pl .pk{color:#c4a9fb}.pl .pv{color:#f4b45f}
+.ref{display:inline-block;font-size:19px;font-weight:700;letter-spacing:.02em;
+  padding:10px 24px;background:var(--gns);color:#047a37;border:1px solid #b9ecd0;
+  border-radius:10px;font-variant-numeric:tabular-nums}
+.refsub{margin-top:9px;font-size:11.5px;color:var(--ink3)}
 
 .pane{display:none}
 .pane.on{display:block;animation:ri .22s cubic-bezier(.2,0,.2,1)}
@@ -370,8 +370,8 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       <div class="tick">✓</div>
       <h2>Sent for approval</h2>
       <p>Codes arrive on this thread once approved.</p>
-      <div class="ref">REQ-<span id="ref">0001</span></div>
-      <div class="pl" id="pl"></div>
+      <div class="ref" id="ref">—</div>
+      <div class="refsub" id="pl"></div>
     </div></div>
     <div class="act"><button class="btn bs" id="again">Raise another</button></div>
   </section>
@@ -704,8 +704,15 @@ btn.onclick=()=>{
     .then(r=>{
       const d=r&&r.data&&r.data[0];
       if(d&&d.code==="SUCCESS"){
-        $("#ref").textContent=(d.details&&d.details.id)?"created":"created";
-        $("#pl").textContent="Record ID "+(d.details?d.details.id:"—");
+        const rid=d.details?d.details.id:null;
+        $("#ref").textContent="…";
+        $("#pl").textContent=rid?("Record ID "+rid):"";
+        if(rid){
+          ZOHO.CRM.API.getRecord({Entity:"Discount_Requisitions",RecordID:rid})
+            .then(g=>{const rec=g&&g.data&&g.data[0];
+              $("#ref").textContent=(rec&&rec.Name)?rec.Name:"Created"})
+            .catch(()=>{$("#ref").textContent="Created"});
+        }else{$("#ref").textContent="Created"}
         $$(".pane").forEach(x=>x.classList.remove("on"));$("#p3").classList.add("on");
         $("#t1").className="tab";$("#t2").className="tab";
         window.scrollTo({top:0,behavior:"smooth"});
