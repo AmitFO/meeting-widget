@@ -60,6 +60,15 @@
   </div>
 
   <div class="field-group">
+    <div class="field-label">Meeting Type <span>*</span></div>
+    <select id="meetingType">
+      <option value="">-None-</option>
+      <option value="In-person Connect">In-person Connect</option>
+      <option value="Online Connect">Online Connect</option>
+    </select>
+  </div>
+
+  <div class="field-group">
     <div class="field-label">Description <span>*</span></div>
     <textarea id="meetingDescription" placeholder="Enter meeting description..."></textarea>
   </div>
@@ -83,6 +92,7 @@ var FIELD_ACTION_DATETIME  = "Action_Date_Time";
 var FIELD_LATITUDE         = "Meeting_Latitude";
 var FIELD_LONGITUDE        = "Meeting_Longitude";
 var FIELD_PURPOSE          = "Meeting_Purpose";
+var FIELD_MEETING_TYPE     = "Meeting_Type";
 var FIELD_DESCRIPTION      = "Description";
 var FIELD_STATUS_MARKED_BY = "Status_Marked_by";
 var UNIQUE_NUMBER_FIELD    = "Meeting_Unique_Number";
@@ -102,6 +112,7 @@ var messageEl   = document.getElementById("message");
 var gpsEl       = document.getElementById("gpsInfo");
 var loaderEl    = document.getElementById("loader");
 var purposeEl   = document.getElementById("meetingPurpose");
+var meetingTypeEl = document.getElementById("meetingType");
 var descEl      = document.getElementById("meetingDescription");
 
 function showMessage(msg, type) {
@@ -143,12 +154,19 @@ function processMeetingAction(targetStage) {
   }
 
   purposeEl.classList.remove("field-error");
+  meetingTypeEl.classList.remove("field-error");
   descEl.classList.remove("field-error");
 
   if (!purposeEl.value || purposeEl.value === "") {
     showMessage("Please select a Meeting Purpose before proceeding.", "error");
     purposeEl.classList.add("field-error");
     purposeEl.focus();
+    return;
+  }
+  if (!meetingTypeEl.value || meetingTypeEl.value === "") {
+    showMessage("Please select a Meeting Type before proceeding.", "error");
+    meetingTypeEl.classList.add("field-error");
+    meetingTypeEl.focus();
     return;
   }
   if (!descEl.value || descEl.value.trim() === "") {
@@ -180,6 +198,7 @@ function processMeetingAction(targetStage) {
         updateData[FIELD_LATITUDE]         = location.latitude;
         updateData[FIELD_LONGITUDE]        = location.longitude;
         updateData[FIELD_PURPOSE]          = purposeEl.value;
+        updateData[FIELD_MEETING_TYPE]     = meetingTypeEl.value;
         updateData[FIELD_DESCRIPTION]      = descEl.value.trim();
         updateData[FIELD_STATUS_MARKED_BY] = currentUser;
 
@@ -241,8 +260,9 @@ ZOHO.embeddedApp.on("PageLoad", function(data) {
       currentStage = meeting[FIELD_STAGE] || "";
       stageEl.textContent = currentStage || "Not Set";
 
-      if (meeting[FIELD_PURPOSE])     purposeEl.value = meeting[FIELD_PURPOSE];
-      if (meeting[FIELD_DESCRIPTION]) descEl.value    = meeting[FIELD_DESCRIPTION];
+      if (meeting[FIELD_PURPOSE])     purposeEl.value     = meeting[FIELD_PURPOSE];
+      if (meeting[FIELD_MEETING_TYPE]) meetingTypeEl.value = meeting[FIELD_MEETING_TYPE];
+      if (meeting[FIELD_DESCRIPTION]) descEl.value        = meeting[FIELD_DESCRIPTION];
 
       if (currentStage === STAGE_COMPLETED)  { disableButtons(); showMessage("This Meeting is already Completed.", "info");  return; }
       if (currentStage === STAGE_CANCELLED)  { disableButtons(); showMessage("This Meeting is already Cancelled.", "info");  return; }
