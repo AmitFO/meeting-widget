@@ -3,184 +3,214 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Domestic Check In</title>
+<title>Mark Meeting</title>
 <script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #fff; color: #222; }
-  .container {
-    max-width: 100%;
-    padding: 16px;
-    text-align: center;
-  }
-
-  /* Loading State */
-  .state { display: none; padding: 16px; }
-  .state.active { display: block; }
-
-  .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid #f0f0f0;
-    border-top: 3px solid #2e7d32;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 10px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 13px; color: #666; }
-
-  /* Success State */
-  .success-circle {
-    width: 70px; height: 70px;
-    background: #2e7d32;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 12px;
-    animation: popIn 0.4s ease;
-  }
-  @keyframes popIn {
-    0% { transform: scale(0); opacity: 0; }
-    70% { transform: scale(1.15); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  .checkmark { color: white; font-size: 35px; line-height: 1; }
-  .success-title { font-size: 18px; font-weight: bold; color: #2e7d32; margin-bottom: 6px; }
-  .success-sub { font-size: 12px; color: #666; }
-  .coords { font-size: 11px; color: #999; margin-top: 6px; }
-
-  /* Error State */
-  .error-circle {
-    width: 70px; height: 70px;
-    background: #c62828;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 12px;
-    animation: popIn 0.4s ease;
-  }
-  .error-mark { color: white; font-size: 35px; line-height: 1; }
-  .error-title { font-size: 17px; font-weight: bold; color: #c62828; margin-bottom: 6px; }
-  .error-sub { font-size: 12px; color: #666; }
-
-  /* Already captured state */
-  .already-circle {
-    width: 70px; height: 70px;
-    background: #1565c0;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 12px;
-  }
-  .already-mark { color: white; font-size: 30px; line-height: 1; }
-  .already-title { font-size: 17px; font-weight: bold; color: #1565c0; margin-bottom: 6px; }
-  .already-sub { font-size: 12px; color: #666; }
+  .container { max-width: 500px; margin: auto; padding: 20px; }
+  h2 { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+  .status { background: #f5f5f5; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+  .status-label { font-size: 13px; color: #666; }
+  .status-value { font-size: 17px; font-weight: bold; margin-top: 4px; }
+  .field-group { margin-bottom: 14px; }
+  .field-label { font-size: 13px; color: #555; font-weight: 600; margin-bottom: 5px; }
+  .field-label span { color: #c62828; }
+  select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: Arial, sans-serif; background: #fff; color: #222; outline: none; }
+  select:focus, textarea:focus { border-color: #2e7d32; }
+  .field-error { border-color: #c62828 !important; background: #fff8f8 !important; }
+  textarea { resize: vertical; min-height: 90px; }
+  button { width: 100%; padding: 14px; margin-bottom: 12px; border: 0; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  #completeBtn { background: #2e7d32; color: white; }
+  #cancelBtn { background: #c62828; color: white; }
+  #postponeBtn { background: #e65100; color: white; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button:active:not(:disabled) { opacity: 0.8; }
+  #message { display: none; padding: 12px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
+  .info { display: block !important; background: #eef5ff; color: #174a7e; }
+  .success { display: block !important; background: #edf7ed; color: #1b5e20; }
+  .error { display: block !important; background: #ffefef; color: #8b1a1a; }
+  #gpsInfo { display: none; margin-top: 12px; padding: 10px; background: #f5f5f5; border-radius: 8px; font-size: 12px; }
+  #loader { display: none; text-align: center; padding: 10px; color: #555; font-size: 13px; }
+  .divider { height: 1px; background: #eee; margin: 14px 0; }
 </style>
 </head>
 <body>
 <div class="container">
 
-  <!-- Loading State -->
-  <div class="state active" id="loadingState">
-    <div class="spinner"></div>
-    <div class="loading-text" id="loadingText">Initializing...</div>
+  <div class="status">
+    <div class="status-label">Current Meeting Status</div>
+    <div class="status-value" id="stage">Loading...</div>
   </div>
 
-  <!-- Success State -->
-  <div class="state" id="successState">
-    <div class="success-circle">
-      <span class="checkmark">&#10003;</span>
-    </div>
-    <div class="success-title">Location Captured</div>
-    <div class="success-sub">Check-in location saved successfully!</div>
-    <div class="coords" id="coordsText"></div>
+  <div class="field-group">
+    <div class="field-label">Meeting Purpose <span>*</span></div>
+    <select id="meetingPurpose">
+      <option value="">-None-</option>
+      <option value="Demo">Demo</option>
+      <option value="Followup">Followup</option>
+      <option value="Installation">Installation</option>
+      <option value="Negotiation">Negotiation</option>
+      <option value="Others">Others</option>
+      <option value="Partner Meeting">Partner Meeting</option>
+      <option value="Prospecting">Prospecting</option>
+      <option value="Service">Service</option>
+      <option value="Training">Training</option>
+    </select>
   </div>
 
-  <!-- Error State -->
-  <div class="state" id="errorState">
-    <div class="error-circle">
-      <span class="error-mark">&#10007;</span>
-    </div>
-    <div class="error-title" id="errorTitle">Error</div>
-    <div class="error-sub" id="errorSub"></div>
+  <div class="field-group">
+    <div class="field-label">Description <span>*</span></div>
+    <textarea id="meetingDescription" placeholder="Enter meeting description..."></textarea>
   </div>
 
-  <!-- Already Captured State -->
-  <div class="state" id="alreadyState">
-    <div class="already-circle">
-      <span class="already-mark">&#128205;</span>
-    </div>
-    <div class="already-title">Location Already Captured</div>
-    <div class="already-sub" id="alreadyCoords"></div>
-  </div>
+  <div class="divider"></div>
+
+  <h2>Mark Meeting</h2>
+  <div id="loader">Please wait...</div>
+  <button id="completeBtn" onclick="completeMeeting()" disabled>&#10003; Completed</button>
+  <button id="cancelBtn" onclick="cancelMeeting()" disabled>&#10005; Cancelled</button>
+  <button id="postponeBtn" onclick="postponeMeeting()" disabled>&#9200; Postponed</button>
+  <div id="message"></div>
+  <div id="gpsInfo"></div>
 
 </div>
 
 <script>
-var MODULE_API_NAME     = "Events";
-var FIELD_UNIQUE_NUMBER = "Meeting_Unique_Number";
-var FIELD_LATITUDE      = "Meeting_Latitude";
-var FIELD_LONGITUDE     = "Meeting_Longitude";
-var meetingId           = null;
+var MODULE_API_NAME        = "Events";
+var FIELD_STAGE            = "Meeting_Status";
+var FIELD_ACTION_DATETIME  = "Action_Date_Time";
+var FIELD_LATITUDE         = "Meeting_Latitude";
+var FIELD_LONGITUDE        = "Meeting_Longitude";
+var FIELD_PURPOSE          = "Meeting_Purpose";
+var FIELD_DESCRIPTION      = "Description";
+var FIELD_STATUS_MARKED_BY = "Status_Marked_by";
+var UNIQUE_NUMBER_FIELD    = "Meeting_Unique_Number";
+var STAGE_COMPLETED        = "Completed";
+var STAGE_CANCELLED        = "Cancelled";
 
-function showState(id) {
-  var states = ["loadingState","successState","errorState","alreadyState"];
-  states.forEach(function(s) {
-    document.getElementById(s).classList.remove("active");
-  });
-  document.getElementById(id).classList.add("active");
+var meetingId    = null;
+var currentStage = "";
+var isProcessing = false;
+
+var STAGE_POSTPONED        = "Postponed";
+var stageEl     = document.getElementById("stage");
+var completeBtn = document.getElementById("completeBtn");
+var cancelBtn   = document.getElementById("cancelBtn");
+var postponeBtn = document.getElementById("postponeBtn");
+var messageEl   = document.getElementById("message");
+var gpsEl       = document.getElementById("gpsInfo");
+var loaderEl    = document.getElementById("loader");
+var purposeEl   = document.getElementById("meetingPurpose");
+var descEl      = document.getElementById("meetingDescription");
+
+function showMessage(msg, type) {
+  messageEl.textContent   = msg;
+  messageEl.className     = type || "info";
+  messageEl.style.display = "block";
+}
+function enableButtons()  { completeBtn.disabled = false; cancelBtn.disabled = false; postponeBtn.disabled = false; }
+function disableButtons() { completeBtn.disabled = true;  cancelBtn.disabled = true;  postponeBtn.disabled = true;  }
+
+function getZohoDateTime() {
+  var now = new Date();
+  var pad = function(n) { return n < 10 ? "0" + n : n; };
+  return now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) + "T" + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
 }
 
-function setLoading(text) {
-  document.getElementById("loadingText").textContent = text;
-  showState("loadingState");
-}
-
-function showSuccess(lat, lng) {
-  document.getElementById("coordsText").textContent =
-    "Lat: " + lat.toFixed(6) + " | Lng: " + lng.toFixed(6);
-  showState("successState");
-}
-
-function showError(title, sub) {
-  document.getElementById("errorTitle").textContent = title;
-  document.getElementById("errorSub").textContent   = sub;
-  showState("errorState");
-}
-
-function showAlready(lat, lng) {
-  document.getElementById("alreadyCoords").textContent =
-    "Lat: " + lat + " | Lng: " + lng;
-  showState("alreadyState");
-}
-
-function getLocation() {
+function getCurrentLocation() {
   return new Promise(function(resolve, reject) {
-    if (!navigator.geolocation) {
-      reject(new Error("GPS not supported on this device."));
-      return;
-    }
+    if (!navigator.geolocation) { reject(new Error("GPS not supported on this device.")); return; }
     navigator.geolocation.getCurrentPosition(
-      function(pos) {
-        resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      },
-      function(err) {
+      function(position) { resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: position.coords.accuracy }); },
+      function(error) {
         var msg = "Unable to capture location.";
-        if (err.code === err.PERMISSION_DENIED)
-          msg = "Location permission denied. Please allow location access.";
-        else if (err.code === err.POSITION_UNAVAILABLE)
-          msg = "Location unavailable. Check GPS settings.";
-        else if (err.code === err.TIMEOUT)
-          msg = "Location timed out. Please refresh.";
+        if (error.code === error.PERMISSION_DENIED) msg = "Location permission denied. Please allow location access.";
+        else if (error.code === error.POSITION_UNAVAILABLE) msg = "Location unavailable. Check GPS settings.";
+        else if (error.code === error.TIMEOUT) msg = "Location timed out. Please try again.";
         reject(new Error(msg));
       },
       { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
     );
   });
 }
+
+function processMeetingAction(targetStage) {
+  if (isProcessing || !meetingId) return;
+  if (currentStage === STAGE_COMPLETED || currentStage === STAGE_CANCELLED || currentStage === STAGE_POSTPONED) {
+    showMessage("This meeting is already " + currentStage + ".", "info");
+    return;
+  }
+
+  purposeEl.classList.remove("field-error");
+  descEl.classList.remove("field-error");
+
+  if (!purposeEl.value || purposeEl.value === "") {
+    showMessage("Please select a Meeting Purpose before proceeding.", "error");
+    purposeEl.classList.add("field-error");
+    purposeEl.focus();
+    return;
+  }
+  if (!descEl.value || descEl.value.trim() === "") {
+    showMessage("Please enter a Description before proceeding.", "error");
+    descEl.classList.add("field-error");
+    descEl.focus();
+    return;
+  }
+
+  isProcessing = true;
+  disableButtons();
+  loaderEl.style.display = "block";
+  showMessage("Capturing your current location...", "info");
+
+  getCurrentLocation()
+    .then(function(location) {
+      gpsEl.textContent   = "GPS captured | Accuracy: " + Math.round(location.accuracy) + "m";
+      gpsEl.style.display = "block";
+
+      return ZOHO.CRM.CONFIG.getCurrentUser().then(function(userResponse) {
+        var currentUser = "";
+        if (userResponse && userResponse.users && userResponse.users[0]) {
+          currentUser = userResponse.users[0].full_name || "";
+        }
+
+        var updateData = { id: meetingId };
+        updateData[FIELD_STAGE]            = targetStage;
+        updateData[FIELD_ACTION_DATETIME]  = getZohoDateTime();
+        updateData[FIELD_LATITUDE]         = location.latitude;
+        updateData[FIELD_LONGITUDE]        = location.longitude;
+        updateData[FIELD_PURPOSE]          = purposeEl.value;
+        updateData[FIELD_DESCRIPTION]      = descEl.value.trim();
+        updateData[FIELD_STATUS_MARKED_BY] = currentUser;
+
+        showMessage("Updating Meeting...", "info");
+        return ZOHO.CRM.API.updateRecord({ Entity: MODULE_API_NAME, APIData: updateData, Trigger: [] });
+      });
+    })
+    .then(function(response) {
+      if (response && response.data && response.data[0] && response.data[0].code === "SUCCESS") {
+        currentStage = targetStage;
+        stageEl.textContent = targetStage;
+        showMessage("Meeting marked as " + targetStage + " successfully.", "success");
+        isProcessing = false;
+        loaderEl.style.display = "none";
+        setTimeout(function() { try { ZOHO.CRM.UI.Popup.close(); } catch(e) {} }, 1500);
+      } else {
+        var errMsg = (response && response.data && response.data[0] && response.data[0].message) ? response.data[0].message : "Update failed. Check field API names.";
+        throw new Error(errMsg);
+      }
+    })
+    .catch(function(error) {
+      showMessage(error && error.message ? error.message : "Unable to update the meeting.", "error");
+      isProcessing = false;
+      loaderEl.style.display = "none";
+      enableButtons();
+    });
+}
+
+function completeMeeting()  { processMeetingAction(STAGE_COMPLETED);  }
+function cancelMeeting()    { processMeetingAction(STAGE_CANCELLED);   }
+function postponeMeeting()  { processMeetingAction(STAGE_POSTPONED);   }
 
 ZOHO.embeddedApp.on("PageLoad", function(data) {
   if (data && data.EntityId) {
@@ -190,72 +220,38 @@ ZOHO.embeddedApp.on("PageLoad", function(data) {
   }
 
   if (!meetingId) {
-    showError("Error", "Unable to identify the Meeting record.");
+    stageEl.textContent = "Record ID not found";
+    showMessage("Unable to identify the Meeting record.", "error");
     return;
   }
 
-  setLoading("Checking meeting details...");
-
   ZOHO.CRM.API.getRecord({ Entity: MODULE_API_NAME, RecordID: meetingId })
     .then(function(response) {
-      if (!response || !response.data || !response.data.length) {
-        showError("Error", "Unable to load Meeting record.");
-        return;
-      }
+      if (!response || !response.data || !response.data.length) throw new Error("Unable to load the Meeting record.");
 
-      var meeting        = response.data[0];
-      var uniqueNumber   = meeting[FIELD_UNIQUE_NUMBER];
-      var existingLat    = meeting[FIELD_LATITUDE];
-      var existingLng    = meeting[FIELD_LONGITUDE];
+      var meeting      = response.data[0];
+      var uniqueNumber = meeting[UNIQUE_NUMBER_FIELD];
 
-      // Not a Check-In meeting
       if (!uniqueNumber || uniqueNumber === "" || uniqueNumber === null) {
-        showError(
-          "This is not a Check-In meeting.",
-          "GPS cannot be captured."
-        );
+        stageEl.textContent = "Not a Check-In Meeting";
+        showMessage("This is not a Check-In meeting. GPS cannot be captured.", "error");
         return;
       }
 
-      // Location already captured
-      if (existingLat && existingLng) {
-        showAlready(existingLat, existingLng);
-        return;
-      }
+      currentStage = meeting[FIELD_STAGE] || "";
+      stageEl.textContent = currentStage || "Not Set";
 
-      // Capture GPS
-      setLoading("Capturing your location...");
+      if (meeting[FIELD_PURPOSE])     purposeEl.value = meeting[FIELD_PURPOSE];
+      if (meeting[FIELD_DESCRIPTION]) descEl.value    = meeting[FIELD_DESCRIPTION];
 
-      getLocation()
-        .then(function(location) {
-          setLoading("Saving location...");
-
-          var updateData       = { id: meetingId };
-          updateData[FIELD_LATITUDE]  = location.latitude;
-          updateData[FIELD_LONGITUDE] = location.longitude;
-
-          return ZOHO.CRM.API.updateRecord({
-            Entity:  MODULE_API_NAME,
-            APIData: updateData,
-            Trigger: []
-          }).then(function(res) {
-            return { res: res, location: location };
-          });
-        })
-        .then(function(result) {
-          if (result.res && result.res.data &&
-              result.res.data[0] && result.res.data[0].code === "SUCCESS") {
-            showSuccess(result.location.latitude, result.location.longitude);
-          } else {
-            showError("Update Failed", "Could not save location. Please refresh.");
-          }
-        })
-        .catch(function(error) {
-          showError("Location Error", error.message || "Unable to capture GPS.");
-        });
+      if (currentStage === STAGE_COMPLETED)  { disableButtons(); showMessage("This Meeting is already Completed.", "info");  return; }
+      if (currentStage === STAGE_CANCELLED)  { disableButtons(); showMessage("This Meeting is already Cancelled.", "info");  return; }
+      if (currentStage === STAGE_POSTPONED)  { disableButtons(); showMessage("This Meeting is already Postponed.", "info");  return; }
+      enableButtons();
     })
     .catch(function(error) {
-      showError("Error", "Unable to load Meeting record.");
+      stageEl.textContent = "Error";
+      showMessage(error && error.message ? error.message : "Unable to load Meeting.", "error");
     });
 });
 
