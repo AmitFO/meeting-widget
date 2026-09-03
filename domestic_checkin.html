@@ -199,7 +199,7 @@ function processMeetingAction(targetStage) {
         updateData[FIELD_LONGITUDE]        = location.longitude;
         updateData[FIELD_PURPOSE]          = purposeEl.value;
         updateData[FIELD_MEETING_TYPE]     = meetingTypeEl.value;
-        updateData[FIELD_DESCRIPTION]      = descEl.value.trim();
+        updateData[FIELD_DESCRIPTION]      = descEl.value.trim().replace(/\r\n/g, " ").replace(/\n/g, " ").replace(/\r/g, " ");
         updateData[FIELD_STATUS_MARKED_BY] = currentUser;
 
         showMessage("Updating Meeting...", "info");
