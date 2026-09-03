@@ -290,18 +290,18 @@ function uploadAttachments(recordId, filesToUpload) {
       uploadProgress.textContent = "Uploading image " + (i+1) + " of " + total + "...";
       progressBar.style.width = Math.round((i / total) * 100) + "%";
 
-      compressImage(file).then(function(compressed) {
-        return ZOHO.CRM.FUNCTIONS.execute({
-          function_name: "upload_meeting_image",
-          arguments: JSON.stringify({
-            record_id:    recordId,
-            file_name:    compressed.name,
-            file_content: compressed.base64
-          })
-        });
+      ZOHO.CRM.API.attachFile({
+        Entity:   MODULE_API_NAME,
+        RecordID: recordId,
+        File: {
+          Name:    file.name,
+          Content: file
+        }
       }).then(function(res) {
         console.log("Upload " + (i+1) + " result:", JSON.stringify(res));
-        successCount++;
+        if (res && res.data && res.data[0] && res.data[0].code === "SUCCESS") {
+          successCount++;
+        }
         progressBar.style.width = Math.round(((i+1) / total) * 100) + "%";
         uploadNext(i + 1);
       }).catch(function(err) {
