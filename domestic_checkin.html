@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mark Meeting</title>
-<script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
+<script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #fff; color: #222; }
@@ -301,32 +301,60 @@ function removeImage(index) {
   updateImageUI();
 }
 
-function uploadAttachments(recordId) {
-  return new Promise(function(resolve, reject) {
-    if (selectedFiles.length === 0) { resolve(); return; }
+function compressImage(file) {
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onload = function() {
+        var canvas = document.createElement("canvas");
+        var maxSize = 1024;
+        var w = img.width;
+        var h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else       { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        canvas.width  = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        var base64 = canvas.toDataURL("image/jpeg", 0.75).split(",")[1];
+        resolve({ base64: base64, name: file.name.replace(/\.[^.]+$/, "") + ".jpg" });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
-    var uploaded = 0;
+function uploadAttachments(recordId) {
+  return new Promise(function(resolve) {
+    if (selectedFiles.length === 0) { resolve(); return; }
     progressWrap.style.display = "block";
+    var uploaded = 0;
 
     function uploadNext(i) {
-      if (i >= selectedFiles.length) {
-        resolve();
-        return;
-      }
+      if (i >= selectedFiles.length) { resolve(); return; }
       var file = selectedFiles[i];
-      uploadProgress.textContent = "Uploading image " + (i+1) + " of " + selectedFiles.length + "...";
-      progressBar.style.width = Math.round(((i) / selectedFiles.length) * 100) + "%";
+      uploadProgress.textContent = "Compressing & uploading image " + (i+1) + " of " + selectedFiles.length + "...";
+      progressBar.style.width = Math.round((i / selectedFiles.length) * 100) + "%";
 
-      ZOHO.CRM.API.addAttachment({
-        Entity:   MODULE_API_NAME,
-        RecordID: recordId,
-        File:     file
+      compressImage(file).then(function(compressed) {
+        return ZOHO.CRM.FUNCTIONS.execute({
+          function_name: "upload_meeting_image",
+          arguments: JSON.stringify({
+            record_id: recordId,
+            file_name: compressed.name,
+            file_content: compressed.base64
+          })
+        });
       }).then(function(res) {
+        console.log("Upload result for image " + (i+1) + ":", res);
         uploaded++;
         progressBar.style.width = Math.round((uploaded / selectedFiles.length) * 100) + "%";
         uploadNext(i + 1);
       }).catch(function(err) {
-        console.log("Attachment upload error for " + file.name + ":", err);
+        console.log("Upload error for image " + (i+1) + ":", err);
         uploaded++;
         uploadNext(i + 1);
       });
