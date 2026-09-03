@@ -126,29 +126,25 @@ function disableButtons() { completeBtn.disabled = true;  cancelBtn.disabled = t
 function sanitizeText(text) {
   if (!text) return "";
   return text
-    // Line breaks - all variants
     .replace(/\r\n/g, " ")
     .replace(/\n/g, " ")
     .replace(/\r/g, " ")
     .replace(/\u2028/g, " ")
     .replace(/\u2029/g, " ")
-    // Tab
     .replace(/\t/g, " ")
-    // Control characters (but NOT emoji range)
+    .replace(/\u00A0/g, " ")
+    .replace(/\u202F/g, " ")
+    .replace(/\u00AD/g, "")
     .replace(/[\u0000-\u001F\u007F-\u009F]/g, " ")
-    // Zero width characters
     .replace(/\u200B/g, "")
     .replace(/\u200C/g, "")
     .replace(/\u200D/g, "")
     .replace(/\uFEFF/g, "")
-    // iOS smart quotes → standard quotes
     .replace(/\u201C|\u201D/g, '"')
     .replace(/\u2018|\u2019/g, "'")
-    // iOS special punctuation → standard
     .replace(/\u2026/g, "...")
     .replace(/\u2014/g, "-")
     .replace(/\u2013/g, "-")
-    // Clean up multiple spaces
     .replace(/\s{2,}/g, " ")
     .trim();
 }
@@ -219,18 +215,20 @@ function processMeetingAction(targetStage) {
       return ZOHO.CRM.CONFIG.getCurrentUser().then(function(userResponse) {
         var currentUser = "";
         if (userResponse && userResponse.users && userResponse.users[0]) {
-          currentUser = userResponse.users[0].full_name || "";
+          currentUser = sanitizeText(userResponse.users[0].full_name || "");
         }
 
         var updateData = { id: meetingId };
         updateData[FIELD_STAGE]            = targetStage;
         updateData[FIELD_ACTION_DATETIME]  = getZohoDateTime();
-        updateData[FIELD_LATITUDE]         = location.latitude;
-        updateData[FIELD_LONGITUDE]        = location.longitude;
+        updateData[FIELD_LATITUDE]         = parseFloat(location.latitude.toFixed(7));
+        updateData[FIELD_LONGITUDE]        = parseFloat(location.longitude.toFixed(7));
         updateData[FIELD_PURPOSE]          = purposeEl.value;
         updateData[FIELD_MEETING_TYPE]     = meetingTypeEl.value;
         updateData[FIELD_DESCRIPTION]      = sanitizeText(descEl.value);
-        updateData[FIELD_STATUS_MARKED_BY] = sanitizeText(currentUser);
+        updateData[FIELD_STATUS_MARKED_BY] = currentUser;
+
+        console.log("Update payload:", JSON.stringify(updateData));
 
         showMessage("Updating Meeting...", "info");
         return ZOHO.CRM.API.updateRecord({ Entity: MODULE_API_NAME, APIData: updateData, Trigger: [] });
@@ -245,8 +243,11 @@ function processMeetingAction(targetStage) {
         loaderEl.style.display = "none";
         setTimeout(function() { try { ZOHO.CRM.UI.Popup.close(); } catch(e) {} }, 1500);
       } else {
-        var errMsg = (response && response.data && response.data[0] && response.data[0].message) ? response.data[0].message : (response && response.data && response.data[0] && response.data[0].details) ? JSON.stringify(response.data[0].details) : "Update failed. Please try again.";
-        throw new Error(errMsg);
+        console.log("Full API response:", JSON.stringify(response));
+        var errData = response && response.data && response.data[0] ? response.data[0] : {};
+        var errMsg = errData.message || "Update failed.";
+        var errDetails = errData.details ? JSON.stringify(errData.details) : "";
+        throw new Error(errMsg + (errDetails ? " | Details: " + errDetails : ""));
       }
     })
     .catch(function(error) {
