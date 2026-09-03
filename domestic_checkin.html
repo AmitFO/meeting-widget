@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mark Meeting</title>
-<script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
+<script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; background: #fff; color: #222; }
@@ -320,10 +320,7 @@ function uploadAttachments(recordId) {
       ZOHO.CRM.API.addAttachment({
         Entity:   MODULE_API_NAME,
         RecordID: recordId,
-        File: {
-          Name:    file.name,
-          Content: file
-        }
+        File:     file
       }).then(function(res) {
         uploaded++;
         progressBar.style.width = Math.round((uploaded / selectedFiles.length) * 100) + "%";
