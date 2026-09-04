@@ -62,7 +62,7 @@
 
   <div class="field-group">
     <div class="field-label">Meeting Purpose <span>*</span></div>
-    <select id="meetingPurpose">
+    <select id="meetingPurpose" onchange="updateImageLabel()">
       <option value="">-None-</option>
       <option value="Demo">Demo</option>
       <option value="Followup">Followup</option>
@@ -91,7 +91,7 @@
   </div>
 
   <div class="field-group">
-    <div class="field-label">Meeting Images <span>*</span> <small style="font-weight:400;color:#999;">(at least 1 required)</small></div>
+    <div class="field-label">Meeting Images <span id="imgMandatoryMark"></span> <small id="imgMandatoryHint" style="font-weight:400;color:#999;">(required for Demo/Training when Completed)</small></div>
     <div class="upload-box" id="uploadBox" onclick="document.getElementById('imageInput').click()">
       <div class="upload-icon">📷</div>
       <div class="upload-text">Tap to select images</div>
@@ -164,6 +164,22 @@ var progressWrap   = document.getElementById("progressWrap");
 var uploadProgress = document.getElementById("uploadProgress");
 
 // ── HELPERS ───────────────────────────────────────────────
+function updateImageLabel() {
+  var purpose = purposeEl.value;
+  var mark    = document.getElementById("imgMandatoryMark");
+  var hint    = document.getElementById("imgMandatoryHint");
+  if (purpose === "Demo" || purpose === "Training") {
+    mark.textContent = "*";
+    mark.style.color = "#c62828";
+    hint.textContent = "(at least 1 image required when marking Completed)";
+    hint.style.color = "#c62828";
+  } else {
+    mark.textContent = "";
+    hint.textContent = "(optional — required only for Demo/Training + Completed)";
+    hint.style.color = "#999";
+  }
+}
+
 function showMessage(msg, type) {
   messageEl.textContent   = msg;
   messageEl.className     = type || "info";
@@ -394,9 +410,12 @@ function processMeetingAction(targetStage) {
     descEl.classList.add("field-error"); descEl.focus(); return;
   }
   if (selectedFiles.length === 0) {
-    showMessage("Please upload at least 1 image before marking the meeting.", "error");
-    uploadBox.classList.add("has-error");
-    uploadBox.scrollIntoView({ behavior: "smooth" }); return;
+    var imageMandatory = (purposeEl.value === "Demo" || purposeEl.value === "Training") && targetStage === STAGE_COMPLETED;
+    if (imageMandatory) {
+      showMessage("Please upload at least 1 image for Demo/Training meetings marked as Completed.", "error");
+      uploadBox.classList.add("has-error");
+      uploadBox.scrollIntoView({ behavior: "smooth" }); return;
+    }
   }
 
   var filesToUpload = selectedFiles.slice();
@@ -499,7 +518,7 @@ ZOHO.embeddedApp.on("PageLoad", function(data) {
       currentStage = meeting[FIELD_STAGE] || "";
       stageEl.textContent = currentStage || "Not Set";
 
-      if (meeting[FIELD_PURPOSE])      purposeEl.value     = meeting[FIELD_PURPOSE];
+      if (meeting[FIELD_PURPOSE])      { purposeEl.value     = meeting[FIELD_PURPOSE]; updateImageLabel(); }
       if (meeting[FIELD_MEETING_TYPE]) meetingTypeEl.value = meeting[FIELD_MEETING_TYPE];
       if (meeting[FIELD_DESCRIPTION])  descEl.value        = meeting[FIELD_DESCRIPTION];
 
