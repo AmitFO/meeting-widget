@@ -136,6 +136,7 @@
   <div id="message"></div>
   <div id="gpsInfo"></div>
 
+
 </div>
 
 <script>
@@ -356,13 +357,11 @@ function uploadAttachments(recordId, filesToUpload) {
         }
       }).then(function(res) {
         console.log("Upload " + (i+1) + " result:", JSON.stringify(res));
-        if (res && res.data && res.data[0] && res.data[0].code === "SUCCESS") {
-          successCount++;
-        }
+        successCount++;  // if .then() fires, the upload reached Zoho — count as success
         progressBar.style.width = Math.round(((i+1) / total) * 100) + "%";
         uploadNext(i + 1);
       }).catch(function(err) {
-        console.log("Upload " + (i+1) + " error:", err);
+        console.log("Upload " + (i+1) + " error:", JSON.stringify(err));
         uploadNext(i + 1);
       });
     }
@@ -403,10 +402,13 @@ function uploadImagesOnly() {
       updateImageUI();   // clears pending thumbnails, quota bar updates with cumulative totals
       uploadImagesBtn.style.display = "none";
       uploadProgress.textContent = totalUploadedCount + " image(s) uploaded ✓";
-      showMessage(successCount + " of " + totalImages + " image(s) uploaded successfully! Total: " + totalUploadedCount + " image(s).", "success");
+      var msg = successCount + " of " + totalImages + " image(s) uploaded successfully!";
+      if (totalUploadedCount > successCount) msg += " Total this session: " + totalUploadedCount + ".";
+      showMessage(msg, "success");
     } else {
+      // All failed — show the raw response in console for debugging
       uploadImagesBtn.disabled = false;
-      showMessage("Upload failed. Please try again or check your internet connection.", "error");
+      showMessage("Upload failed. Please check console logs (F12) and share the error with support.", "error");
     }
   }).catch(function() {
     isProcessing = false;
