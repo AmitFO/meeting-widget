@@ -393,6 +393,9 @@ const GST=18, SC=40, DEFAULT_BASE=14;
 
 const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false};
 const inr=v=>"₹"+Math.round(v).toLocaleString("en-IN");
+/* percent text: up to 5 decimals, trailing zeros trimmed.
+   16 stays "16", 19.98770 becomes "19.9877". Keeps the boxes narrow. */
+const pct=v=>(+v||0).toFixed(5).replace(/0+$/,"").replace(/\.$/,"");
 
 function baseOf(){
   if(!S.acc||!S.acc.name)return DEFAULT_BASE;
@@ -523,7 +526,7 @@ function addLine(){
         <div class="f qty-w"><label>Qty</label><input type="number" class="qty num" value="1" min="1"></div>
         <div class="f lp-w"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ad-w"><label>Allowed</label><input type="text" class="ad num ro" value="—" readonly tabindex="-1"></div>
-        <div class="f ed-w"><label>Extra</label><input type="number" class="ed num" value="0" min="0" max="60" step="0.01"></div>
+        <div class="f ed-w"><label>Extra</label><input type="number" class="ed num" value="0" min="0" max="60" step="0.00001"></div>
       </div>
     </div>
     <div class="mtr">
@@ -558,12 +561,12 @@ function paint(){
     const q=Math.max(1,+l.querySelector(".qty").value||1);
     const ex=Math.max(0,+l.querySelector(".ed").value||0);
     l.querySelector(".lp").value=s?inr(s.price):"—";
-    l.querySelector(".ad").value=s?b.toFixed(2)+"%":"—";
+    l.querySelector(".ad").value=s?pct(b)+"%":"—";
     l.querySelector(".sa").style.width=(s?Math.min(b,SC)/SC*100:0)+"%";
     l.querySelector(".se").style.width=(s?Math.min(ex,SC-b)/SC*100:0)+"%";
-    l.querySelector(".av").textContent=(s?b.toFixed(2):"0")+"%";
-    l.querySelector(".ev").textContent=ex.toFixed(2)+"%";
-    l.querySelector(".tv").textContent=(s?(b+ex).toFixed(2):"0")+"%";
+    l.querySelector(".av").textContent=(s?pct(b):"0")+"%";
+    l.querySelector(".ev").textContent=pct(ex)+"%";
+    l.querySelector(".tv").textContent=(s?pct(b+ex):"0")+"%";
     if(!s){["fp","lip","tx","tl"].forEach(c=>l.querySelector("."+c).textContent="—");
       l.querySelector(".gv").textContent="₹0";return}
     const p=s.price,lip=p*(1-(b+ex)/100),tx=lip*q*GST/100;
@@ -578,7 +581,7 @@ function paint(){
   chips();
   const n=$$(".li").filter(l=>l._sku).length;
   const top=Math.max(0,...$$(".li").map(l=>b+(+l.querySelector(".ed").value||0)));
-  $("#subj").textContent=`Discount approval · ${S.acc?S.acc.name:"Any"} · ${n} SKU · up to ${top.toFixed(2)}%`;
+  $("#subj").textContent=`Discount approval · ${S.acc?S.acc.name:"Any"} · ${n} SKU · up to ${pct(top)}%`;
 }
 function chips(){
   const p=[];
@@ -626,7 +629,7 @@ $("#go2").onclick=()=>show(2);$("#back").onclick=()=>show(1);
 function review(){
   const b=baseOf();
   const r=$$(".li").filter(l=>l._sku).map(l=>
-    `${l._sku.name} ${(b+(+l.querySelector(".ed").value||0)).toFixed(2)}% ×${l.querySelector(".qty").value}`);
+    `${l._sku.name} ${pct(b+(+l.querySelector(".ed").value||0))}% ×${l.querySelector(".qty").value}`);
   const it=[
     ["Account Name",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
     ["Sub-dealer",S.mode==="via"?(S.acc?S.acc.name:"—"):(S.mode==="both"&&S.dlr?S.dlr.name:"—")],
