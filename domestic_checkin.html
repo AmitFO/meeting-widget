@@ -2,545 +2,835 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mark Meeting</title>
-<script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mark Meeting Status</title>
+<script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbeddedAppSDK.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #fff; color: #222; }
-  .container { max-width: 500px; margin: auto; padding: 20px; }
-  h2 { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
-  .status { background: #f5f5f5; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
-  .status-label { font-size: 13px; color: #666; }
-  .status-value { font-size: 17px; font-weight: bold; margin-top: 4px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f6fa;
+    color: #222;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+  .header {
+    background: #1565c0;
+    color: #fff;
+    padding: 14px 16px;
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .container { padding: 14px 16px; max-width: 600px; margin: 0 auto; }
+
+  .status-bar {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border-left: 4px solid #1565c0;
+    font-size: 13px;
+    color: #555;
+  }
+  .status-bar strong { color: #1565c0; font-size: 14px; }
+
   .field-group { margin-bottom: 14px; }
-  .field-label { font-size: 13px; color: #555; font-weight: 600; margin-bottom: 5px; }
-  .field-label span { color: #c62828; }
-  select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: Arial, sans-serif; background: #fff; color: #222; outline: none; }
-  select:focus, textarea:focus { border-color: #2e7d32; }
-  .field-error { border-color: #c62828 !important; background: #fff8f8 !important; }
-  textarea { resize: vertical; min-height: 90px; }
-  .upload-box { border: 2px dashed #ddd; border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: border-color 0.2s; margin-bottom: 10px; }
-  .upload-box:hover { border-color: #2e7d32; }
-  .upload-box.has-error { border-color: #c62828; }
-  .upload-icon { font-size: 28px; margin-bottom: 6px; }
-  .upload-text { font-size: 13px; color: #555; }
-  .upload-sub { font-size: 11px; color: #999; margin-top: 3px; }
-  #imageInput { display: none; }
-  .image-count { font-size: 12px; color: #2e7d32; font-weight: 600; margin-bottom: 8px; }
-  .image-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-  .image-item { position: relative; border-radius: 6px; overflow: hidden; aspect-ratio: 1; background: #f5f5f5; }
-  .image-item img { width: 100%; height: 100%; object-fit: cover; }
-  .image-remove { position: absolute; top: 3px; right: 3px; background: rgba(198,40,40,0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
-  .upload-progress { font-size: 12px; color: #555; margin-top: 6px; }
-  .progress-bar-wrap { height: 6px; background: #eee; border-radius: 3px; margin-top: 6px; overflow: hidden; }
-  .progress-bar { height: 100%; background: #2e7d32; border-radius: 3px; width: 0%; transition: width 0.3s; }
-  .size-info { font-size: 11px; color: #999; margin-top: 4px; }
-  button { width: 100%; padding: 14px; margin-bottom: 12px; border: 0; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  #completeBtn { background: #2e7d32; color: white; }
-  #cancelBtn { background: #c62828; color: white; }
-  #postponeBtn { background: #1565c0; color: white; }
-  #uploadImagesBtn { background: #546e7a; color: white; margin-top: 8px; display: none; }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  button:active:not(:disabled) { opacity: 0.8; }
-  #message { display: none; padding: 12px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
-  .info    { display: block !important; background: #eef5ff; color: #174a7e; }
-  .success { display: block !important; background: #edf7ed; color: #1b5e20; }
-  .error   { display: block !important; background: #ffefef; color: #8b1a1a; }
-  #gpsInfo { display: none; margin-top: 12px; padding: 10px; background: #f5f5f5; border-radius: 8px; font-size: 12px; }
-  #loader  { display: none; text-align: center; padding: 10px; color: #555; font-size: 13px; }
-  .divider { height: 1px; background: #eee; margin: 14px 0; }
+  .field-label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #333;
+  }
+  .field-label span.req { color: #c62828; margin-left: 2px; }
+
+  select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:focus, textarea:focus { border-color: #1565c0; }
+  select.has-error, textarea.has-error, .upload-box.has-error { border-color: #c62828 !important; }
+  textarea { min-height: 80px; resize: vertical; }
+
+  /* ── Image Upload ── */
+  .upload-box {
+    border: 2px dashed #bbb;
+    border-radius: 8px;
+    background: #fafafa;
+    text-align: center;
+    padding: 22px 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-box:hover { border-color: #1565c0; background: #e8f0fe; }
+  .upload-box input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-box .upload-icon { font-size: 32px; margin-bottom: 6px; }
+  .upload-box .upload-title { font-size: 14px; font-weight: 600; color: #444; }
+  .upload-box .upload-sub { font-size: 11px; color: #888; margin-top: 4px; }
+
+  /* quota bar */
+  .quota-bar-wrap {
+    margin-top: 10px;
+    background: #e8eaf6;
+    border-radius: 20px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .quota-bar-fill {
+    height: 100%;
+    background: #1565c0;
+    border-radius: 20px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+  .quota-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #666;
+    margin-top: 5px;
+  }
+  .quota-info .count-label { font-weight: 600; color: #333; }
+
+  /* Upload status line */
+  .upload-status {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2e7d32;
+    min-height: 18px;
+  }
+
+  /* Thumbnail grid */
+  .preview-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .preview-item {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+  }
+  .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-item .remove-btn {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Upload progress per-image */
+  .upload-log {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #555;
+    max-height: 80px;
+    overflow-y: auto;
+  }
+  .upload-log-item { padding: 2px 0; }
+  .upload-log-item.ok { color: #2e7d32; }
+  .upload-log-item.fail { color: #c62828; }
+
+  /* Section divider */
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1565c0;
+    margin: 18px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e3e8f8;
+  }
+
+  /* Mark buttons */
+  .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-complete { background: #2e7d32; color: #fff; }
+  .btn-cancel   { background: #c62828; color: #fff; }
+  .btn-postpone { background: #1565c0; color: #fff; }
+
+  /* Upload images button */
+  .btn-upload-only {
+    width: 100%;
+    padding: 11px;
+    border: 2px solid #1565c0;
+    border-radius: 8px;
+    background: #fff;
+    color: #1565c0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    transition: background 0.2s;
+  }
+  .btn-upload-only:hover { background: #e8f0fe; }
+  .btn-upload-only:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Toast message */
+  #toastMsg {
+    display: none;
+    margin: 12px 0 4px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  #toastMsg.success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+  #toastMsg.error   { background: #ffebee; color: #c62828; border-left: 4px solid #c62828; }
+  #toastMsg.info    { background: #e3f2fd; color: #1565c0; border-left: 4px solid #1565c0; }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  .spinner-dark {
+    border-color: rgba(21,101,192,0.3);
+    border-top-color: #1565c0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<div class="container">
 
-  <div class="status">
-    <div class="status-label">Current Meeting Status</div>
-    <div class="status-value" id="stage">Loading...</div>
-  </div>
-
-  <div class="field-group">
-    <div class="field-label">Meeting Purpose <span>*</span></div>
-    <select id="meetingPurpose" onchange="updateImageLabel()">
-      <option value="">-None-</option>
-      <option value="Demo">Demo</option>
-      <option value="Followup">Followup</option>
-      <option value="Installation">Installation</option>
-      <option value="Negotiation">Negotiation</option>
-      <option value="Others">Others</option>
-      <option value="Partner Meeting">Partner Meeting</option>
-      <option value="Prospecting">Prospecting</option>
-      <option value="Service">Service</option>
-      <option value="Training">Training</option>
-    </select>
-  </div>
-
-  <div class="field-group">
-    <div class="field-label">Meeting Type <span>*</span></div>
-    <select id="meetingType">
-      <option value="">-None-</option>
-      <option value="In-person Connect">In-person Connect</option>
-      <option value="Online Connect">Online Connect</option>
-    </select>
-  </div>
-
-  <div class="field-group">
-    <div class="field-label">Description <span>*</span></div>
-    <textarea id="meetingDescription" placeholder="Enter meeting description..."></textarea>
-  </div>
-
-  <div class="field-group">
-    <div class="field-label">Meeting Images <span id="imgMandatoryMark"></span> <small id="imgMandatoryHint" style="font-weight:400;color:#999;">(required for Demo/Training when Completed)</small></div>
-    <div class="upload-box" id="uploadBox" onclick="document.getElementById('imageInput').click()">
-      <div class="upload-icon">📷</div>
-      <div class="upload-text">Tap to select images</div>
-      <div class="upload-sub">Max 15 images · All formats · Max 20MB total</div>
-    </div>
-    <input type="file" id="imageInput" multiple accept="image/*" onchange="handleImageSelect(this)">
-    <div class="image-count" id="imageCount"></div>
-    <div class="image-grid" id="imageGrid"></div>
-    <div class="size-info" id="sizeInfo"></div>
-    <div class="upload-progress" id="uploadProgress"></div>
-    <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-    <button id="uploadImagesBtn" onclick="uploadImagesOnly()">&#128247; Upload Images</button>
-  </div>
-
-  <div class="divider"></div>
-
-  <h2>Mark Meeting</h2>
-  <div id="loader">Please wait...</div>
-  <button id="completeBtn" onclick="completeMeeting()" disabled>&#10003; Completed</button>
-  <button id="cancelBtn"   onclick="cancelMeeting()"   disabled>&#10005; Cancelled</button>
-  <button id="postponeBtn" onclick="postponeMeeting()" disabled>&#9200; Postponed</button>
-  <div id="message"></div>
-  <div id="gpsInfo"></div>
-
+<div class="header">
+  <span>📋</span> Mark Meeting Status
 </div>
 
+<div class="container">
+
+  <div class="status-bar">
+    Current Stage: <strong id="stageDisplay">Loading…</strong>
+  </div>
+
+  <!-- Meeting Purpose -->
+  <div class="field-group">
+    <div class="field-label">Meeting Purpose <span class="req">*</span></div>
+    <select id="meetingPurpose" onchange="onPurposeChange()">
+      <option value="">— Select Purpose —</option>
+      <option value="Demo">Demo</option>
+      <option value="Training">Training</option>
+      <option value="Retention">Retention</option>
+      <option value="Prospecting">Prospecting</option>
+      <option value="Regular Visit">Regular Visit</option>
+      <option value="Support">Support</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
+
+  <!-- Meeting Type -->
+  <div class="field-group">
+    <div class="field-label">Meeting Type <span class="req">*</span></div>
+    <select id="meetingType">
+      <option value="">— Select Type —</option>
+      <option value="In-person Connect">In-person Connect</option>
+      <option value="Virtual Connect">Virtual Connect</option>
+      <option value="Phone Call">Phone Call</option>
+    </select>
+  </div>
+
+  <!-- Description -->
+  <div class="field-group">
+    <div class="field-label">Description <span class="req">*</span></div>
+    <textarea id="meetingDesc" placeholder="Enter meeting description…"></textarea>
+  </div>
+
+  <!-- Meeting Images -->
+  <div class="field-group">
+    <div class="field-label">
+      Meeting Images <span class="req" id="imgReqMark"></span>
+      <small id="imgReqHint" style="font-weight:400;color:#888;margin-left:4px;"></small>
+    </div>
+
+    <div class="upload-box" id="uploadBox">
+      <input type="file" id="fileInput" accept="image/*" multiple onchange="onFilesSelected(event)">
+      <div class="upload-icon">📷</div>
+      <div class="upload-title">Tap to select images</div>
+      <div class="upload-sub">Max 15 images · All formats · Max 20MB total</div>
+    </div>
+
+    <!-- Quota display -->
+    <div id="quotaWrap" style="display:none;">
+      <div class="quota-bar-wrap"><div class="quota-bar-fill" id="quotaFill"></div></div>
+      <div class="quota-info">
+        <span class="count-label" id="countLabel">0 of 15 images</span>
+        <span id="sizeLabel">0.00 / 20.00 MB</span>
+      </div>
+    </div>
+
+    <div class="preview-grid" id="previewGrid"></div>
+    <div class="upload-log"  id="uploadLog"></div>
+    <div class="upload-status" id="uploadStatus"></div>
+
+    <button class="btn-upload-only" id="btnUploadOnly" onclick="uploadImagesOnly()" disabled>
+      <span>⬆️</span> Upload Images
+    </button>
+  </div>
+
+  <div id="toastMsg"></div>
+
+  <div class="section-title">Mark Meeting</div>
+
+  <div class="btn-group">
+    <button class="btn btn-complete" id="btnComplete" onclick="processMeetingAction('Completed')">✔ Completed</button>
+    <button class="btn btn-cancel"   id="btnCancel"   onclick="processMeetingAction('Cancelled')">✖ Cancelled</button>
+    <button class="btn btn-postpone" id="btnPostpone" onclick="processMeetingAction('Postponed')">⏰ Postponed</button>
+  </div>
+
+</div><!-- /container -->
+
 <script>
-// ── CONFIG ──────────────────────────────────────────────
-var MODULE_API_NAME        = "Events";
-var FIELD_STAGE            = "Meeting_Status";
-var FIELD_ACTION_DATETIME  = "Action_Date_Time";
-var FIELD_LATITUDE         = "Meeting_Latitude";
-var FIELD_LONGITUDE        = "Meeting_Longitude";
-var FIELD_PURPOSE          = "Meeting_Purpose";
-var FIELD_MEETING_TYPE     = "Meeting_Type";
-var FIELD_DESCRIPTION      = "Description";
-var FIELD_STATUS_MARKED_BY = "Status_Marked_by";
-var UNIQUE_NUMBER_FIELD    = "Meeting_Unique_Number";
-var STAGE_COMPLETED        = "Completed";
-var STAGE_CANCELLED        = "Cancelled";
-var STAGE_POSTPONED        = "Postponed";
-var MAX_IMAGES             = 15;
-var MAX_SIZE_BYTES         = 20 * 1024 * 1024;
+/* ── Constants ── */
+var FIELD_PURPOSE  = "Meeting_Purpose";
+var FIELD_TYPE     = "Meeting_Type";
+var FIELD_DESC     = "Description";
+var FIELD_STAGE    = "Meeting_Stage";
+var FIELD_MARKED_BY= "Meeting_Status_Marked_By";
+var FIELD_ACTION_DT= "Action_Date_Time";
+var FIELD_LOCATION = "Meeting_Location";
 
-var meetingId    = null;
-var currentStage = "";
-var isProcessing = false;
-var selectedFiles = [];
-var imagesUploaded = false; // tracks if images were already uploaded via Upload button
+var STAGE_COMPLETED = "Completed";
+var STAGE_CANCELLED = "Cancelled";
+var STAGE_POSTPONED = "Postponed";
 
-// ── DOM REFS ─────────────────────────────────────────────
-var stageEl        = document.getElementById("stage");
-var completeBtn    = document.getElementById("completeBtn");
-var cancelBtn      = document.getElementById("cancelBtn");
-var postponeBtn    = document.getElementById("postponeBtn");
-var uploadImagesBtn= document.getElementById("uploadImagesBtn");
-var messageEl      = document.getElementById("message");
-var gpsEl          = document.getElementById("gpsInfo");
-var loaderEl       = document.getElementById("loader");
-var purposeEl      = document.getElementById("meetingPurpose");
-var meetingTypeEl  = document.getElementById("meetingType");
-var descEl         = document.getElementById("meetingDescription");
-var imageGrid      = document.getElementById("imageGrid");
-var imageCount     = document.getElementById("imageCount");
-var sizeInfo       = document.getElementById("sizeInfo");
-var uploadBox      = document.getElementById("uploadBox");
-var progressBar    = document.getElementById("progressBar");
-var progressWrap   = document.getElementById("progressWrap");
-var uploadProgress = document.getElementById("uploadProgress");
+var MAX_IMAGES   = 15;
+var MAX_MB       = 20;
+var MAX_BYTES    = MAX_MB * 1024 * 1024;
 
-// ── HELPERS ───────────────────────────────────────────────
+/* ── State ── */
+var meetingId      = null;
+var currentStage   = "";
+var isProcessing   = false;
+var selectedFiles  = [];          // files pending upload
+var uploadedCount  = 0;           // total successfully uploaded this session
+var uploadedBytes  = 0;           // total bytes uploaded this session
+
+/* ── UI refs (set after DOMContentLoaded) ── */
+var purposeEl, typeEl, descEl, uploadBox, fileInput,
+    previewGrid, uploadLog, uploadStatus, quotaWrap,
+    quotaFill, countLabel, sizeLabel, btnUploadOnly,
+    stageDisplay, toastMsg, imgReqMark, imgReqHint;
+
+document.addEventListener("DOMContentLoaded", function() {
+  purposeEl    = document.getElementById("meetingPurpose");
+  typeEl       = document.getElementById("meetingType");
+  descEl       = document.getElementById("meetingDesc");
+  uploadBox    = document.getElementById("uploadBox");
+  fileInput    = document.getElementById("fileInput");
+  previewGrid  = document.getElementById("previewGrid");
+  uploadLog    = document.getElementById("uploadLog");
+  uploadStatus = document.getElementById("uploadStatus");
+  quotaWrap    = document.getElementById("quotaWrap");
+  quotaFill    = document.getElementById("quotaFill");
+  countLabel   = document.getElementById("countLabel");
+  sizeLabel    = document.getElementById("sizeLabel");
+  btnUploadOnly= document.getElementById("btnUploadOnly");
+  stageDisplay = document.getElementById("stageDisplay");
+  toastMsg     = document.getElementById("toastMsg");
+  imgReqMark   = document.getElementById("imgReqMark");
+  imgReqHint   = document.getElementById("imgReqHint");
+  updateImageLabel();
+});
+
+/* ──────────────────────────────────────────
+   Purpose change → update image label
+────────────────────────────────────────── */
+function onPurposeChange() { updateImageLabel(); }
+
 function updateImageLabel() {
-  var purpose = purposeEl.value;
-  var mark    = document.getElementById("imgMandatoryMark");
-  var hint    = document.getElementById("imgMandatoryHint");
-  if (purpose === "Demo" || purpose === "Training") {
-    mark.textContent = "*";
-    mark.style.color = "#c62828";
-    hint.textContent = "(at least 1 image required when marking Completed)";
-    hint.style.color = "#c62828";
+  if (!imgReqMark) return;
+  var p = purposeEl ? purposeEl.value : "";
+  if (p === "Demo" || p === "Training") {
+    imgReqMark.textContent = "*";
+    imgReqHint.textContent = "(at least 1 image required when marking Completed)";
+    imgReqHint.style.color = "#c62828";
   } else {
-    mark.textContent = "";
-    hint.textContent = "(optional — required only for Demo/Training + Completed)";
-    hint.style.color = "#999";
+    imgReqMark.textContent = "";
+    imgReqHint.textContent = "(optional for this meeting purpose)";
+    imgReqHint.style.color = "#888";
   }
+}
+
+/* ──────────────────────────────────────────
+   Image selection
+────────────────────────────────────────── */
+function onFilesSelected(event) {
+  var files = Array.from(event.target.files);
+  if (!files.length) return;
+
+  var totalSelected = selectedFiles.length + files.length;
+  var totalUploaded = uploadedCount;
+
+  // slot check
+  var slotsLeft = MAX_IMAGES - totalUploaded - selectedFiles.length;
+  if (slotsLeft <= 0) {
+    showMessage("Maximum " + MAX_IMAGES + " images allowed. You have already filled the quota.", "error");
+    fileInput.value = "";
+    return;
+  }
+  files = files.slice(0, slotsLeft);
+
+  // size check (pending + what's already uploaded)
+  var pendingBytes = selectedFiles.reduce(function(s,f){ return s+f.size; },0);
+  var remainingBytes = MAX_BYTES - uploadedBytes - pendingBytes;
+  var toAdd = [];
+  for (var i = 0; i < files.length; i++) {
+    if (files[i].size > remainingBytes) {
+      showMessage("Adding \"" + files[i].name + "\" would exceed the 20MB total limit. Skipped.", "error");
+      continue;
+    }
+    toAdd.push(files[i]);
+    remainingBytes -= files[i].size;
+  }
+  selectedFiles = selectedFiles.concat(toAdd);
+  fileInput.value = "";
+  renderPreviews();
+  updateQuota();
+  btnUploadOnly.disabled = (selectedFiles.length === 0);
+  uploadBox.classList.remove("has-error");
+}
+
+function renderPreviews() {
+  previewGrid.innerHTML = "";
+  selectedFiles.forEach(function(file, idx) {
+    var div = document.createElement("div");
+    div.className = "preview-item";
+    var img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    var btn = document.createElement("button");
+    btn.className = "remove-btn";
+    btn.textContent = "✕";
+    btn.onclick = function(e) { e.stopPropagation(); removeFile(idx); };
+    div.appendChild(img);
+    div.appendChild(btn);
+    previewGrid.appendChild(div);
+  });
+}
+
+function removeFile(idx) {
+  selectedFiles.splice(idx, 1);
+  renderPreviews();
+  updateQuota();
+  btnUploadOnly.disabled = (selectedFiles.length === 0);
+}
+
+function updateQuota() {
+  var pendingBytes = selectedFiles.reduce(function(s,f){ return s+f.size; },0);
+  var totalBytes   = uploadedBytes + pendingBytes;
+  var totalCount   = uploadedCount + selectedFiles.length;
+
+  if (totalCount === 0 && uploadedCount === 0) {
+    quotaWrap.style.display = "none";
+    uploadStatus.textContent = "";
+    return;
+  }
+
+  quotaWrap.style.display = "block";
+  var pctSize  = Math.min((totalBytes / MAX_BYTES) * 100, 100);
+  quotaFill.style.width = pctSize + "%";
+
+  var totalMB  = (totalBytes / (1024 * 1024)).toFixed(2);
+  var uploadedMB = (uploadedBytes / (1024*1024)).toFixed(2);
+
+  countLabel.textContent = totalCount + " of " + MAX_IMAGES + " images";
+  sizeLabel.textContent  = totalMB + " / " + MAX_MB + ".00 MB";
+
+  // status line: show uploaded so far
+  if (uploadedCount > 0) {
+    var upMB = (uploadedBytes/(1024*1024)).toFixed(2);
+    uploadStatus.textContent = "✅ " + uploadedCount + " uploaded (" + upMB + " MB used)";
+    if (selectedFiles.length > 0) {
+      uploadStatus.textContent += "  |  " + selectedFiles.length + " pending";
+    }
+  } else {
+    uploadStatus.textContent = selectedFiles.length + " selected, ready to upload";
+  }
+}
+
+/* ──────────────────────────────────────────
+   Upload Images Only (independent button)
+────────────────────────────────────────── */
+function uploadImagesOnly() {
+  if (isProcessing) return;
+  if (selectedFiles.length === 0) { showMessage("Please select at least one image.", "error"); return; }
+  if (!meetingId) { showMessage("Meeting not loaded. Please wait.", "error"); return; }
+  isProcessing = true;
+  btnUploadOnly.disabled = true;
+  btnUploadOnly.innerHTML = '<span class="spinner spinner-dark"></span> Uploading…';
+  uploadLog.innerHTML = "";
+
+  var total = selectedFiles.length;
+  var done  = 0;
+  var ok    = 0;
+  var filesToUpload = selectedFiles.slice();
+
+  function uploadNext(i) {
+    if (i >= filesToUpload.length) {
+      isProcessing = false;
+      btnUploadOnly.innerHTML = "⬆️ Upload Images";
+
+      if (ok > 0) {
+        uploadedCount += ok;
+        uploadedBytes += filesToUpload.slice(0, ok).reduce(function(s){ return s; }, 0);
+        // Recalculate uploadedBytes properly
+        var successFiles = filesToUpload.filter(function(_,idx){ return idx < ok; });
+        uploadedBytes = filesToUpload.reduce(function(s, f, idx) {
+          return s; // we'll recompute below
+        }, uploadedBytes);
+        selectedFiles = [];
+        renderPreviews();
+        updateQuota();
+        btnUploadOnly.disabled = true;
+        var msg = ok + " of " + total + " image(s) uploaded successfully!";
+        if (ok < total) msg += " (" + (total - ok) + " failed)";
+        showMessage(msg, ok === total ? "success" : "info");
+        uploadStatus.textContent = "✅ " + uploadedCount + " image(s) uploaded this session";
+      } else {
+        btnUploadOnly.disabled = false;
+        showMessage("All uploads failed. Please try again.", "error");
+      }
+      return;
+    }
+
+    var file = filesToUpload[i];
+    var logItem = document.createElement("div");
+    logItem.className = "upload-log-item";
+    logItem.textContent = "⏳ Uploading " + (i+1) + " of " + total + ": " + file.name + "…";
+    uploadLog.appendChild(logItem);
+    uploadLog.scrollTop = uploadLog.scrollHeight;
+
+    // Update status during upload
+    uploadStatus.textContent = "Uploading " + (i+1) + " of " + total + "…";
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var base64 = e.target.result.split(",")[1];
+      ZOHO.CRM.API.attachFile({
+        Entity: "Events",
+        RecordID: meetingId,
+        File: { Name: file.name, Content: base64 }
+      }).then(function(res) {
+        if (res && res.data && res.data[0] && res.data[0].code === "SUCCESS") {
+          ok++;
+          uploadedBytes += file.size;
+          logItem.className = "upload-log-item ok";
+          logItem.textContent = "✅ " + (i+1) + " of " + total + ": " + file.name;
+        } else {
+          logItem.className = "upload-log-item fail";
+          logItem.textContent = "❌ " + (i+1) + " of " + total + ": " + file.name + " (failed)";
+        }
+        done++;
+        uploadNext(i + 1);
+      }).catch(function() {
+        logItem.className = "upload-log-item fail";
+        logItem.textContent = "❌ " + (i+1) + " of " + total + ": " + file.name + " (error)";
+        done++;
+        uploadNext(i + 1);
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+  uploadNext(0);
+}
+
+/* ──────────────────────────────────────────
+   Mark meeting action
+────────────────────────────────────────── */
+function processMeetingAction(targetStage) {
+  if (isProcessing) return;
+
+  // Validate purpose
+  var purpose = purposeEl.value.trim();
+  if (!purpose) {
+    purposeEl.classList.add("has-error");
+    showMessage("Please select a Meeting Purpose.", "error");
+    purposeEl.scrollIntoView({ behavior: "smooth" }); return;
+  }
+  purposeEl.classList.remove("has-error");
+
+  // Validate type
+  var mType = typeEl.value.trim();
+  if (!mType) {
+    typeEl.classList.add("has-error");
+    showMessage("Please select a Meeting Type.", "error");
+    typeEl.scrollIntoView({ behavior: "smooth" }); return;
+  }
+  typeEl.classList.remove("has-error");
+
+  // Validate description
+  var desc = descEl.value.trim();
+  if (!desc) {
+    descEl.classList.add("has-error");
+    showMessage("Please enter a Description.", "error");
+    descEl.scrollIntoView({ behavior: "smooth" }); return;
+  }
+  descEl.classList.remove("has-error");
+
+  // Image validation: mandatory only for Demo/Training + Completed
+  var imageMandatory = (purpose === "Demo" || purpose === "Training") && targetStage === STAGE_COMPLETED;
+  var hasImages = (uploadedCount > 0) || (selectedFiles.length > 0);
+
+  if (imageMandatory && !hasImages) {
+    uploadBox.classList.add("has-error");
+    showMessage("Please upload at least 1 image for Demo/Training meetings marked as Completed.", "error");
+    uploadBox.scrollIntoView({ behavior: "smooth" }); return;
+  }
+  uploadBox.classList.remove("has-error");
+
+  // If there are pending (not yet uploaded) selected files, upload them first then mark
+  if (selectedFiles.length > 0) {
+    isProcessing = true;
+    disableAllButtons();
+    showMessage("Uploading images, then marking as " + targetStage + "…", "info");
+    uploadAndThenMark(targetStage, desc, purpose, mType);
+    return;
+  }
+
+  // No pending files — just mark
+  doMarkMeeting(targetStage, desc, purpose, mType);
+}
+
+function uploadAndThenMark(targetStage, desc, purpose, mType) {
+  var filesToUpload = selectedFiles.slice();
+  var total = filesToUpload.length;
+  var ok = 0;
+
+  uploadLog.innerHTML = "";
+  uploadStatus.textContent = "Uploading images…";
+
+  function uploadNext(i) {
+    if (i >= filesToUpload.length) {
+      if (ok > 0) {
+        uploadedCount += ok;
+        selectedFiles = [];
+        renderPreviews();
+        updateQuota();
+      }
+      isProcessing = false;
+      doMarkMeeting(targetStage, desc, purpose, mType);
+      return;
+    }
+    var file = filesToUpload[i];
+    var logItem = document.createElement("div");
+    logItem.className = "upload-log-item";
+    logItem.textContent = "⏳ " + (i+1) + "/" + total + ": " + file.name;
+    uploadLog.appendChild(logItem);
+    uploadStatus.textContent = "Uploading " + (i+1) + " of " + total + "…";
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var base64 = e.target.result.split(",")[1];
+      ZOHO.CRM.API.attachFile({
+        Entity: "Events",
+        RecordID: meetingId,
+        File: { Name: file.name, Content: base64 }
+      }).then(function(res) {
+        if (res && res.data && res.data[0] && res.data[0].code === "SUCCESS") {
+          ok++;
+          uploadedBytes += file.size;
+          logItem.className = "upload-log-item ok";
+          logItem.textContent = "✅ " + (i+1) + "/" + total + ": " + file.name;
+        } else {
+          logItem.className = "upload-log-item fail";
+          logItem.textContent = "❌ " + (i+1) + "/" + total + ": " + file.name;
+        }
+        uploadNext(i + 1);
+      }).catch(function() {
+        logItem.className = "upload-log-item fail";
+        logItem.textContent = "❌ " + (i+1) + "/" + total + ": " + file.name;
+        uploadNext(i + 1);
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+  uploadNext(0);
+}
+
+function doMarkMeeting(targetStage, desc, purpose, mType) {
+  isProcessing = true;
+  disableAllButtons();
+  showMessage("Marking meeting as " + targetStage + "…", "info");
+
+  var now = new Date().toISOString();
+  var updateData = {};
+  updateData[FIELD_STAGE]     = targetStage;
+  updateData[FIELD_PURPOSE]   = purpose;
+  updateData[FIELD_TYPE]      = mType;
+  updateData[FIELD_DESC]      = desc;
+  updateData[FIELD_ACTION_DT] = now;
+
+  // GPS
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      updateData[FIELD_LOCATION] = "https://www.google.com/maps?q=" + pos.coords.latitude + "," + pos.coords.longitude;
+      pushUpdate(updateData, targetStage);
+    }, function() {
+      pushUpdate(updateData, targetStage);
+    }, { timeout: 5000 });
+  } else {
+    pushUpdate(updateData, targetStage);
+  }
+}
+
+function pushUpdate(data, targetStage) {
+  ZOHO.CRM.getCurrentUser().then(function(user) {
+    if (user && user.users && user.users[0]) {
+      data[FIELD_MARKED_BY] = user.users[0].full_name || user.users[0].email || "";
+    }
+    ZOHO.CRM.API.updateRecord({
+      Entity: "Events",
+      APIData: Object.assign({ id: meetingId }, data),
+      Trigger: []
+    }).then(function(res) {
+      isProcessing = false;
+      if (res && res.data && res.data[0] && res.data[0].code === "SUCCESS") {
+        showMessage("✅ Meeting marked as " + targetStage + " successfully!", "success");
+        disableAllButtons();
+        stageDisplay.textContent = targetStage;
+        setTimeout(function() { ZOHO.CRM.UI.Popup.closeReload(); }, 2000);
+      } else {
+        enableAllButtons();
+        showMessage("Update failed. Please try again.", "error");
+      }
+    }).catch(function(err) {
+      isProcessing = false;
+      enableAllButtons();
+      showMessage("Error updating meeting: " + (err && err.message ? err.message : "Unknown error"), "error");
+    });
+  }).catch(function() {
+    ZOHO.CRM.API.updateRecord({
+      Entity: "Events",
+      APIData: Object.assign({ id: meetingId }, data),
+      Trigger: []
+    }).then(function(res) {
+      isProcessing = false;
+      if (res && res.data && res.data[0] && res.data[0].code === "SUCCESS") {
+        showMessage("✅ Meeting marked as " + targetStage + " successfully!", "success");
+        disableAllButtons();
+        stageDisplay.textContent = targetStage;
+        setTimeout(function() { ZOHO.CRM.UI.Popup.closeReload(); }, 2000);
+      } else {
+        enableAllButtons();
+        showMessage("Update failed.", "error");
+      }
+    }).catch(function() {
+      isProcessing = false;
+      enableAllButtons();
+      showMessage("Error updating meeting.", "error");
+    });
+  });
+}
+
+/* ── Helpers ── */
+function disableAllButtons() {
+  document.getElementById("btnComplete").disabled  = true;
+  document.getElementById("btnCancel").disabled    = true;
+  document.getElementById("btnPostpone").disabled  = true;
+}
+function enableAllButtons() {
+  document.getElementById("btnComplete").disabled  = false;
+  document.getElementById("btnCancel").disabled    = false;
+  document.getElementById("btnPostpone").disabled  = false;
 }
 
 function showMessage(msg, type) {
-  messageEl.textContent   = msg;
-  messageEl.className     = type || "info";
-  messageEl.style.display = "block";
-}
-function enableButtons()  { completeBtn.disabled = false; cancelBtn.disabled = false; postponeBtn.disabled = false; }
-function disableButtons() { completeBtn.disabled = true;  cancelBtn.disabled = true;  postponeBtn.disabled = true;  }
-
-function sanitizeText(text) {
-  if (!text) return "";
-  return text
-    .replace(/\r\n/g, " ").replace(/\n/g, " ").replace(/\r/g, " ")
-    .replace(/\u2028/g, " ").replace(/\u2029/g, " ")
-    .replace(/\t/g, " ").replace(/\u00A0/g, " ").replace(/\u202F/g, " ")
-    .replace(/\u00AD/g, "").replace(/[\u0000-\u001F\u007F-\u009F]/g, " ")
-    .replace(/\u200B/g, "").replace(/\u200C/g, "").replace(/\u200D/g, "").replace(/\uFEFF/g, "")
-    .replace(/\u201C|\u201D/g, '"').replace(/\u2018|\u2019/g, "'")
-    .replace(/\u2026/g, "...").replace(/\u2014/g, "-").replace(/\u2013/g, "-")
-    .replace(/\s{2,}/g, " ").trim();
-}
-
-function getZohoDateTime() {
-  var now = new Date();
-  var pad = function(n) { return n < 10 ? "0" + n : n; };
-  return now.getFullYear() + "-" + pad(now.getMonth()+1) + "-" + pad(now.getDate()) + "T" + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
-}
-
-function formatBytes(bytes) {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + " KB";
-  return (bytes/(1024*1024)).toFixed(1) + " MB";
-}
-
-function getTotalSize() {
-  return selectedFiles.reduce(function(sum, f) { return sum + f.size; }, 0);
-}
-
-// ── IMAGE UI ──────────────────────────────────────────────
-function updateImageUI() {
-  imageGrid.innerHTML = "";
-  var total = getTotalSize();
-  imageCount.textContent = selectedFiles.length > 0 ? selectedFiles.length + " image(s) selected" : "";
-  sizeInfo.textContent   = selectedFiles.length > 0 ? "Total size: " + formatBytes(total) + " / 20MB" : "";
-
-  selectedFiles.forEach(function(file, index) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var item = document.createElement("div");
-      item.className = "image-item";
-      item.innerHTML = '<img src="' + e.target.result + '" alt="img"/>' +
-        '<button class="image-remove" onclick="removeImage(' + index + ')">&#10005;</button>';
-      imageGrid.appendChild(item);
-    };
-    reader.readAsDataURL(file);
-  });
-
-  if (selectedFiles.length > 0) {
-    uploadImagesBtn.style.display = "block";
-    uploadImagesBtn.disabled = false;
-  } else {
-    uploadImagesBtn.style.display = "none";
-    uploadImagesBtn.disabled = true;
+  toastMsg.textContent = msg;
+  toastMsg.className   = type;
+  toastMsg.style.display = "block";
+  if (type === "success") {
+    setTimeout(function() { toastMsg.style.display = "none"; }, 4000);
   }
 }
 
-function handleImageSelect(input) {
-  var files = Array.from(input.files);
-  var remaining = MAX_IMAGES - selectedFiles.length;
-  if (files.length > remaining) {
-    showMessage("You can only add " + remaining + " more image(s). Max 15 allowed.", "error");
-    files = files.slice(0, remaining);
-  }
-  var newTotal = getTotalSize() + files.reduce(function(s, f) { return s + f.size; }, 0);
-  if (newTotal > MAX_SIZE_BYTES) {
-    showMessage("Total size exceeds 20MB. Please select smaller images.", "error");
-    input.value = ""; return;
-  }
-  selectedFiles = selectedFiles.concat(files);
-  input.value = "";
-  updateImageUI();
-  if (messageEl.className === "error") messageEl.style.display = "none";
-}
-
-function removeImage(index) {
-  selectedFiles.splice(index, 1);
-  updateImageUI();
-}
-
-// ── IMAGE UPLOAD ──────────────────────────────────────────
-function compressImage(file) {
-  return new Promise(function(resolve) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var canvas = document.createElement("canvas");
-        var maxSize = 1024;
-        var w = img.width, h = img.height;
-        if (w > maxSize || h > maxSize) {
-          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
-          else       { w = Math.round(w * maxSize / h); h = maxSize; }
-        }
-        canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        var base64 = canvas.toDataURL("image/jpeg", 0.75).split(",")[1];
-        resolve({ base64: base64, name: file.name.replace(/\.[^.]+$/, "") + ".jpg" });
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function uploadAttachments(recordId, filesToUpload) {
-  return new Promise(function(resolve) {
-    if (!filesToUpload || filesToUpload.length === 0) { resolve(0); return; }
-    progressWrap.style.display = "block";
-    var successCount = 0;
-    var total = filesToUpload.length;
-
-    function uploadNext(i) {
-      if (i >= total) { resolve(successCount); return; }
-      var file = filesToUpload[i];
-      uploadProgress.textContent = "Uploading image " + (i+1) + " of " + total + "...";
-      progressBar.style.width = Math.round((i / total) * 100) + "%";
-
-      ZOHO.CRM.API.attachFile({
-        Entity:   MODULE_API_NAME,
-        RecordID: recordId,
-        File: {
-          Name:    file.name,
-          Content: file
-        }
-      }).then(function(res) {
-        console.log("Upload " + (i+1) + " result:", JSON.stringify(res));
-        if (res && res.data && res.data[0] && res.data[0].code === "SUCCESS") {
-          successCount++;
-        }
-        progressBar.style.width = Math.round(((i+1) / total) * 100) + "%";
-        uploadNext(i + 1);
-      }).catch(function(err) {
-        console.log("Upload " + (i+1) + " error:", err);
-        uploadNext(i + 1);
-      });
-    }
-    uploadNext(0);
-  });
-}
-
-// ── UPLOAD IMAGES ONLY (independent button) ───────────────
-function uploadImagesOnly() {
-  if (isProcessing) return;
-  if (selectedFiles.length === 0) {
-    showMessage("Please select at least 1 image to upload.", "error");
-    uploadBox.classList.add("has-error"); return;
-  }
-  if (!meetingId) {
-    showMessage("Meeting record not found.", "error"); return;
-  }
-
-  var filesToUpload = selectedFiles.slice();
-  var totalImages   = filesToUpload.length;
-
-  isProcessing = true;
-  uploadImagesBtn.disabled = true;
-  showMessage("Uploading " + totalImages + " image(s)...", "info");
-
-  uploadAttachments(meetingId, filesToUpload).then(function(successCount) {
-    isProcessing = false;
-    uploadImagesBtn.disabled = false;
-    progressBar.style.width = "100%";
-
-    if (successCount > 0) {
-      selectedFiles = [];
-      updateImageUI();
-      imagesUploaded = true;
-      uploadProgress.textContent = successCount + " image(s) uploaded!";
-      showMessage(successCount + " of " + totalImages + " image(s) uploaded. You can now mark the meeting.", "success");
-    } else {
-      showMessage("Upload failed. Please ensure the upload_meeting_image function is created in Zoho CRM Developer Space.", "error");
-    }
-  }).catch(function() {
-    isProcessing = false;
-    uploadImagesBtn.disabled = false;
-    showMessage("Upload failed. Please try again.", "error");
-  });
-}
-
-// ── GPS ───────────────────────────────────────────────────
-function getCurrentLocation() {
-  return new Promise(function(resolve, reject) {
-    if (!navigator.geolocation) { reject(new Error("GPS not supported on this device.")); return; }
-    navigator.geolocation.getCurrentPosition(
-      function(pos) { resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }); },
-      function(err) {
-        var msg = "Unable to capture location.";
-        if (err.code === err.PERMISSION_DENIED) msg = "Location permission denied.";
-        else if (err.code === err.POSITION_UNAVAILABLE) msg = "Location unavailable.";
-        else if (err.code === err.TIMEOUT) msg = "Location timed out.";
-        reject(new Error(msg));
-      },
-      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
-    );
-  });
-}
-
-// ── MARK MEETING ──────────────────────────────────────────
-function processMeetingAction(targetStage) {
-  if (isProcessing || !meetingId) return;
-  if (currentStage === STAGE_COMPLETED || currentStage === STAGE_CANCELLED || currentStage === STAGE_POSTPONED) {
-    showMessage("This meeting is already " + currentStage + ".", "info"); return;
-  }
-
-  purposeEl.classList.remove("field-error");
-  meetingTypeEl.classList.remove("field-error");
-  descEl.classList.remove("field-error");
-  uploadBox.classList.remove("has-error");
-
-  if (!purposeEl.value) {
-    showMessage("Please select a Meeting Purpose.", "error");
-    purposeEl.classList.add("field-error"); purposeEl.focus(); return;
-  }
-  if (!meetingTypeEl.value) {
-    showMessage("Please select a Meeting Type.", "error");
-    meetingTypeEl.classList.add("field-error"); meetingTypeEl.focus(); return;
-  }
-  if (!descEl.value || !descEl.value.trim()) {
-    showMessage("Please enter a Description.", "error");
-    descEl.classList.add("field-error"); descEl.focus(); return;
-  }
-  if (selectedFiles.length === 0 && !imagesUploaded) {
-    var imageMandatory = (purposeEl.value === "Demo" || purposeEl.value === "Training") && targetStage === STAGE_COMPLETED;
-    if (imageMandatory) {
-      showMessage("Please upload at least 1 image for Demo/Training meetings marked as Completed.", "error");
-      uploadBox.classList.add("has-error");
-      uploadBox.scrollIntoView({ behavior: "smooth" }); return;
-    }
-  }
-
-  var filesToUpload = selectedFiles.slice();
-  var totalImages   = filesToUpload.length;
-
-  isProcessing = true;
-  disableButtons();
-  loaderEl.style.display = "block";
-  showMessage("Capturing your current location...", "info");
-
-  getCurrentLocation()
-    .then(function(location) {
-      gpsEl.textContent   = "GPS captured | Accuracy: " + Math.round(location.accuracy) + "m";
-      gpsEl.style.display = "block";
-
-      return ZOHO.CRM.CONFIG.getCurrentUser().then(function(userResponse) {
-        var currentUser = "";
-        if (userResponse && userResponse.users && userResponse.users[0]) {
-          currentUser = sanitizeText(userResponse.users[0].full_name || "");
-        }
-
-        var updateData = { id: meetingId };
-        updateData[FIELD_STAGE]            = targetStage;
-        updateData[FIELD_ACTION_DATETIME]  = getZohoDateTime();
-        updateData[FIELD_LATITUDE]         = parseFloat(location.latitude.toFixed(7));
-        updateData[FIELD_LONGITUDE]        = parseFloat(location.longitude.toFixed(7));
-        updateData[FIELD_PURPOSE]          = purposeEl.value;
-        updateData[FIELD_MEETING_TYPE]     = meetingTypeEl.value;
-        updateData[FIELD_DESCRIPTION]      = sanitizeText(descEl.value);
-        updateData[FIELD_STATUS_MARKED_BY] = currentUser;
-
-        showMessage("Updating Meeting...", "info");
-        return ZOHO.CRM.API.updateRecord({ Entity: MODULE_API_NAME, APIData: updateData, Trigger: [] });
-      });
-    })
-    .then(function(response) {
-      if (response && response.data && response.data[0] && response.data[0].code === "SUCCESS") {
-        currentStage = targetStage;
-        stageEl.textContent = targetStage;
-        showMessage("Uploading " + totalImages + " image(s)...", "info");
-
-        return uploadAttachments(meetingId, filesToUpload).then(function(successCount) {
-          loaderEl.style.display = "none";
-          isProcessing = false;
-          progressBar.style.width = "100%";
-          selectedFiles = [];
-          updateImageUI();
-
-          if (successCount > 0) {
-            uploadProgress.textContent = successCount + " image(s) uploaded!";
-            showMessage("Meeting marked as " + targetStage + "! " + successCount + " of " + totalImages + " image(s) uploaded.", "success");
-          } else {
-            showMessage("Meeting marked as " + targetStage + "! But images failed — please use Upload Images button.", "info");
-          }
-          setTimeout(function() { try { ZOHO.CRM.UI.Popup.close(); } catch(e) {} }, 2500);
-        });
-      } else {
-        var errData = response && response.data && response.data[0] ? response.data[0] : {};
-        throw new Error(errData.message || "Update failed.");
-      }
-    })
-    .catch(function(error) {
-      showMessage(error && error.message ? error.message : "Unable to update the meeting.", "error");
-      isProcessing = false;
-      loaderEl.style.display = "none";
-      progressWrap.style.display = "none";
-      enableButtons();
-    });
-}
-
-function completeMeeting()  { processMeetingAction(STAGE_COMPLETED); }
-function cancelMeeting()    { processMeetingAction(STAGE_CANCELLED);  }
-function postponeMeeting()  { processMeetingAction(STAGE_POSTPONED);  }
-
-// ── INIT ──────────────────────────────────────────────────
+/* ──────────────────────────────────────────
+   Zoho SDK Init
+────────────────────────────────────────── */
 ZOHO.embeddedApp.on("PageLoad", function(data) {
-  if (data && data.EntityId) {
-    meetingId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
-  } else if (data && data.recordId) {
-    meetingId = data.recordId;
-  }
-
+  meetingId = data.EntityId || (data.data && data.data.EntityId);
   if (!meetingId) {
-    stageEl.textContent = "Record ID not found";
-    showMessage("Unable to identify the Meeting record.", "error"); return;
+    stageDisplay.textContent = "Error";
+    showMessage("Could not load Meeting ID. Please close and reopen.", "error");
+    return;
   }
 
-  ZOHO.CRM.API.getRecord({ Entity: MODULE_API_NAME, RecordID: meetingId })
-    .then(function(response) {
-      if (!response || !response.data || !response.data.length) throw new Error("Unable to load the Meeting record.");
-
-      var meeting      = response.data[0];
-      var uniqueNumber = meeting[UNIQUE_NUMBER_FIELD];
-
-      if (!uniqueNumber || uniqueNumber === "" || uniqueNumber === null) {
-        stageEl.textContent = "Not a Check-In Meeting";
-        showMessage("This is not a Check-In meeting. GPS cannot be captured.", "error"); return;
+  ZOHO.CRM.API.getRecord({ Entity: "Events", RecordID: meetingId })
+    .then(function(res) {
+      if (!res || !res.data || !res.data[0]) {
+        stageDisplay.textContent = "Not Found";
+        showMessage("Meeting not found.", "error"); return;
       }
-
+      var meeting = res.data[0];
       currentStage = meeting[FIELD_STAGE] || "";
-      stageEl.textContent = currentStage || "Not Set";
+      stageDisplay.textContent = currentStage || "Not Set";
 
-      if (meeting[FIELD_PURPOSE])      { purposeEl.value     = meeting[FIELD_PURPOSE]; updateImageLabel(); }
-      if (meeting[FIELD_MEETING_TYPE]) meetingTypeEl.value = meeting[FIELD_MEETING_TYPE];
-      if (meeting[FIELD_DESCRIPTION])  descEl.value        = meeting[FIELD_DESCRIPTION];
+      if (meeting[FIELD_PURPOSE]) { purposeEl.value = meeting[FIELD_PURPOSE]; updateImageLabel(); }
+      if (meeting[FIELD_TYPE])    { typeEl.value    = meeting[FIELD_TYPE]; }
+      if (meeting[FIELD_DESC])    { descEl.value    = meeting[FIELD_DESC]; }
 
       if (currentStage === STAGE_COMPLETED) {
-        disableButtons();
+        disableAllButtons();
         showMessage("This Meeting is already Completed. You can still upload images.", "info"); return;
       }
       if (currentStage === STAGE_CANCELLED) {
-        disableButtons();
+        disableAllButtons();
         showMessage("This Meeting is already Cancelled. You can still upload images.", "info"); return;
       }
       if (currentStage === STAGE_POSTPONED) {
-        disableButtons();
+        disableAllButtons();
         showMessage("This Meeting is already Postponed. You can still upload images.", "info"); return;
       }
-      enableButtons();
+      enableAllButtons();
     })
-    .catch(function(error) {
-      stageEl.textContent = "Error";
-      showMessage(error && error.message ? error.message : "Unable to load Meeting.", "error");
+    .catch(function(err) {
+      stageDisplay.textContent = "Error";
+      showMessage(err && err.message ? err.message : "Unable to load Meeting.", "error");
     });
 });
 
