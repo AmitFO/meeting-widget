@@ -334,30 +334,6 @@ function removeImage(index) {
 }
 
 // ── IMAGE UPLOAD ──────────────────────────────────────────
-function compressImage(file) {
-  return new Promise(function(resolve) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var img = new Image();
-      img.onload = function() {
-        var canvas = document.createElement("canvas");
-        var maxSize = 1024;
-        var w = img.width, h = img.height;
-        if (w > maxSize || h > maxSize) {
-          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
-          else       { w = Math.round(w * maxSize / h); h = maxSize; }
-        }
-        canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        var base64 = canvas.toDataURL("image/jpeg", 0.75).split(",")[1];
-        resolve({ base64: base64, name: file.name.replace(/\.[^.]+$/, "") + ".jpg" });
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
 function uploadAttachments(recordId, filesToUpload) {
   return new Promise(function(resolve) {
     if (!filesToUpload || filesToUpload.length === 0) { resolve(0); return; }
@@ -371,18 +347,18 @@ function uploadAttachments(recordId, filesToUpload) {
       uploadProgress.textContent = "Uploading " + (i+1) + " of " + total + "...";
       progressBar.style.width = Math.round((i / total) * 100) + "%";
 
-      compressImage(file).then(function(compressed) {
-        return ZOHO.CRM.FUNCTIONS.execute({
-          function_name: "upload_meeting_image",
-          arguments: JSON.stringify({
-            record_id:    recordId,
-            file_name:    compressed.name,
-            file_content: compressed.base64
-          })
-        });
+      ZOHO.CRM.API.attachFile({
+        Entity:   MODULE_API_NAME,
+        RecordID: recordId,
+        File: {
+          Name:    file.name,
+          Content: file
+        }
       }).then(function(res) {
         console.log("Upload " + (i+1) + " result:", JSON.stringify(res));
-        successCount++;
+        if (res && res.data && res.data[0] && res.data[0].code === "SUCCESS") {
+          successCount++;
+        }
         progressBar.style.width = Math.round(((i+1) / total) * 100) + "%";
         uploadNext(i + 1);
       }).catch(function(err) {
@@ -430,7 +406,7 @@ function uploadImagesOnly() {
       showMessage(successCount + " of " + totalImages + " image(s) uploaded successfully! Total: " + totalUploadedCount + " image(s).", "success");
     } else {
       uploadImagesBtn.disabled = false;
-      showMessage("Upload failed. Please ensure the upload_meeting_image function is created in Zoho CRM Developer Space.", "error");
+      showMessage("Upload failed. Please try again or check your internet connection.", "error");
     }
   }).catch(function() {
     isProcessing = false;
