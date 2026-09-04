@@ -363,32 +363,48 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 (function(){
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
-/* ─────────────────────────────────────────────────────────────
+/* =============================================================
    ALLOWED DISCOUNT BY PARTNER
-   To add a partner, copy a line below: a distinctive bit of the
-   account name in lower case, and the percent.
-   Matching ignores case and matches any account whose name
-   CONTAINS that text, so every branch of a partner group is
-   covered by one line (e.g. "Rashi Peripherals Limited Kolkata"
-   and "RASHI PERIPHERALS LIMITED" both match "rashi peripherals").
-   Anything not listed here gets DEFAULT_BASE.
-   NOTE: this same number is also written into the CRM order
-   validation function. If you change it here, change it there.
-   ───────────────────────────────────────────────────────────── */
+   -------------------------------------------------------------
+   FIRST MATCH WINS - order matters.
+
+   Each rule uses ONE of these, never both:
+     name     : the account name must match EXACTLY (case ignored)
+     contains : the account name must CONTAIN this text
+
+   needGst : when true, the account must also have a GST number.
+
+   Why they are set this way:
+     - IRIS uses "name" so IRIS GLOBAL SERVICES PRIVATE LIMITED
+       is excluded, and needGst drops the entities with no GSTIN.
+     - REDINGTON uses "name" so the Patna and Kongu branches,
+       which have extra words, stay on the flat rate.
+     - RASHI uses "contains" so every RASHI entity is covered.
+
+   NOTE: these numbers are also written into the CRM function
+   validateOrderCode. Change them here, change them there.
+   ============================================================= */
 const PARTNER_BASE=[
-  {match:"rashi peripherals", pct:16},
-  {match:"iris global",       pct:16}
+  {name:"iris global services limited", pct:15, needGst:true},
+  {name:"redington limited",            pct:15},
+  {contains:"rashi peripherals",        pct:16}
 ];
-const GST=18, SC=40, DEFAULT_BASE=15.29;
+const GST=18, SC=40, DEFAULT_BASE=14;
 
 const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false};
 const inr=v=>"₹"+Math.round(v).toLocaleString("en-IN");
 
 function baseOf(){
   if(!S.acc||!S.acc.name)return DEFAULT_BASE;
-  const n=S.acc.name.toLowerCase();
-  const hit=PARTNER_BASE.find(p=>n.indexOf(p.match)>-1);
-  return hit?hit.pct:DEFAULT_BASE;
+  const n=S.acc.name.trim().toLowerCase();
+  const g=(S.acc.gst||"").trim();
+  for(const p of PARTNER_BASE){
+    const ok = p.name ? (n===p.name) : (n.indexOf(p.contains)>-1);
+    if(!ok) continue;
+    if(p.needGst && !g) continue;
+    return p.pct;
+  }
+  return DEFAULT_BASE;
 }
 
 /* ── Zoho SDK ── */
@@ -459,7 +475,7 @@ function combo(inp,list,module,render,onPick){
 combo($("#i-account"),$("#wa .lst"),"Accounts",
   o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
   o=>{
-    S.acc=o?{id:o.id,name:o.Account_Name}:null;
+    S.acc=o?{id:o.id,name:o.Account_Name,gst:o.GST_Number||""}:null;
     if(o){$("#i-gstin").value=o.GST_Number||"";ask()}
     else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#lbl-acc").textContent="Account Name";$("#wd").style.display="none";$("#i-dealer").value=""}
   });
