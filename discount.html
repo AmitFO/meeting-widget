@@ -112,7 +112,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .lnums{display:flex;gap:9px;flex-wrap:wrap}
 .lnums .f{flex:0 0 auto}
 .lnums .f.qty-w{width:78px}
-.lnums .f.lp-w{width:128px}
+.lnums .f.lp-w{width:146px}
 .lnums .f.ad-w{width:96px}
 .lnums .f.ed-w{width:88px}
 @media(max-width:400px){
@@ -133,7 +133,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .rc{background:var(--sf2);padding:7px 9px;min-width:0}
 .rc .k{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
   color:var(--ink2);margin-bottom:1px;white-space:nowrap}
-.rc .v{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;
+.rc .v{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rc.hl{background:var(--ams)}
 .rc.hl .k,.rc.hl .v{color:var(--am)}
@@ -392,7 +392,9 @@ const PARTNER_BASE=[
 const GST=18, SC=40, DEFAULT_BASE=14;
 
 const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false};
-const inr=v=>"₹"+Math.round(v).toLocaleString("en-IN");
+/* money: always two decimals, so paise are visible.
+   72011.07 shows as ₹72,011.07 rather than ₹72,011. */
+const inr=v=>"₹"+(+v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 /* percent text: up to 5 decimals, trailing zeros trimmed.
    16 stays "16", 19.98770 becomes "19.9877". Keeps the boxes narrow. */
 const pct=v=>(+v||0).toFixed(5).replace(/0+$/,"").replace(/\.$/,"");
