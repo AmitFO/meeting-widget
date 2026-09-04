@@ -142,6 +142,7 @@ var meetingId    = null;
 var currentStage = "";
 var isProcessing = false;
 var selectedFiles = [];
+var imagesUploaded = false; // tracks if images were already uploaded via Upload button
 
 // ── DOM REFS ─────────────────────────────────────────────
 var stageEl        = document.getElementById("stage");
@@ -355,8 +356,9 @@ function uploadImagesOnly() {
     if (successCount > 0) {
       selectedFiles = [];
       updateImageUI();
+      imagesUploaded = true;
       uploadProgress.textContent = successCount + " image(s) uploaded!";
-      showMessage(successCount + " of " + totalImages + " image(s) uploaded to the meeting record successfully!", "success");
+      showMessage(successCount + " of " + totalImages + " image(s) uploaded. You can now mark the meeting.", "success");
     } else {
       showMessage("Upload failed. Please ensure the upload_meeting_image function is created in Zoho CRM Developer Space.", "error");
     }
@@ -409,7 +411,7 @@ function processMeetingAction(targetStage) {
     showMessage("Please enter a Description.", "error");
     descEl.classList.add("field-error"); descEl.focus(); return;
   }
-  if (selectedFiles.length === 0) {
+  if (selectedFiles.length === 0 && !imagesUploaded) {
     var imageMandatory = (purposeEl.value === "Demo" || purposeEl.value === "Training") && targetStage === STAGE_COMPLETED;
     if (imageMandatory) {
       showMessage("Please upload at least 1 image for Demo/Training meetings marked as Completed.", "error");
