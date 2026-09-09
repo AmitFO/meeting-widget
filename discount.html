@@ -589,7 +589,7 @@ function addLine(){
   combo(el.querySelector(".sku"),el.querySelector(".lst"),"Products",
     o=>`${o.Product_Name}${o.Product_Code?`<span class="sm">${o.Product_Code} · ${inr(o.Unit_Price||o.MRP||0)}</span>`:""}`,
     o=>{el._sku=o?{id:o.id,name:o.Product_Name,price:+(o.Unit_Price||o.MRP||0)}:null});
-  el.querySelector(".kill").onclick=()=>{if($$(".li").length===1)return;el.remove();renum();paint()};
+  el.querySelector(".kill").onclick=()=>{if($$(".li").length===1)return;el.remove();renum();syncAllSku();paint()};
   el._drive="ed";
   el._all=false; el._nocap=false;
   const allBox=el.querySelector(".allsku"), capBox=el.querySelector(".nocap");
@@ -607,15 +607,29 @@ function addLine(){
     if(el._nocap){q.value="";}else if(!q.value){q.value=1;}
     paint();
   }
-  allBox.addEventListener("change",modes);
+  allBox.addEventListener("change",()=>{modes();syncAllSku()});
   capBox.addEventListener("change",modes);
+  syncAllSku();
   el.querySelector(".ed").addEventListener("input",()=>{el._drive="ed";paint()});
   el.querySelector(".gt").addEventListener("input",()=>{el._drive="gt";paint()});
-  el.querySelector(".qty").addEventListener("input",paint);
+  el.querySelector(".qty").addEventListener("input",function(){this.style.borderColor="";paint()});
   el.querySelector(".gt").addEventListener("blur",()=>{el._drive="ed";paint()});
   paint();
 }
 function renum(){$$(".li").forEach((l,i)=>l.querySelector(".sl").textContent=String(i+1).padStart(2,"0"))}
+/* All SKUs already means every product, so a second such line is meaningless.
+   Once one is ticked, lock the box on every other line. */
+function syncAllSku(){
+  const taken=$$(".li").some(l=>l._all);
+  $$(".li").forEach(l=>{
+    const cb=l.querySelector(".allsku"), lb=l.querySelector(".allTick");
+    const off=taken&&!cb.checked;
+    cb.disabled=off;
+    lb.style.opacity=off?".35":"1";
+    lb.style.cursor=off?"not-allowed":"pointer";
+    lb.title=off?"One line already covers all SKUs":"";
+  });
+}
 $("#addl").onclick=addLine;
 function paint(){
   const b=baseOf();let sa=0,se=0;
@@ -710,7 +724,28 @@ function show(n){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 $("#t1").onclick=()=>show(1);$("#t2").onclick=()=>show(2);
-$("#go2").onclick=()=>show(2);$("#back").onclick=()=>show(1);
+function lineCheck(){
+  const rows=$$(".li").filter(l=>l._sku||l._all);
+  if(!rows.length) return "Add a SKU, or tick All SKUs on a line";
+  for(let i=0;i<rows.length;i++){
+    const l=rows[i], n=l.querySelector(".sl").textContent;
+    if(!l._nocap){
+      const q=+l.querySelector(".qty").value||0;
+      if(q<1){
+        l.querySelector(".qty").style.borderColor="var(--rd)";
+        l.querySelector(".qty").focus();
+        return "Line "+n+": enter a quantity, or tick No cap";
+      }
+    }
+    l.querySelector(".qty").style.borderColor="";
+  }
+  return "";
+}
+$("#go2").onclick=()=>{
+  const m=lineCheck(), e=$("#e1");
+  if(m){e.textContent=m;e.classList.add("show");return}
+  e.classList.remove("show");show(2);
+};$("#back").onclick=()=>show(1);
 function review(){
   const b=baseOf();
   const r=$$(".li").filter(l=>l._sku||l._all).map(l=>
@@ -733,7 +768,8 @@ const btn=$("#send");
 btn.onclick=()=>{
   const e=$("#e2");
   const lines=$$(".li").filter(l=>l._sku||l._all);
-  if(!lines.length){e.textContent="Add a SKU, or tick All SKUs on a line";e.classList.add("show");return}
+  const lc=lineCheck();
+  if(lc){e.textContent=lc;e.classList.add("show");return}
   if(!$("#i-validtill").value){e.textContent="Set Valid till";e.classList.add("show");return}
   if(!$("#i-justification").value.trim()){e.textContent="Add a justification";e.classList.add("show");return}
   if(!S.to.length){e.textContent="Add a recipient";e.classList.add("show");return}
@@ -812,7 +848,7 @@ btn.onclick=()=>{
 $("#again").onclick=()=>location.reload();
 /* ── init ── */
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v14";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v15";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
