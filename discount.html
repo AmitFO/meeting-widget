@@ -114,7 +114,8 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .lnums .f.qty-w{width:78px}
 .lnums .f.lp-w{width:146px}
 .lnums .f.ad-w{width:96px}
-.lnums .f.ed-w{width:88px}
+.lnums .f.ed-w{width:92px}
+.lnums .f.gt-w{width:158px}
 @media(max-width:400px){
   .lnums .f{flex:1 1 calc(50% - 5px);width:auto}
 }
@@ -459,7 +460,7 @@ function combo(inp,list,module,render,onPick){
       const asked=q;
       search(module,q).then(rows=>{
         if(inp.value!==asked)return;           // a newer keystroke won
-        draw(rows.slice(0,30),"No match in CRM");
+        draw(rows.slice(0,30), module==="Contacts" ? "No match \u2014 the name you typed will be used" : "No match in CRM");
       });
     },350);
   }
@@ -484,6 +485,10 @@ combo($("#i-account"),$("#wa .lst"),"Accounts",
     if(o){$("#i-gstin").value=o.GST_Number||"";ask()}
     else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#lbl-acc").textContent="Account Name";$("#wd").style.display="none";$("#i-dealer").value=""}
   });
+/* Sub-account is now free text. The search is only a convenience:
+   pick a match to get the exact spelling, or just type a name that
+   does not exist in CRM yet (a new shipping entity is often created
+   only when the order is punched, after the request is raised). */
 combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
   o=>{
     const nm=o.Full_Name||o.Last_Name||"";
@@ -491,6 +496,7 @@ combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
     return nm+(par&&par!==nm?`<span class="sm">${par}</span>`:"");
   },
   o=>{S.sub=o?{id:o.id,name:o.Full_Name||o.Last_Name}:null});
+const subText=()=>$("#i-subaccount").value.trim();
 combo($("#i-dealer"),$("#wd .lst"),"Accounts",
   o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
   o=>{S.dlr=o?{id:o.id,name:o.Account_Name}:null});
@@ -529,6 +535,7 @@ function addLine(){
         <div class="f lp-w"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ad-w"><label>Allowed</label><input type="text" class="ad num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ed-w"><label>Extra</label><input type="number" class="ed num" value="0" min="0" max="60" step="0.00001"></div>
+        <div class="f gt-w"><label>Grand Total</label><input type="number" class="gt num" placeholder="—" min="0" step="0.01"></div>
       </div>
     </div>
     <div class="mtr">
@@ -551,7 +558,11 @@ function addLine(){
     o=>`${o.Product_Name}${o.Product_Code?`<span class="sm">${o.Product_Code} · ${inr(o.Unit_Price||o.MRP||0)}</span>`:""}`,
     o=>{el._sku=o?{id:o.id,name:o.Product_Name,price:+(o.Unit_Price||o.MRP||0)}:null});
   el.querySelector(".kill").onclick=()=>{if($$(".li").length===1)return;el.remove();renum();paint()};
-  el.querySelectorAll(".qty,.ed").forEach(f=>f.addEventListener("input",paint));
+  el._drive="ed";
+  el.querySelector(".ed").addEventListener("input",()=>{el._drive="ed";paint()});
+  el.querySelector(".gt").addEventListener("input",()=>{el._drive="gt";paint()});
+  el.querySelector(".qty").addEventListener("input",paint);
+  el.querySelector(".gt").addEventListener("blur",()=>{el._drive="ed";paint()});
   paint();
 }
 function renum(){$$(".li").forEach((l,i)=>l.querySelector(".sl").textContent=String(i+1).padStart(2,"0"))}
@@ -561,7 +572,17 @@ function paint(){
   $$(".li").forEach(l=>{
     const s=l._sku;
     const q=Math.max(1,+l.querySelector(".qty").value||1);
-    const ex=Math.max(0,+l.querySelector(".ed").value||0);
+    let ex;
+    if(l._drive==="gt"&&s){
+      /* reverse: grand total typed -> work back to the extra percent */
+      const gtv=+l.querySelector(".gt").value||0;
+      let tp=0;
+      if(gtv>0){const lipx=gtv/(q*(1+GST/100));tp=(1-lipx/s.price)*100;}
+      ex=Math.max(0,+(tp-b).toFixed(5));
+      l.querySelector(".ed").value=ex;
+    }else{
+      ex=Math.max(0,+l.querySelector(".ed").value||0);
+    }
     l.querySelector(".lp").value=s?inr(s.price):"—";
     l.querySelector(".ad").value=s?pct(b)+"%":"—";
     l.querySelector(".sa").style.width=(s?Math.min(b,SC)/SC*100:0)+"%";
@@ -570,13 +591,16 @@ function paint(){
     l.querySelector(".ev").textContent=pct(ex)+"%";
     l.querySelector(".tv").textContent=(s?pct(b+ex):"0")+"%";
     if(!s){["fp","lip","tx","tl"].forEach(c=>l.querySelector("."+c).textContent="—");
-      l.querySelector(".gv").textContent="₹0";return}
+      l.querySelector(".gv").textContent="₹0.00";
+      if(l._drive!=="gt"){l.querySelector(".gt").value="";}
+      return}
     const p=s.price,lip=p*(1-(b+ex)/100),tx=lip*q*GST/100;
     l.querySelector(".fp").textContent=inr(p*(1-b/100));
     l.querySelector(".lip").textContent=inr(lip);
     l.querySelector(".tx").textContent=inr(tx);
     l.querySelector(".tl").textContent=inr(lip*q+tx);
     l.querySelector(".gv").textContent=inr(p*q*(b+ex)/100);
+    if(l._drive!=="gt"){l.querySelector(".gt").value=(lip*q+tx).toFixed(2);}
     sa+=p*q*b/100;se+=p*q*ex/100;
   });
   $("#tT").textContent=inr(sa+se);$("#tA").textContent=inr(sa);$("#tE").textContent=inr(se);
@@ -589,7 +613,7 @@ function chips(){
   const p=[];
   if(S.acc)p.push([S.mode==="via"?"Sub-dealer":"Account",S.acc.name]);
   if(S.mode==="both"&&S.dlr)p.push(["Sub-dealer",S.dlr.name]);
-  if(S.sub)p.push(["Sub-acc",S.sub.name]);
+  if(subText())p.push(["Sub-acc",subText()]);
   if($("#i-payment").value)p.push(["Pay",$("#i-payment").value]);
   if($("#i-zone").value)p.push(["Zone",$("#i-zone").value]);
   $$(".li").forEach(l=>{if(l._sku)p.push(["SKU",l._sku.name])});
@@ -635,7 +659,7 @@ function review(){
   const it=[
     ["Account Name",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
     ["Sub-dealer",S.mode==="via"?(S.acc?S.acc.name:"—"):(S.mode==="both"&&S.dlr?S.dlr.name:"—")],
-    ["Sub-account",S.sub?S.sub.name:"—"],
+    ["Sub-account",subText()||"—"],
     ["GSTIN",$("#i-gstin").value.trim()||"—"],
     ["Payment Terms",$("#i-payment").value||"—"],
     ["Zone",$("#i-zone").value||"—"],
@@ -663,7 +687,7 @@ btn.onclick=()=>{
     Sub_dealer   : S.mode==="via" ? (S.acc?{id:S.acc.id}:null)
                  : S.mode==="both"? (S.dlr?{id:S.dlr.id}:null)
                  : null,
-    Sub_account1 : S.sub?{id:S.sub.id}:null,
+    Sub_account1 : subText()||null,
     GSTIN        : $("#i-gstin").value.trim()||null,
     Payment_Terms: $("#i-payment").value||null,
     Zone         : $("#i-zone").value||null,
@@ -730,7 +754,7 @@ dv.addEventListener("input",dtoggle);
 dv.addEventListener("focus",()=>{dv.classList.remove("empty");$("#dph").classList.remove("on")});
 dv.addEventListener("blur",dtoggle);
 dtoggle();
-["#i-payment","#i-zone","#i-validtill","#i-gstin"].forEach(s=>$(s).addEventListener("input",paint));
+["#i-payment","#i-zone","#i-validtill","#i-gstin","#i-subaccount"].forEach(s=>$(s).addEventListener("input",paint));
 addLine();
 })();
 </script>
