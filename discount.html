@@ -115,6 +115,14 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .lnums .f.lp-w{width:146px}
 .lnums .f.ad-w{width:96px}
 .lnums .f.ed-w{width:92px}
+.tick{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2);cursor:pointer;user-select:none;white-space:nowrap}
+.tick input{width:14px;height:14px;margin:0;flex:0 0 auto;accent-color:var(--ac)}
+.tick.on{color:var(--ac2);font-weight:600}
+.anySku{padding:0 10px;height:36px;display:flex;align-items:center;border:1px dashed var(--acl);border-radius:7px;background:var(--acs);font-size:13px;color:var(--ac2)}
+.li.allmode .hidePrice{display:none}
+.li.nocap .qty-w input{background:var(--sf2);color:var(--ink4)}
+.warn{margin-top:11px;padding:9px 11px;background:var(--rds);border:1px solid #f3b9b9;border-radius:7px;font-size:11.5px;color:#b42318;display:none}
+.li.openend .warn{display:block}
 .lnums .f.gt-w{width:158px}
 @media(max-width:400px){
   .lnums .f{flex:1 1 calc(50% - 5px);width:auto}
@@ -529,16 +537,22 @@ function addLine(){
     <div class="lh"><span class="sl">${String(i+1).padStart(2,"0")}</span>
       <button type="button" class="kill">×</button></div>
     <div class="lr">
-      <div class="f"><label>SKU</label><input type="text" class="sku" placeholder="Search" autocomplete="off"><div class="lst"></div></div>
+      <div class="f skuwrap"><label>SKU</label>
+        <input type="text" class="sku" placeholder="Search" autocomplete="off">
+        <div class="anySku" style="display:none">Any product in the catalogue</div>
+        <div class="lst"></div>
+      </div>
+      <label class="tick allTick"><input type="checkbox" class="allsku"> All SKUs</label>
       <div class="lnums">
         <div class="f qty-w"><label>Qty</label><input type="number" class="qty num" value="1" min="1"></div>
-        <div class="f lp-w"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
+        <label class="tick nocapTick" style="align-self:flex-end;padding-bottom:9px"><input type="checkbox" class="nocap"> No cap</label>
+        <div class="f lp-w hidePrice"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ad-w"><label>Allowed</label><input type="text" class="ad num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ed-w"><label>Extra</label><input type="number" class="ed num" value="0" min="0" max="60" step="0.00001"></div>
-        <div class="f gt-w"><label>Grand Total</label><input type="number" class="gt num" placeholder="—" min="0" step="0.01"></div>
+        <div class="f gt-w hidePrice"><label>Grand Total</label><input type="number" class="gt num" placeholder="—" min="0" step="0.01"></div>
       </div>
     </div>
-    <div class="mtr">
+    <div class="mtr hidePrice">
       <div class="trk"><div class="sa" style="width:0"></div><div class="se" style="width:0"></div></div>
       <div class="mlg">
         <span><i class="a"></i>allowed <b class="av">0%</b></span>
@@ -546,7 +560,8 @@ function addLine(){
         <span style="margin-left:auto">total <b class="tv">0%</b> · <b class="gv">₹0</b></span>
       </div>
     </div>
-    <div class="rs">
+    <div class="warn">Any product in the catalogue, no quantity limit. Only the valid-till date stops this.</div>
+    <div class="rs hidePrice">
       <div class="rc"><div class="k">Final Price</div><div class="v fp">—</div></div>
       <div class="rc hl"><div class="k">Lock in Price</div><div class="v lip">—</div></div>
       <div class="rc"><div class="k">Tax</div><div class="v tx">—</div></div>
@@ -559,6 +574,24 @@ function addLine(){
     o=>{el._sku=o?{id:o.id,name:o.Product_Name,price:+(o.Unit_Price||o.MRP||0)}:null});
   el.querySelector(".kill").onclick=()=>{if($$(".li").length===1)return;el.remove();renum();paint()};
   el._drive="ed";
+  el._all=false; el._nocap=false;
+  const allBox=el.querySelector(".allsku"), capBox=el.querySelector(".nocap");
+  function modes(){
+    el._all=allBox.checked; el._nocap=capBox.checked;
+    el.classList.toggle("allmode",el._all);
+    el.classList.toggle("nocap",el._nocap);
+    el.classList.toggle("openend",el._all&&el._nocap);
+    el.querySelector(".allTick").classList.toggle("on",el._all);
+    el.querySelector(".nocapTick").classList.toggle("on",el._nocap);
+    el.querySelector(".sku").style.display=el._all?"none":"";
+    el.querySelector(".anySku").style.display=el._all?"flex":"none";
+    if(el._all){el._sku=null;el.querySelector(".sku").value="";}
+    const q=el.querySelector(".qty"); q.disabled=el._nocap;
+    if(el._nocap){q.value="";}else if(!q.value){q.value=1;}
+    paint();
+  }
+  allBox.addEventListener("change",modes);
+  capBox.addEventListener("change",modes);
   el.querySelector(".ed").addEventListener("input",()=>{el._drive="ed";paint()});
   el.querySelector(".gt").addEventListener("input",()=>{el._drive="gt";paint()});
   el.querySelector(".qty").addEventListener("input",paint);
@@ -571,6 +604,15 @@ function paint(){
   const b=baseOf();let sa=0,se=0;
   $$(".li").forEach(l=>{
     const s=l._sku;
+    if(l._all){
+      const exA=Math.max(0,+l.querySelector(".ed").value||0);
+      l.querySelector(".ad").value=pct(b)+"%";
+      l.querySelector(".av").textContent=pct(b)+"%";
+      l.querySelector(".ev").textContent=pct(exA)+"%";
+      l.querySelector(".tv").textContent=pct(b+exA)+"%";
+      l.querySelector(".gv").textContent="\u2014";
+      return;
+    }
     const q=Math.max(1,+l.querySelector(".qty").value||1);
     let ex;
     if(l._drive==="gt"&&s){
@@ -605,7 +647,7 @@ function paint(){
   });
   $("#tT").textContent=inr(sa+se);$("#tA").textContent=inr(sa);$("#tE").textContent=inr(se);
   chips();
-  const n=$$(".li").filter(l=>l._sku).length;
+  const n=$$(".li").filter(l=>l._sku||l._all).length;
   const top=Math.max(0,...$$(".li").map(l=>b+(+l.querySelector(".ed").value||0)));
   $("#subj").textContent=`Discount approval · ${S.acc?S.acc.name:"Any"} · ${n} SKU · up to ${pct(top)}%`;
 }
@@ -616,7 +658,7 @@ function chips(){
   if(subText())p.push(["Sub-acc",subText()]);
   if($("#i-payment").value)p.push(["Pay",$("#i-payment").value]);
   if($("#i-zone").value)p.push(["Zone",$("#i-zone").value]);
-  $$(".li").forEach(l=>{if(l._sku)p.push(["SKU",l._sku.name])});
+  $$(".li").forEach(l=>{if(l._all){p.push(["SKU","All SKUs"])}else if(l._sku){p.push(["SKU",l._sku.name])}});
   const v=$("#i-validtill").value;
   if(v)p.push(["Till",new Date(v+"T00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short"})]);
   const c=$("#combo");
@@ -654,8 +696,8 @@ $("#t1").onclick=()=>show(1);$("#t2").onclick=()=>show(2);
 $("#go2").onclick=()=>show(2);$("#back").onclick=()=>show(1);
 function review(){
   const b=baseOf();
-  const r=$$(".li").filter(l=>l._sku).map(l=>
-    `${l._sku.name} ${pct(b+(+l.querySelector(".ed").value||0))}% ×${l.querySelector(".qty").value}`);
+  const r=$$(".li").filter(l=>l._sku||l._all).map(l=>
+    `${l._all?"All SKUs":l._sku.name} ${pct(b+(+l.querySelector(".ed").value||0))}% ×${l._nocap?"no cap":l.querySelector(".qty").value}`);
   const it=[
     ["Account Name",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
     ["Sub-dealer",S.mode==="via"?(S.acc?S.acc.name:"—"):(S.mode==="both"&&S.dlr?S.dlr.name:"—")],
@@ -673,8 +715,8 @@ function review(){
 const btn=$("#send");
 btn.onclick=()=>{
   const e=$("#e2");
-  const lines=$$(".li").filter(l=>l._sku);
-  if(!lines.length){e.textContent="Add a SKU";e.classList.add("show");return}
+  const lines=$$(".li").filter(l=>l._sku||l._all);
+  if(!lines.length){e.textContent="Add a SKU, or tick All SKUs on a line";e.classList.add("show");return}
   if(!$("#i-validtill").value){e.textContent="Set Valid till";e.classList.add("show");return}
   if(!$("#i-justification").value.trim()){e.textContent="Add a justification";e.classList.add("show");return}
   if(!S.to.length){e.textContent="Add a recipient";e.classList.add("show");return}
@@ -698,20 +740,26 @@ btn.onclick=()=>{
     bcc          : S.bcc.join(","),
     Subject      : $("#subj").textContent,
     Item_Detail  : lines.map((l,i)=>{
-      const s=l._sku,q=+l.querySelector(".qty").value||1,ex=+l.querySelector(".ed").value||0;
-      const lip=s.price*(1-(b+ex)/100),tx=lip*q*GST/100;
-      return{
+      const s=l._sku,ex=+l.querySelector(".ed").value||0;
+      const q=l._nocap?null:(+l.querySelector(".qty").value||1);
+      const row={
         Sl_No:i+1,
-        SKU:{id:s.id},
-        List_Price:s.price,
-        Qty:q,
+        All_SKUs:!!l._all,
+        No_Cap:!!l._nocap,
         Allowed_Discount:b,
-        Extra_Discount:ex,
-        Final_Price:+(s.price*(1-b/100)).toFixed(2),
-        Lock_in_Price:+lip.toFixed(2),
-        Tax:+tx.toFixed(2),
-        Total:+(lip*q+tx).toFixed(2)
+        Extra_Discount:ex
       };
+      if(q!==null) row.Qty=q;
+      if(!l._all&&s){
+        const lip=s.price*(1-(b+ex)/100),tx=lip*(q||1)*GST/100;
+        row.SKU={id:s.id};
+        row.List_Price=s.price;
+        row.Final_Price=+(s.price*(1-b/100)).toFixed(2);
+        row.Lock_in_Price=+lip.toFixed(2);
+        row.Tax=+tx.toFixed(2);
+        row.Total=+(lip*(q||1)+tx).toFixed(2);
+      }
+      return row;
     })
   };
   Object.keys(rec).forEach(k=>{if(rec[k]===null)delete rec[k]});
