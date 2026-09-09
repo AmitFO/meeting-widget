@@ -118,10 +118,6 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .lnums .f.lp-w{width:146px}
 .lnums .f.ad-w{width:96px}
 .lnums .f.ed-w{width:92px}
-.ckopt{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.02em;
-  color:var(--ink3);cursor:pointer;user-select:none;white-space:nowrap;line-height:1}
-.ckopt input{width:13px;height:13px;margin:0;flex:0 0 auto;accent-color:var(--ac);cursor:pointer}
-.ckopt.on{color:var(--ac2)}
 .anySku{padding:0 10px;height:36px;display:flex;align-items:center;border:1px dashed var(--acl);border-radius:7px;background:var(--acs);font-size:13px;color:var(--ac2)}
 .li.allmode .hidePrice{display:none}
 .li.nocap .qty-w input{background:var(--sf2);color:var(--ink4)}
@@ -556,7 +552,7 @@ function addLine(){
     <div class="lr">
       <div class="f skuwrap">
         <label>SKU</label>
-        <label class="ckopt allTick" style="position:absolute;right:0;top:0"><input type="checkbox" class="allsku"> All SKUs</label>
+        <label class="allTick" style="position:absolute;right:0;top:0;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.02em;color:#8b93a1;cursor:pointer;user-select:none;white-space:nowrap;line-height:1;background:none;border:0;padding:0;width:auto;height:auto;border-radius:0"><input type="checkbox" class="allsku" style="width:13px;height:13px;margin:0;padding:0;flex:0 0 auto;accent-color:#7c3aed;cursor:pointer;height:13px;border-radius:0"> All SKUs</label>
         <input type="text" class="sku" placeholder="Search" autocomplete="off">
         <div class="anySku" style="display:none">Any product in the catalogue</div>
         <div class="lst"></div>
@@ -565,7 +561,7 @@ function addLine(){
         <div class="f qty-w">
           <label>Qty</label>
           <input type="number" class="qty num" value="1" min="1">
-          <label class="ckopt nocapTick" style="margin-top:5px"><input type="checkbox" class="nocap"> No cap</label>
+          <label class="nocapTick" style="margin-top:5px;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.02em;color:#8b93a1;cursor:pointer;user-select:none;white-space:nowrap;line-height:1;background:none;border:0;padding:0;width:auto;height:auto;border-radius:0"><input type="checkbox" class="nocap" style="width:13px;height:13px;margin:0;padding:0;flex:0 0 auto;accent-color:#7c3aed;cursor:pointer;height:13px;border-radius:0"> No cap</label>
         </div>
         <div class="f lp-w hidePrice"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ad-w"><label>Allowed</label><input type="text" class="ad num ro" value="—" readonly tabindex="-1"></div>
@@ -602,8 +598,8 @@ function addLine(){
     el.classList.toggle("allmode",el._all);
     el.classList.toggle("nocap",el._nocap);
     el.classList.toggle("openend",el._all&&el._nocap);
-    el.querySelector(".allTick").classList.toggle("on",el._all);
-    el.querySelector(".nocapTick").classList.toggle("on",el._nocap);
+    el.querySelector(".allTick").style.color   = el._all   ? "#6d28d9" : "#8b93a1";
+    el.querySelector(".nocapTick").style.color = el._nocap ? "#6d28d9" : "#8b93a1";
     el.querySelector(".sku").style.display=el._all?"none":"";
     el.querySelector(".anySku").style.display=el._all?"flex":"none";
     if(el._all){el._sku=null;el.querySelector(".sku").value="";}
@@ -816,7 +812,7 @@ btn.onclick=()=>{
 $("#again").onclick=()=>location.reload();
 /* ── init ── */
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v14";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
