@@ -110,14 +110,15 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .lr{display:grid;grid-template-columns:1fr;gap:11px}
 /* SKU spans, numeric fields sit compactly beside each other */
 .lnums{display:flex;gap:9px;flex-wrap:wrap}
-.lnums .f{flex:0 0 auto}
-.lnums .f.qty-w{width:78px}
+.lnums .f{flex:0 0 auto;align-self:flex-start}
+.lnums .f.qty-w{width:86px}
 .lnums .f.lp-w{width:146px}
 .lnums .f.ad-w{width:96px}
 .lnums .f.ed-w{width:92px}
-.tick{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2);cursor:pointer;user-select:none;white-space:nowrap}
-.tick input{width:14px;height:14px;margin:0;flex:0 0 auto;accent-color:var(--ac)}
-.tick.on{color:var(--ac2);font-weight:600}
+.ckopt{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.02em;
+  color:var(--ink3);cursor:pointer;user-select:none;white-space:nowrap;line-height:1}
+.ckopt input{width:13px;height:13px;margin:0;flex:0 0 auto;accent-color:var(--ac);cursor:pointer}
+.ckopt.on{color:var(--ac2)}
 .anySku{padding:0 10px;height:36px;display:flex;align-items:center;border:1px dashed var(--acl);border-radius:7px;background:var(--acs);font-size:13px;color:var(--ac2)}
 .li.allmode .hidePrice{display:none}
 .li.nocap .qty-w input{background:var(--sf2);color:var(--ink4)}
@@ -537,15 +538,19 @@ function addLine(){
     <div class="lh"><span class="sl">${String(i+1).padStart(2,"0")}</span>
       <button type="button" class="kill">×</button></div>
     <div class="lr">
-      <div class="f skuwrap"><label>SKU</label>
+      <div class="f skuwrap">
+        <label>SKU</label>
+        <label class="ckopt allTick" style="position:absolute;right:0;top:0"><input type="checkbox" class="allsku"> All SKUs</label>
         <input type="text" class="sku" placeholder="Search" autocomplete="off">
         <div class="anySku" style="display:none">Any product in the catalogue</div>
         <div class="lst"></div>
       </div>
-      <label class="tick allTick"><input type="checkbox" class="allsku"> All SKUs</label>
       <div class="lnums">
-        <div class="f qty-w"><label>Qty</label><input type="number" class="qty num" value="1" min="1"></div>
-        <label class="tick nocapTick" style="align-self:flex-end;padding-bottom:9px"><input type="checkbox" class="nocap"> No cap</label>
+        <div class="f qty-w">
+          <label>Qty</label>
+          <input type="number" class="qty num" value="1" min="1">
+          <label class="ckopt nocapTick" style="margin-top:5px"><input type="checkbox" class="nocap"> No cap</label>
+        </div>
         <div class="f lp-w hidePrice"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ad-w"><label>Allowed</label><input type="text" class="ad num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ed-w"><label>Extra</label><input type="number" class="ed num" value="0" min="0" max="60" step="0.00001"></div>
