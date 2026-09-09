@@ -94,6 +94,9 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .opt .sm{font-size:10.5px;color:var(--ink3);margin-top:1px}
 .opt:hover .sm,.opt.hi .sm{color:var(--ac2);opacity:.7}
 .non{padding:10px 11px;font-size:12px;color:var(--ink4)}
+.useNew{border-bottom:1px solid var(--ln)!important;background:var(--acs)}
+.useNew b{color:var(--ac2)}
+.hint{font-size:10.5px;color:var(--ink4);margin-top:2px}
 .mst{display:none;align-items:center;gap:8px;grid-column:1/-1;padding:7px 11px;
   background:var(--acs);border-radius:7px;font-size:11.5px;color:var(--ac2)}
 .mst.show{display:flex}
@@ -255,8 +258,9 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
             </div>
             <div class="f" id="ws">
               <label for="i-subaccount">Sub-account</label>
-              <input type="text" id="i-subaccount" placeholder="Search" autocomplete="off">
+              <input type="text" id="i-subaccount" placeholder="Search, or type a new name" autocomplete="off">
               <div class="lst"></div>
+              <div class="hint">Pick a match if it exists. If not, type the name and it will be used as it is.</div>
             </div>
             <div class="f">
               <label for="i-gstin">GSTIN</label>
@@ -449,11 +453,22 @@ function combo(inp,list,module,render,onPick){
   let cur=[],hi=-1,timer=null;
   function draw(rows,msg){
     cur=rows;
-    list.innerHTML=rows.length
+    const typed=inp.value.trim();
+    /* sub-account can be a name that does not exist in CRM yet, so offer
+       the typed text as an explicit choice at the top of the list */
+    const head=(module==="Contacts"&&typed)
+      ? `<div class="opt useNew" data-use="1">Use "<b>${typed}</b>"<span class="sm">New sub-account, not in CRM yet</span></div>`
+      : "";
+    const body=rows.length
       ? rows.map((o,x)=>`<div class="opt" data-i="${x}">${render(o)}</div>`).join("")
-      : `<div class="non">${msg||"No match"}</div>`;
+      : (head?"":`<div class="non">${msg||"No match"}</div>`);
+    list.innerHTML=head+body;
     list.classList.add("open");hi=-1;
-    list.querySelectorAll(".opt").forEach(e=>e.onmousedown=ev=>{ev.preventDefault();sel(+e.dataset.i)});
+    list.querySelectorAll(".opt").forEach(e=>e.onmousedown=ev=>{
+      ev.preventDefault();
+      if(e.dataset.use){list.classList.remove("open");paint();return}
+      sel(+e.dataset.i);
+    });
   }
   function sel(x){
     const o=cur[x];if(!o)return;
@@ -463,7 +478,8 @@ function combo(inp,list,module,render,onPick){
   }
   function go(q){
     clearTimeout(timer);
-    if(!q||q.trim().length<3){draw([],"Type at least 3 characters");return}
+    const min=(module==="Contacts")?1:3;
+    if(!q||q.trim().length<min){draw([],"Type at least 3 characters");return}
     draw([],"Searching…");
     timer=setTimeout(()=>{
       const asked=q;
