@@ -204,6 +204,25 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   padding:10px 24px;background:var(--gns);color:#047a37;border:1px solid #b9ecd0;
   border-radius:10px;font-variant-numeric:tabular-nums}
 .refsub{margin-top:9px;font-size:11.5px;color:var(--ink3)}
+.htabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.htab{font-family:inherit;font-size:12px;font-weight:600;padding:6px 13px;border-radius:100px;
+  border:1px solid var(--ln);background:var(--sf);color:var(--ink2);cursor:pointer}
+.htab.on{background:var(--acs);border-color:var(--acl);color:var(--ac2)}
+.htab .n{opacity:.55;margin-left:4px;font-weight:500}
+.hcard{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:12px 14px;margin-bottom:9px;box-shadow:var(--sh)}
+.hcard.dim{opacity:.62}
+.hrow1{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:3px}
+.hcode{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;font-weight:700;color:var(--ac2);letter-spacing:.03em}
+.hcopy{background:var(--acs);border:0;border-radius:6px;padding:4px 7px;cursor:pointer;font-size:10.5px;color:var(--ac2);font-weight:600}
+.hpart{font-size:13px;font-weight:600;color:var(--ink)}
+.hmeta{font-size:11.5px;color:var(--ink3)}
+.hsku{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:4px 0;border-top:1px solid var(--ln2)}
+.hsku span:last-child{color:var(--ink2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hpill{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:100px}
+.hempty{text-align:center;padding:34px 16px;color:var(--ink4);font-size:13px}
+.hbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.hbar h3{font-size:14px;font-weight:700;flex:1}
+.spin{text-align:center;padding:40px;color:var(--ink3);font-size:13px}
 .pane{display:none}
 .pane.on{display:block;animation:ri .22s cubic-bezier(.2,0,.2,1)}
 @keyframes ri{from{opacity:0;transform:translateY(5px)}}
@@ -225,7 +244,8 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 <div class="bar"><div class="bar-in">
   <div class="bar-t"><div class="mk">T</div><h1>Discount Requisition</h1></div>
   <div class="tabs">
-    <button class="tab on" id="t1">Request</button>
+    <button class="tab on" id="t0">My requests</button>
+    <button class="tab" id="t1">Request</button>
     <button class="tab" id="t2">Send</button>
     <span class="tdate" id="i-date"></span>
   </div>
@@ -235,7 +255,15 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
     <span class="lb">Combination</span>
     <span class="ce" id="ce">—</span>
   </div>
-  <section class="pane on" id="p1">
+  <section class="pane on" id="p0">
+    <div class="hbar">
+      <h3>My discount requests</h3>
+      <button class="btn bp" id="newReq" style="height:34px;padding:0 16px;font-size:13px">+ New request</button>
+    </div>
+    <div class="htabs" id="htabs"></div>
+    <div id="hlist"><div class="spin">Loading your requests…</div></div>
+  </section>
+  <section class="pane" id="p1">
     <div class="card">
       <div class="ch"><h2>Scope &amp; terms</h2></div>
       <div class="cb">
@@ -423,7 +451,7 @@ function baseOf(){
 }
 
 /* ── Zoho SDK ── */
-ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; });
+ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; loadHistory(); });
 ZOHO.embeddedApp.init();
 /* search: word search only (criteria operators are unreliable), filtered locally */
 function txtOf(o){
@@ -577,6 +605,7 @@ function addLine(){
         <span style="margin-left:auto">total <b class="tv">0%</b> · <b class="gv">₹0</b></span>
       </div>
     </div>
+    <div class="qerr" style="display:none;margin-top:8px;font-size:11.5px;color:var(--rd);font-weight:500">Enter a quantity, or tick No cap</div>
     <div class="warn">Any product in the catalogue, no quantity limit. Only the valid-till date stops this.</div>
     <div class="rs hidePrice">
       <div class="rc"><div class="k">Final Price</div><div class="v fp">—</div></div>
@@ -588,7 +617,7 @@ function addLine(){
   el._sku=null;
   combo(el.querySelector(".sku"),el.querySelector(".lst"),"Products",
     o=>`${o.Product_Name}${o.Product_Code?`<span class="sm">${o.Product_Code} · ${inr(o.Unit_Price||o.MRP||0)}</span>`:""}`,
-    o=>{el._sku=o?{id:o.id,name:o.Product_Name,price:+(o.Unit_Price||o.MRP||0)}:null});
+    o=>{el._sku=o?{id:o.id,name:o.Product_Name,price:+(o.Unit_Price||o.MRP||0)}:null;markQty(el)});
   el.querySelector(".kill").onclick=()=>{if($$(".li").length===1)return;el.remove();renum();syncAllSku();paint()};
   el._drive="ed";
   el._all=false; el._nocap=false;
@@ -598,6 +627,7 @@ function addLine(){
     el.classList.toggle("allmode",el._all);
     el.classList.toggle("nocap",el._nocap);
     el.classList.toggle("openend",el._all&&el._nocap);
+    markQty(el);
     el.querySelector(".allTick").style.color   = el._all   ? "#6d28d9" : "#8b93a1";
     el.querySelector(".nocapTick").style.color = el._nocap ? "#6d28d9" : "#8b93a1";
     el.querySelector(".sku").style.display=el._all?"none":"";
@@ -612,9 +642,19 @@ function addLine(){
   syncAllSku();
   el.querySelector(".ed").addEventListener("input",()=>{el._drive="ed";paint()});
   el.querySelector(".gt").addEventListener("input",()=>{el._drive="gt";paint()});
-  el.querySelector(".qty").addEventListener("input",function(){this.style.borderColor="";paint()});
+  el.querySelector(".qty").addEventListener("input",function(){markQty(el);paint()});
   el.querySelector(".gt").addEventListener("blur",()=>{el._drive="ed";paint()});
   paint();
+}
+function qtyOk(l){
+  if(l._nocap) return true;
+  if(!l._sku && !l._all) return true;
+  return (+l.querySelector(".qty").value||0) >= 1;
+}
+function markQty(l){
+  const bad=!qtyOk(l);
+  l.querySelector(".qty").style.borderColor = bad ? "var(--rd)" : "";
+  l.querySelector(".qerr").style.display = bad ? "block" : "none";
 }
 function renum(){$$(".li").forEach((l,i)=>l.querySelector(".sl").textContent=String(i+1).padStart(2,"0"))}
 /* All SKUs already means every product, so a second such line is meaningless.
@@ -719,11 +759,14 @@ $$(".chips").forEach(box=>{
 /* ── tabs ── */
 function show(n){
   $$(".pane").forEach(p=>p.classList.remove("on"));$("#p"+n).classList.add("on");
-  $("#t1").className="tab"+(n===1?" on":"");$("#t2").className="tab"+(n===2?" on":"");
+  $("#t0").className="tab"+(n===0?" on":"");
+  $("#t1").className="tab"+(n===1?" on":"");
+  $("#t2").className="tab"+(n===2?" on":"");
   if(n===2)review();
   window.scrollTo({top:0,behavior:"smooth"});
 }
-$("#t1").onclick=()=>show(1);$("#t2").onclick=()=>show(2);
+$("#t0").onclick=()=>show(0);$("#t1").onclick=()=>show(1);$("#t2").onclick=()=>show(2);
+$("#newReq").onclick=()=>show(1);
 function lineCheck(){
   const rows=$$(".li").filter(l=>l._sku||l._all);
   if(!rows.length) return "Add a SKU, or tick All SKUs on a line";
@@ -732,12 +775,12 @@ function lineCheck(){
     if(!l._nocap){
       const q=+l.querySelector(".qty").value||0;
       if(q<1){
-        l.querySelector(".qty").style.borderColor="var(--rd)";
+        markQty(l);
         l.querySelector(".qty").focus();
         return "Line "+n+": enter a quantity, or tick No cap";
       }
     }
-    l.querySelector(".qty").style.borderColor="";
+    markQty(l);
   }
   return "";
 }
@@ -846,9 +889,129 @@ btn.onclick=()=>{
     .finally(()=>{btn.disabled=false;btn.textContent="Send for approval"});
 };
 $("#again").onclick=()=>location.reload();
+
+/* ================= my requests =================
+   Two fetches: the user's own requisitions, then the authorizations that
+   came out of them. Joined on Approval_Code. Filtering happens here rather
+   than in a criteria query because criteria on Owner is unreliable.
+   Only the most recent 200 of each are examined.                        */
+const H={me:null,pend:[],active:[],done:[],exp:[],tab:"pend",ready:false};
+
+function qStart(){
+  const d=new Date(), m=d.getMonth(), y=d.getFullYear();
+  if(m>=3&&m<=5)  return new Date(y,3,1);
+  if(m>=6&&m<=8)  return new Date(y,6,1);
+  if(m>=9)        return new Date(y,9,1);
+  return new Date(y,0,1);
+}
+const dmy=s=>{if(!s)return "\u2014";const d=new Date(s);return isNaN(d)?s:d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})};
+const partyOf=r=>(r.Account_Name&&r.Account_Name.name)||(r.Sub_dealer&&r.Sub_dealer.name)||"\u2014";
+
+function grab(entity){
+  return ZOHO.CRM.API.getAllRecords({Entity:entity,sort_by:"Created_Time",sort_order:"desc",per_page:200,page:1})
+    .then(r=>(r&&r.data&&Array.isArray(r.data))?r.data:[]).catch(()=>[]);
+}
+
+function loadHistory(){
+  ZOHO.CRM.CONFIG.getCurrentUser().then(u=>{
+    H.me=(u&&u.users&&u.users[0])?u.users[0].id:null;
+    return Promise.all([grab("Discount_Requisitions"),grab("Discount_Authorizations")]);
+  }).then(([reqs,auths])=>{
+    const mine=reqs.filter(r=>{
+      const by=r.Created_By||r.Owner;
+      return !H.me||!by||String(by.id)===String(H.me);
+    });
+    const codes={};
+    mine.forEach(r=>{if(r.Approval_Code)codes[r.Approval_Code]=r});
+
+    H.pend=mine.filter(r=>(r.Status||"")==="Pending");
+
+    const qs=qStart(), today=new Date(); today.setHours(0,0,0,0);
+    const byCode={};
+    auths.forEach(a=>{
+      const c=a.Approval_Code; if(!c||!codes[c])return;
+      (byCode[c]=byCode[c]||{code:c,req:codes[c],rows:[]}).rows.push(a);
+    });
+
+    H.active=[];H.done=[];H.exp=[];
+    Object.keys(byCode).forEach(c=>{
+      const g=byCode[c];
+      let anyLive=false, anyOpen=false, latest=null;
+      g.rows.forEach(a=>{
+        const till=a.Valid_till?new Date(a.Valid_till):null;
+        const dead=till&&till<today;
+        const unl=!!a.Unlimited_Quantity;
+        const left=unl?Infinity:((a.Approved_Quantity||0)-(a.Fulfilled_Quantity||0));
+        a._left=left; a._dead=dead;
+        if(!dead){anyLive=true; if(left>0)anyOpen=true;}
+        if(till&&(!latest||till>latest))latest=till;
+      });
+      g.till=latest;
+      const made=g.rows[0].Created_Time?new Date(g.rows[0].Created_Time):null;
+      const thisQ=made&&made>=qs;
+      if(anyLive&&anyOpen)      H.active.push(g);
+      else if(anyLive&&thisQ)   H.done.push(g);
+      else if(!anyLive&&thisQ)  H.exp.push(g);
+    });
+    H.ready=true; drawHist();
+    if(!H.pend.length&&!H.active.length&&!H.done.length&&!H.exp.length) show(1);
+  }).catch(()=>{H.ready=true;$("#hlist").innerHTML='<div class="hempty">Could not load your requests.</div>'});
+}
+
+function drawHist(){
+  const sets=[["pend","Pending",H.pend],["active","Active",H.active],["done","Fulfilled",H.done],["exp","Expired",H.exp]];
+  if(H.tab==="pend"&&!H.pend.length){const f=sets.find(s=>s[2].length);if(f)H.tab=f[0]}
+  $("#htabs").innerHTML=sets.map(([k,lbl,arr])=>
+    `<button class="htab${H.tab===k?" on":""}" data-k="${k}">${lbl}<span class="n">${arr.length}</span></button>`).join("");
+  $$("#htabs .htab").forEach(b=>b.onclick=()=>{H.tab=b.dataset.k;drawHist()});
+
+  const cur=sets.find(s=>s[0]===H.tab);
+  const arr=cur?cur[2]:[];
+  if(!arr.length){$("#hlist").innerHTML='<div class="hempty">Nothing here.</div>';return}
+
+  if(H.tab==="pend"){
+    $("#hlist").innerHTML=arr.map(r=>{
+      const n=(r.Item_Detail||[]).length;
+      return `<div class="hcard">
+        <div class="hrow1">
+          <span class="hpill" style="background:var(--ams);color:var(--am)">awaiting decision</span>
+          <span class="hpart">${partyOf(r)}</span>
+        </div>
+        <div class="hmeta">${r.Name} \u00b7 ${n?n+" line"+(n>1?"s":""):"no lines"} \u00b7 raised ${dmy(r.Created_Time)}</div>
+      </div>`}).join("");
+    return;
+  }
+
+  const dim=(H.tab!=="active")?" dim":"";
+  $("#hlist").innerHTML=arr.map(g=>{
+    const rows=g.rows.map(a=>{
+      const nm=a.All_SKUs?"All SKUs":((a.SKU&&a.SKU.name)||"\u2014");
+      let right;
+      if(a.Unlimited_Quantity) right="no cap";
+      else right=`${a._left} of ${a.Approved_Quantity||0} left`;
+      return `<div class="hsku"><span>${nm}</span><span>${right}</span></div>`;
+    }).join("");
+    return `<div class="hcard${dim}">
+      <div class="hrow1">
+        <span class="hcode">${g.code}</span>
+        <button class="hcopy" data-c="${g.code}">copy</button>
+        <span class="hpart">${partyOf(g.req)}</span>
+      </div>
+      <div class="hmeta">${g.req.Name} \u00b7 valid till ${g.till?dmy(g.till):"\u2014"}</div>
+      ${rows}
+    </div>`}).join("");
+
+  $$("#hlist .hcopy").forEach(b=>b.onclick=()=>{
+    const t=b.dataset.c;
+    const done=()=>{b.textContent="copied";setTimeout(()=>b.textContent="copy",1500)};
+    if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done)}
+    else{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");document.body.removeChild(a);done()}
+  });
+}
+
 /* ── init ── */
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v15";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v17";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
