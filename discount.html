@@ -381,6 +381,19 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
     <div class="act"><button class="btn bs" id="again">Raise another</button></div>
   </section>
 </div>
+<div class="veil" id="dupveil" role="dialog" aria-modal="true">
+  <div class="modal" style="max-width:470px">
+    <div class="mh">A live approval already exists</div>
+    <div style="padding:0 18px 6px;font-size:13px;color:var(--ink2);line-height:1.55">
+      The combination below is already covered. Raise a new request only if you need a separate code.
+    </div>
+    <div id="dupbody" style="padding:12px 18px 4px;max-height:260px;overflow-y:auto"></div>
+    <div style="padding:14px 18px 18px;display:flex;gap:9px;justify-content:flex-end">
+      <button class="btn bs" id="dupBack">Go back</button>
+      <button class="btn bp" id="dupGo">Yes, continue</button>
+    </div>
+  </div>
+</div>
 <div class="veil" id="veil" role="dialog" aria-modal="true">
   <div class="modal">
     <div class="mh" id="mh">How does this partner buy?</div>
@@ -787,7 +800,10 @@ function lineCheck(){
 $("#go2").onclick=()=>{
   const m=lineCheck(), e=$("#e1");
   if(m){e.textContent=m;e.classList.add("show");return}
-  e.classList.remove("show");show(2);
+  e.classList.remove("show");
+  const d=findDupes();
+  if(d.length){showDupes(d,()=>show(2));return}
+  show(2);
 };$("#back").onclick=()=>show(1);
 function review(){
   const b=baseOf();
@@ -895,7 +911,7 @@ $("#again").onclick=()=>location.reload();
    came out of them. Joined on Approval_Code. Filtering happens here rather
    than in a criteria query because criteria on Owner is unreliable.
    Only the most recent 200 of each are examined.                        */
-const H={me:null,pend:[],active:[],done:[],exp:[],tab:"pend",ready:false};
+const H={me:null,pend:[],active:[],done:[],exp:[],tab:"pend",ready:false,auths:[]};
 
 function qStart(){
   const d=new Date(), m=d.getMonth(), y=d.getFullYear();
@@ -953,6 +969,7 @@ function loadHistory(){
       else if(anyLive&&thisQ)   H.done.push(g);
       else if(!anyLive&&thisQ)  H.exp.push(g);
     });
+    H.auths=auths;
     H.ready=true; drawHist();
     if(!H.pend.length&&!H.active.length&&!H.done.length&&!H.exp.length) show(1);
   }).catch(()=>{H.ready=true;$("#hlist").innerHTML='<div class="hempty">Could not load your requests.</div>'});
@@ -1009,9 +1026,82 @@ function drawHist(){
   });
 }
 
+
+/* ================= duplicate check =================
+   Runs on Continue. Warns, never blocks - the quantity may be spent, or the
+   deal may genuinely need its own code. Everything needed sits on the
+   authorization row itself, so no second query is required.            */
+const NOISE=["pvt","private","ltd","limited","llp","inc","incorporated","corp","corporation","company","co","and","the","of"];
+function nrm(s){
+  let low=(s||"").toLowerCase().trim().replace("m/s "," ");
+  low=low.replace(/[^a-z0-9]+/g," ");
+  return low.split(" ").filter(x=>x&&NOISE.indexOf(x)<0).join("");
+}
+function sameName(a,b){
+  const x=nrm(a),y=nrm(b);
+  if(!x&&!y)return true;
+  if(!x||!y)return false;
+  if(x===y)return true;
+  if(y.length>=4&&x.indexOf(y)>-1)return true;
+  if(x.length>=4&&y.indexOf(x)>-1)return true;
+  return false;
+}
+function liveRow(a){
+  if((a.Status||"")!=="Active")return false;
+  if(a.Valid_till){const t=new Date(a.Valid_till),d=new Date();d.setHours(0,0,0,0);if(t<d)return false}
+  if(a.Unlimited_Quantity)return true;
+  return ((a.Approved_Quantity||0)-(a.Fulfilled_Quantity||0))>0;
+}
+function findDupes(){
+  const accWant = (S.mode==="via"||!S.acc)?null:S.acc.id;
+  const dlrWant = S.mode==="via" ? (S.acc?S.acc.id:null)
+                : S.mode==="both"? (S.dlr?S.dlr.id:null) : null;
+  const sub=subText(), pay=$("#i-payment").value||"", zon=$("#i-zone").value||"";
+  const out=[];
+  $$(".li").filter(l=>l._sku||l._all).forEach(l=>{
+    const n=l.querySelector(".sl").textContent;
+    const label=l._all?"All SKUs":(l._sku?l._sku.name:"");
+    (H.auths||[]).forEach(a=>{
+      if(!liveRow(a))return;
+      const aAcc=a.Account_Name?a.Account_Name.id:null;
+      const aDlr=a.Sub_dealer_Name?a.Sub_dealer_Name.id:null;
+      if(String(aAcc||"")!==String(accWant||""))return;
+      if(String(aDlr||"")!==String(dlrWant||""))return;
+      if(!sameName(sub,a.Sub_Account_Name||""))return;
+      if((a.Payment_Term||"")!==pay)return;
+      if((a.Zone||"")!==zon)return;
+      if(l._all){ if(!a.All_SKUs)return }
+      else { if(a.All_SKUs||!a.SKU||String(a.SKU.id)!==String(l._sku.id))return }
+      const left=a.Unlimited_Quantity?"no cap":((a.Approved_Quantity||0)-(a.Fulfilled_Quantity||0))+" of "+(a.Approved_Quantity||0)+" left";
+      out.push({line:n,label:label,code:a.Approval_Code,left:left,till:a.Valid_till});
+    });
+  });
+  return out;
+}
+function showDupes(list,onGo){
+  $("#dupbody").innerHTML=list.map(d=>`
+    <div class="hcard" style="margin-bottom:8px">
+      <div class="hrow1">
+        <span class="hcode">${d.code}</span>
+        <button class="hcopy" data-c="${d.code}">copy</button>
+      </div>
+      <div class="hmeta">Line ${d.line} \u00b7 ${d.label}</div>
+      <div class="hmeta">${d.left} \u00b7 valid till ${dmy(d.till)}</div>
+    </div>`).join("");
+  $$("#dupbody .hcopy").forEach(b=>b.onclick=()=>{
+    const t=b.dataset.c, done=()=>{b.textContent="copied";setTimeout(()=>b.textContent="copy",1500)};
+    if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(done)}
+    else{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");document.body.removeChild(a);done()}
+  });
+  const veil=$("#dupveil");
+  veil.classList.add("open");
+  $("#dupBack").onclick=()=>veil.classList.remove("open");
+  $("#dupGo").onclick=()=>{veil.classList.remove("open");onGo()};
+}
+
 /* ── init ── */
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v17";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v18";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
