@@ -264,6 +264,9 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
     <div id="hlist"><div class="spin">Loading your requests…</div></div>
   </section>
   <section class="pane" id="p1">
+    <div id="reqBanner" style="display:none;margin-bottom:12px;padding:10px 13px;background:#fffbeb;border:1px solid #f3d9a6;border-radius:9px;font-size:12.5px;color:#78350f;line-height:1.5">
+      <span id="reqBannerTxt"></span>
+    </div>
     <div class="card">
       <div class="ch"><h2>Scope &amp; terms</h2></div>
       <div class="cb">
@@ -373,8 +376,8 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   <section class="pane" id="p3">
     <div class="card"><div class="done">
       <div class="tick">✓</div>
-      <h2>Sent for approval</h2>
-      <p>Codes arrive on this thread once approved.</p>
+      <h2 id="doneTitle">Sent for approval</h2>
+      <p id="doneSub">Codes arrive on this thread once approved.</p>
       <div class="ref" id="ref">—</div>
       <div class="refsub" id="pl"></div>
     </div></div>
@@ -442,7 +445,7 @@ const PARTNER_BASE=[
 ];
 const GST=18, SC=40, DEFAULT_BASE=14;
 
-const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false};
+const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false,editId:null,attempt:1};
 /* money: always two decimals, so paise are visible.
    72011.07 shows as ₹72,011.07 rather than ₹72,011. */
 const inr=v=>"₹"+(+v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -779,7 +782,11 @@ function show(n){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 $("#t0").onclick=()=>show(0);$("#t1").onclick=()=>show(1);$("#t2").onclick=()=>show(2);
-$("#newReq").onclick=()=>show(1);
+$("#newReq").onclick=()=>{
+  S.editId=null;S.attempt=1;
+  $("#reqBanner").style.display="none";
+  show(1);
+};
 function lineCheck(){
   const rows=$$(".li").filter(l=>l._sku||l._all);
   if(!rows.length) return "Add a SKU, or tick All SKUs on a line";
@@ -875,8 +882,25 @@ btn.onclick=()=>{
     })
   };
   Object.keys(rec).forEach(k=>{if(rec[k]===null)delete rec[k]});
+
+  /* resubmitting updates the SAME record. Status goes to Resubmit, which is
+     what the workflow watches, and the token is cleared so the mail can
+     mint a fresh one. */
+  const editing=!!S.editId;
+  if(editing){
+    rec.id=S.editId;
+    rec.Status="Resubmit";
+    rec.Attempt_Number=S.attempt;
+    rec.Action_Token="";
+    rec.Approval_Code="";
+    delete rec.Subject;
+  }
+
   btn.disabled=true;btn.textContent="Saving…";
-  ZOHO.CRM.API.insertRecord({Entity:"Discount_Requisitions",APIData:rec,Trigger:["workflow"]})
+  const call = editing
+    ? ZOHO.CRM.API.updateRecord({Entity:"Discount_Requisitions",RecordID:S.editId,APIData:rec,Trigger:["workflow"]})
+    : ZOHO.CRM.API.insertRecord({Entity:"Discount_Requisitions",APIData:rec,Trigger:["workflow"]});
+  call
     .then(r=>{
       const d=r&&r.data&&r.data[0];
       if(d&&d.code==="SUCCESS"){
@@ -889,6 +913,10 @@ btn.onclick=()=>{
               $("#ref").textContent=(rec&&rec.Name)?rec.Name:"Created"})
             .catch(()=>{$("#ref").textContent="Created"});
         }else{$("#ref").textContent="Created"}
+        if(editing){
+          $("#doneTitle").textContent="Resubmitted for approval";
+          $("#doneSub").textContent="Attempt "+S.attempt+". The approver sees your changes and the earlier reason.";
+        }
         $$(".pane").forEach(x=>x.classList.remove("on"));$("#p3").classList.add("on");
         $("#t1").className="tab";$("#t2").className="tab";
         window.scrollTo({top:0,behavior:"smooth"});
@@ -911,7 +939,7 @@ $("#again").onclick=()=>location.reload();
    came out of them. Joined on Approval_Code. Filtering happens here rather
    than in a criteria query because criteria on Owner is unreliable.
    Only the most recent 200 of each are examined.                        */
-const H={me:null,pend:[],active:[],done:[],exp:[],tab:"pend",ready:false,auths:[]};
+const H={me:null,pend:[],rej:[],active:[],done:[],exp:[],tab:"pend",ready:false,auths:[]};
 
 function qStart(){
   const d=new Date(), m=d.getMonth(), y=d.getFullYear();
@@ -940,7 +968,8 @@ function loadHistory(){
     const codes={};
     mine.forEach(r=>{if(r.Approval_Code)codes[r.Approval_Code]=r});
 
-    H.pend=mine.filter(r=>(r.Status||"")==="Pending");
+    H.pend=mine.filter(r=>{const s=r.Status||"";return s==="Pending"||s==="Resubmit"});
+    H.rej =mine.filter(r=>(r.Status||"")==="Rejected");
 
     const qs=qStart(), today=new Date(); today.setHours(0,0,0,0);
     const byCode={};
@@ -971,12 +1000,12 @@ function loadHistory(){
     });
     H.auths=auths;
     H.ready=true; drawHist();
-    if(!H.pend.length&&!H.active.length&&!H.done.length&&!H.exp.length) show(1);
+    if(!H.pend.length&&!H.rej.length&&!H.active.length&&!H.done.length&&!H.exp.length) show(1);
   }).catch(()=>{H.ready=true;$("#hlist").innerHTML='<div class="hempty">Could not load your requests.</div>'});
 }
 
 function drawHist(){
-  const sets=[["pend","Pending",H.pend],["active","Active",H.active],["done","Fulfilled",H.done],["exp","Expired",H.exp]];
+  const sets=[["pend","Pending",H.pend],["rej","Rejected",H.rej],["active","Active",H.active],["done","Fulfilled",H.done],["exp","Expired",H.exp]];
   if(H.tab==="pend"&&!H.pend.length){const f=sets.find(s=>s[2].length);if(f)H.tab=f[0]}
   $("#htabs").innerHTML=sets.map(([k,lbl,arr])=>
     `<button class="htab${H.tab===k?" on":""}" data-k="${k}">${lbl}<span class="n">${arr.length}</span></button>`).join("");
@@ -996,6 +1025,23 @@ function drawHist(){
         </div>
         <div class="hmeta">${r.Name} \u00b7 ${n?n+" line"+(n>1?"s":""):"no lines"} \u00b7 raised ${dmy(r.Created_Time)}</div>
       </div>`}).join("");
+    return;
+  }
+
+  if(H.tab==="rej"){
+    $("#hlist").innerHTML=arr.map((r,i)=>{
+      const why=(r.Rejection_Reason||"").trim();
+      const att=r.Attempt_Number||1;
+      return `<div class="hcard">
+        <div class="hrow1">
+          <span class="hpill" style="background:var(--rds);color:var(--rd)">rejected</span>
+          <span class="hpart">${partyOf(r)}</span>
+        </div>
+        <div class="hmeta">${r.Name} \u00b7 attempt ${att} \u00b7 raised ${dmy(r.Created_Time)}</div>
+        ${why?`<div style="margin-top:7px;padding:9px 11px;background:var(--sf2);border-left:3px solid var(--rd);border-radius:0 7px 7px 0;font-size:12.5px;color:var(--ink);line-height:1.5">${why}</div>`:""}
+        <button class="btn bp redo" data-i="${i}" style="margin-top:10px;height:32px;padding:0 15px;font-size:12.5px">Fix and resubmit</button>
+      </div>`}).join("");
+    $$("#hlist .redo").forEach(b=>b.onclick=()=>reopen(arr[+b.dataset.i]));
     return;
   }
 
@@ -1099,9 +1145,79 @@ function showDupes(list,onGo){
   $("#dupGo").onclick=()=>{veil.classList.remove("open");onGo()};
 }
 
+
+/* ================= resubmit =================
+   Loads a rejected requisition back into the form. The SAME record is then
+   updated on Send - no new REQ number. Status goes to Resubmit, which is
+   what the workflow watches to fire the request mail again.            */
+function setCombo(inputSel, listSel, name){
+  if(!name) return;
+  $(inputSel).value=name;
+  $(listSel).classList.remove("open");
+}
+function reopen(r){
+  S.editId=r.id;
+  S.attempt=(r.Attempt_Number||1)+1;
+
+  const acc=r.Account_Name, dlr=r.Sub_dealer;
+  if(acc){ S.acc={id:acc.id,name:acc.name,gst:r.GSTIN||""}; setCombo("#i-account","#wa .lst",acc.name); }
+  if(dlr){ S.dlr={id:dlr.id,name:dlr.name};                 setCombo("#i-dealer","#wd .lst",dlr.name); }
+
+  /* rebuild the buying mode from what was stored */
+  if(acc&&dlr)      mode("both");
+  else if(dlr&&!acc){ S.acc={id:dlr.id,name:dlr.name,gst:r.GSTIN||""}; setCombo("#i-account","#wa .lst",dlr.name); mode("via"); }
+  else              mode("direct");
+
+  $("#i-subaccount").value = r.Sub_account1||"";
+  $("#i-gstin").value      = r.GSTIN||"";
+  $("#i-payment").value    = r.Payment_Terms||"";
+  $("#i-zone").value       = r.Zone||"";
+  $("#i-validtill").value  = r.Valid_till||"";
+  $("#i-justification").value = r.Context||"";
+
+  ["to","cc","bcc"].forEach(k=>{
+    S[k]=(r[k]||"").split(",").map(x=>x.trim()).filter(Boolean);
+    const box=document.querySelector('.chips[data-for="'+k+'"]');
+    box.querySelectorAll(".chip").forEach(c=>c.remove());
+    const inp=box.querySelector("input");
+    S[k].forEach((a,i)=>{
+      const c=document.createElement("span");c.className="chip";
+      c.innerHTML=a+'<button type="button">\u00d7</button>';
+      c.querySelector("button").onclick=ev=>{ev.stopPropagation();S[k].splice(i,1);c.remove()};
+      box.insertBefore(c,inp);
+    });
+  });
+
+  $("#lines").innerHTML=""; S.n=0;
+  const rows=r.Item_Detail||[];
+  if(!rows.length) addLine();
+  rows.forEach(it=>{
+    addLine();
+    const el=$$(".li")[$$(".li").length-1];
+    if(it.All_SKUs){ el.querySelector(".allsku").checked=true; }
+    if(it.No_Cap)  { el.querySelector(".nocap").checked=true; }
+    el.querySelector(".allsku").dispatchEvent(new Event("change"));
+    el.querySelector(".nocap").dispatchEvent(new Event("change"));
+    if(!it.All_SKUs && it.SKU){
+      el._sku={id:it.SKU.id,name:it.SKU.name,price:+(it.List_Price1||0)};
+      el.querySelector(".sku").value=it.SKU.name;
+    }
+    if(!it.No_Cap) el.querySelector(".qty").value=it.Qty||1;
+    el.querySelector(".ed").value=it.Extra_Discount||0;
+    el._drive="ed";
+  });
+
+  syncAllSku();
+  paint();
+  $("#reqBanner").style.display="block";
+  $("#reqBannerTxt").innerHTML="Editing <b>"+r.Name+"</b> \u00b7 this will go back as attempt "+S.attempt+
+    (r.Rejection_Reason?' \u00b7 rejected because: "'+r.Rejection_Reason+'"':"");
+  show(1);
+}
+
 /* ── init ── */
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v18";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v19";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
