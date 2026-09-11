@@ -9,9 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f7f8fa; --sf:#fff; --sf2:#fafbfc;
+  --bg:#f9f7fd; --sf:#fff; --sf2:#faf8ff;
   --ink:#1a1d23; --ink2:#5a6270; --ink3:#8b93a1; --ink4:#b4bac5;
-  --ln:#e8eaee; --ln2:#f1f3f6;
+  --ln:#e8eaee; --ln2:#f1f3f6; --pln:#e3d8fb;
   --ac:#7c3aed; --ac2:#6d28d9; --acs:#f3edff; --acl:#d6c4fb;
   --gn:#16a34a; --gns:#eafaf0;
   --am:#ea8c0c; --ams:#fef6e9;
@@ -44,7 +44,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
 .combo>.lb{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink2);margin-right:2px}
 /* bordered sub-sections inside a card */
-.sec{border:1px solid var(--ln);border-radius:8px;padding:12px;margin-bottom:12px}
+.sec{border:1px solid var(--pln);border-radius:8px;padding:12px;margin-bottom:12px}
 .sec:last-child{margin-bottom:0}
 .sec>.st{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink3);margin-bottom:10px}
@@ -54,7 +54,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
 .cc .k{font-size:8.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ac);opacity:.65}
 .cc .v{font-size:11.5px;font-weight:600;color:var(--ac2)}
 .ce{font-size:12px;color:var(--ink4)}
-.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;
+.card{background:var(--sf);border:1px solid var(--pln);border-radius:10px;
   margin-bottom:12px;overflow:hidden;box-shadow:var(--sh)}
 .ch{padding:11px 14px;border-bottom:1px solid var(--ln);display:flex;
   align-items:center;justify-content:space-between;gap:10px;background:var(--sf2)}
@@ -65,7 +65,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
 .f>label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
 .full{grid-column:1/-1}
 input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink);background:var(--sf);
-  border:1px solid var(--ln);border-radius:7px;padding:0 10px;width:100%;height:36px;
+  border:1px solid var(--pln);border-radius:7px;padding:0 10px;width:100%;height:36px;
   transition:border-color .12s,box-shadow .12s}
 textarea{height:auto;min-height:48px;padding:8px 10px;resize:vertical;line-height:1.5;font-size:14px}
 input::placeholder,textarea::placeholder{color:var(--ink4);font-size:13px}
@@ -75,6 +75,7 @@ select{appearance:none;cursor:pointer;padding-right:26px;
   background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' stroke='%238b93a1' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 10px center}
 .ro{background:var(--sf2);color:var(--ink2);cursor:default}
+select.selEmpty{font-style:italic;color:var(--ink4)}
 /* empty date shows a Select placeholder */
 input[type=date].empty{color:transparent}
 input[type=date].empty::-webkit-datetime-edit{color:transparent}
@@ -102,8 +103,8 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .mst.show{display:flex}
 .mst .sw{margin-left:auto;background:var(--sf);border:1px solid var(--acl);color:var(--ac2);
   font-family:inherit;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:100px;cursor:pointer}
-.li{border-top:1px solid var(--ln2);padding:13px 14px}
-.li:first-child{border-top:0}
+.li{border:1px solid var(--pln);border-radius:9px;padding:13px 14px;margin:10px 12px}
+.li:first-child{margin-top:12px}
 .lh{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .sl{font-size:9.5px;font-weight:600;letter-spacing:.06em;color:var(--ac);background:var(--acs);
   padding:3px 8px;border-radius:100px}
@@ -242,7 +243,6 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 </head>
 <body>
 <div class="bar"><div class="bar-in">
-  <div class="bar-t"><div class="mk">T</div><h1>Discount Requisition</h1></div>
   <div class="tabs">
     <button class="tab on" id="t0">My requests</button>
     <button class="tab" id="t1">Request</button>
@@ -271,12 +271,34 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       <div class="ch"><h2>Scope &amp; terms</h2></div>
       <div class="cb">
         <div class="sec">
+          <div class="st">Order basics</div>
+          <div class="grid" style="grid-template-columns:1fr 1fr">
+            <div class="f">
+              <label for="i-zone">Zone</label>
+              <select id="i-zone"><option value="">Select</option>
+                <option>East</option><option>West</option><option>South</option>
+                <option>North 1</option><option>North 2</option></select>
+            </div>
+            <div class="f">
+              <label for="i-payment">Payment Terms</label>
+              <select id="i-payment"><option value="">Select</option>
+                <option>Advance</option><option>Net 7</option><option>Net 15</option><option>Net 30</option>
+                <option>Net 35</option><option>Net 40</option><option>Net 45</option><option>Net 50</option>
+                <option>Net 60</option><option>Net 90</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="sec">
           <div class="st">Parties</div>
           <div class="grid">
             <div class="f" id="wa">
               <label for="i-account" id="lbl-acc">Account Name</label>
               <input type="text" id="i-account" placeholder="Search" autocomplete="off">
               <div class="lst"></div>
+            </div>
+            <div class="f">
+              <label for="i-gstin">GSTIN</label>
+              <input type="text" id="i-gstin" class="ro" readonly tabindex="-1" placeholder="—" style="text-transform:uppercase;font-size:14px">
             </div>
             <div class="f" id="wd" style="display:none">
               <label for="i-dealer">Sub-dealer</label>
@@ -290,29 +312,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
               <div class="lst"></div>
               <div class="hint">Pick a match if it exists. If not, type the name and it will be used as it is.</div>
             </div>
-            <div class="f">
-              <label for="i-gstin">GSTIN</label>
-              <input type="text" id="i-gstin" class="ro" readonly tabindex="-1" placeholder="—" style="text-transform:uppercase;font-size:14px">
-            </div>
             <div class="mst" id="mst"><span id="mtxt"></span><button type="button" class="sw" id="swap">Change</button></div>
-          </div>
-        </div>
-        <div class="sec">
-          <div class="st">Terms</div>
-          <div class="grid">
-            <div class="f">
-              <label for="i-payment">Payment Terms</label>
-              <select id="i-payment"><option value="">Select</option>
-                <option>Advance</option><option>Net 7</option><option>Net 15</option><option>Net 30</option>
-                <option>Net 35</option><option>Net 40</option><option>Net 45</option><option>Net 50</option>
-                <option>Net 60</option><option>Net 90</option></select>
-            </div>
-            <div class="f">
-              <label for="i-zone">Zone</label>
-              <select id="i-zone"><option value="">Select</option>
-                <option>East</option><option>West</option><option>South</option>
-                <option>North 1</option><option>North 2</option></select>
-            </div>
             <div class="f">
               <label for="i-validtill">Valid till</label>
               <div class="datewrap">
@@ -403,10 +403,10 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
     <div class="mh" id="mh">How does this partner buy?</div>
     <div class="modes">
       <button type="button" class="mc" data-mode="direct">
-        <span class="t">Direct</span>
+        <span class="t">Direct Billing</span>
       </button>
       <button type="button" class="mc" data-mode="via">
-        <span class="t">Via</span>
+        <span class="t">As a Sub dealer</span>
       </button>
       <button type="button" class="mc" data-mode="both">
         <span class="t">Both</span>
@@ -534,7 +534,7 @@ combo($("#i-dealer"),$("#wd .lst"),"Accounts",
   o=>{S.dlr=o?{id:o.id,name:o.Account_Name}:null});
 const veil=$("#veil");
 function ask(){
-  $("#mh").textContent="How does "+(S.acc?S.acc.name.split(" ")[0]:"this partner")+" buy?";
+  $("#mh").textContent="How does "+(S.acc?S.acc.name:"this partner")+" buy?";
   veil.classList.add("open");setTimeout(()=>$(".mc").focus(),140);
 }
 function mode(m){
@@ -577,7 +577,7 @@ function addLine(){
         <div class="f lp-w hidePrice"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ad-w"><label>Allowed</label><input type="text" class="ad num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ed-w"><label>Extra</label><input type="number" class="ed num" value="0" min="0" max="60" step="0.00001"></div>
-        <div class="f gt-w hidePrice"><label>Grand Total</label><input type="number" class="gt num" placeholder="—" min="0" step="0.01"></div>
+        <div class="f gt-w hidePrice"><label>Grand Total</label><input type="text" inputmode="decimal" class="gt num" placeholder="—"></div>
       </div>
     </div>
     <div class="mtr hidePrice">
@@ -668,7 +668,7 @@ function paint(){
     const q=Math.max(1,+l.querySelector(".qty").value||1);
     let ex;
     if(l._drive==="gt"&&s){
-      const gtv=+l.querySelector(".gt").value||0;
+      const gtv=+((l.querySelector(".gt").value||"").replace(/,/g,""))||0;
       let tp=0;
       if(gtv>0){const lipx=gtv/(q*(1+GST/100));tp=(1-lipx/s.price)*100;}
       ex=Math.max(0,+(tp-b).toFixed(5));
@@ -693,7 +693,7 @@ function paint(){
     l.querySelector(".tx").textContent=inr(tx);
     l.querySelector(".tl").textContent=inr(lip*q+tx);
     l.querySelector(".gv").textContent=inr(p*q*(b+ex)/100);
-    if(l._drive!=="gt"){l.querySelector(".gt").value=(lip*q+tx).toFixed(2);}
+    if(l._drive!=="gt"){l.querySelector(".gt").value=(lip*q+tx).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});}
     sa+=p*q*b/100;se+=p*q*ex/100;
   });
   $("#tT").textContent=inr(sa+se);$("#tA").textContent=inr(sa);$("#tE").textContent=inr(se);
@@ -758,6 +758,7 @@ function resetForm(){
   $("#i-gstin").value="";
   $("#i-payment").value="";
   $("#i-zone").value="";
+  selToggle($("#i-payment"));selToggle($("#i-zone"));
   $("#i-validtill").value="";
   $("#i-justification").value="";
 
@@ -1143,6 +1144,7 @@ function reopen(r){
   $("#i-gstin").value      = r.GSTIN||"";
   $("#i-payment").value    = r.Payment_Terms||"";
   $("#i-zone").value       = r.Zone||"";
+  selToggle($("#i-payment"));selToggle($("#i-zone"));
   $("#i-validtill").value  = r.Valid_till||"";
   $("#i-justification").value = r.Context||"";
 
@@ -1201,7 +1203,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v21";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v22";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
@@ -1209,6 +1211,8 @@ dv.addEventListener("focus",()=>{dv.classList.remove("empty");$("#dph").classLis
 dv.addEventListener("blur",dtoggle);
 dtoggle();
 ["#i-payment","#i-zone","#i-validtill","#i-gstin","#i-subaccount"].forEach(s=>$(s).addEventListener("input",paint));
+function selToggle(sel){sel.classList.toggle("selEmpty",!sel.value)}
+[$("#i-payment"),$("#i-zone")].forEach(sel=>{selToggle(sel);sel.addEventListener("change",()=>selToggle(sel))});
 addLine();
 })();
 </script>
