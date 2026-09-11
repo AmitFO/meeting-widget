@@ -417,27 +417,6 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 (function(){
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
-/* =============================================================
-   ALLOWED DISCOUNT BY PARTNER
-   -------------------------------------------------------------
-   FIRST MATCH WINS - order matters.
-
-   Each rule uses ONE of these, never both:
-     name     : the account name must match EXACTLY (case ignored)
-     contains : the account name must CONTAIN this text
-
-   needGst : when true, the account must also have a GST number.
-
-   Why they are set this way:
-     - IRIS uses "name" so IRIS GLOBAL SERVICES PRIVATE LIMITED
-       is excluded, and needGst drops the entities with no GSTIN.
-     - REDINGTON uses "name" so the Patna and Kongu branches,
-       which have extra words, stay on the flat rate.
-     - RASHI uses "contains" so every RASHI entity is covered.
-
-   NOTE: these numbers are also written into the CRM function
-   validateOrderCode. Change them here, change them there.
-   ============================================================= */
 const PARTNER_BASE=[
   {name:"iris global services limited", pct:15, needGst:true},
   {name:"redington limited",            pct:15},
@@ -446,11 +425,7 @@ const PARTNER_BASE=[
 const GST=18, SC=40, DEFAULT_BASE=14;
 
 const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false,editId:null,attempt:1};
-/* money: always two decimals, so paise are visible.
-   72011.07 shows as ₹72,011.07 rather than ₹72,011. */
 const inr=v=>"₹"+(+v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
-/* percent text: up to 5 decimals, trailing zeros trimmed.
-   16 stays "16", 19.98770 becomes "19.9877". Keeps the boxes narrow. */
 const pct=v=>(+v||0).toFixed(5).replace(/0+$/,"").replace(/\.$/,"");
 
 function baseOf(){
@@ -466,10 +441,8 @@ function baseOf(){
   return DEFAULT_BASE;
 }
 
-/* ── Zoho SDK ── */
 ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; loadHistory(); });
 ZOHO.embeddedApp.init();
-/* search: word search only (criteria operators are unreliable), filtered locally */
 function txtOf(o){
   return [o.Account_Name && (o.Account_Name.name||o.Account_Name),
           o.Full_Name,o.Last_Name,o.First_Name,
@@ -488,14 +461,11 @@ function search(module,term){
     })
     .catch(e=>{console.warn("search failed",module,q,e);return []});
 }
-/* ── combobox (live CRM search) ── */
 function combo(inp,list,module,render,onPick){
   let cur=[],hi=-1,timer=null;
   function draw(rows,msg){
     cur=rows;
     const typed=inp.value.trim();
-    /* sub-account can be a name that does not exist in CRM yet, so offer
-       the typed text as an explicit choice at the top of the list */
     const head=(module==="Contacts"&&typed)
       ? `<div class="opt useNew" data-use="1">Use "<b>${typed}</b>"<span class="sm">New sub-account, not in CRM yet</span></div>`
       : "";
@@ -524,7 +494,7 @@ function combo(inp,list,module,render,onPick){
     timer=setTimeout(()=>{
       const asked=q;
       search(module,q).then(rows=>{
-        if(inp.value!==asked)return;           // a newer keystroke won
+        if(inp.value!==asked)return;
         draw(rows.slice(0,30), module==="Contacts" ? "No match \u2014 the name you typed will be used" : "No match in CRM");
       });
     },350);
@@ -550,10 +520,6 @@ combo($("#i-account"),$("#wa .lst"),"Accounts",
     if(o){$("#i-gstin").value=o.GST_Number||"";ask()}
     else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#lbl-acc").textContent="Account Name";$("#wd").style.display="none";$("#i-dealer").value=""}
   });
-/* Sub-account is now free text. The search is only a convenience:
-   pick a match to get the exact spelling, or just type a name that
-   does not exist in CRM yet (a new shipping entity is often created
-   only when the order is punched, after the request is raised). */
 combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
   o=>{
     const nm=o.Full_Name||o.Last_Name||"";
@@ -565,7 +531,6 @@ const subText=()=>$("#i-subaccount").value.trim();
 combo($("#i-dealer"),$("#wd .lst"),"Accounts",
   o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
   o=>{S.dlr=o?{id:o.id,name:o.Account_Name}:null});
-/* ── mode ── */
 const veil=$("#veil");
 function ask(){
   $("#mh").textContent="How does "+(S.acc?S.acc.name.split(" ")[0]:"this partner")+" buy?";
@@ -587,7 +552,6 @@ $$(".mc").forEach(b=>b.onclick=()=>mode(b.dataset.mode));
 $("#swap").onclick=ask;
 veil.onclick=e=>{if(e.target===veil&&S.mode)veil.classList.remove("open")};
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.mode)veil.classList.remove("open")});
-/* ── lines ── */
 function addLine(){
   const i=S.n++;const el=document.createElement("div");el.className="li";
   el.innerHTML=`
@@ -673,8 +637,6 @@ function markQty(l){
   l.querySelector(".qerr").style.display = bad ? "block" : "none";
 }
 function renum(){$$(".li").forEach((l,i)=>l.querySelector(".sl").textContent=String(i+1).padStart(2,"0"))}
-/* All SKUs already means every product, so a second such line is meaningless.
-   Once one is ticked, lock the box on every other line. */
 function syncAllSku(){
   const taken=$$(".li").some(l=>l._all);
   $$(".li").forEach(l=>{
@@ -703,7 +665,6 @@ function paint(){
     const q=Math.max(1,+l.querySelector(".qty").value||1);
     let ex;
     if(l._drive==="gt"&&s){
-      /* reverse: grand total typed -> work back to the extra percent */
       const gtv=+l.querySelector(".gt").value||0;
       let tp=0;
       if(gtv>0){const lipx=gtv/(q*(1+GST/100));tp=(1-lipx/s.price)*100;}
@@ -754,7 +715,6 @@ function chips(){
   p.forEach(([k,x])=>{const e=document.createElement("span");e.className="cc";
     e.innerHTML=`<span class="k">${k}</span><span class="v">${x}</span>`;c.appendChild(e)});
 }
-/* ── recipient chips ── */
 $$(".chips").forEach(box=>{
   const key=box.dataset.for,inp=box.querySelector("input");
   box.onclick=()=>inp.focus();
@@ -772,19 +732,49 @@ $$(".chips").forEach(box=>{
       c.querySelector("button").onclick=ev=>{ev.stopPropagation();S[key].splice(i,1);draw()};
       box.insertBefore(c,inp)})}
 });
-/* ── tabs ── */
 function show(n){
   $$(".pane").forEach(p=>p.classList.remove("on"));$("#p"+n).classList.add("on");
   $("#t0").className="tab"+(n===0?" on":"");
   $("#t1").className="tab"+(n===1?" on":"");
   $("#t2").className="tab"+(n===2?" on":"");
+  /* the combination banner only makes sense while building or reviewing
+     a request - hide it on My requests and on the done screen */
+  $("#combo").style.display = (n===1||n===2) ? "" : "none";
   if(n===2)review();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 $("#t0").onclick=()=>show(0);$("#t1").onclick=()=>show(1);$("#t2").onclick=()=>show(2);
-$("#newReq").onclick=()=>{
-  S.editId=null;S.attempt=1;
+function resetForm(){
+  S.editId=null; S.attempt=1;
+  S.acc=null; S.dlr=null; S.sub=null; S.mode=null;
+  S.to=[]; S.cc=[]; S.bcc=[];
+
+  $("#i-account").value="";
+  $("#i-dealer").value="";
+  $("#i-subaccount").value="";
+  $("#i-gstin").value="";
+  $("#i-payment").value="";
+  $("#i-zone").value="";
+  $("#i-validtill").value="";
+  $("#i-justification").value="";
+
+  $("#wd").style.display="none";
+  $("#lbl-acc").textContent="Account Name";
+  $("#mst").classList.remove("show");
+
+  ["to","cc","bcc"].forEach(k=>{
+    const box=document.querySelector('.chips[data-for="'+k+'"]');
+    box.querySelectorAll(".chip").forEach(c=>c.remove());
+  });
+
+  $("#lines").innerHTML=""; S.n=0; addLine();
+
+  dtoggle();
   $("#reqBanner").style.display="none";
+  paint();
+}
+$("#newReq").onclick=()=>{
+  resetForm();
   show(1);
 };
 function lineCheck(){
@@ -829,7 +819,6 @@ function review(){
   $("#rev").innerHTML=it.map(([k,v])=>`<div class="rv"><div class="k">${k}</div><div class="v${v==="—"?" em":""}">${v}</div></div>`).join("")
     +`<div class="rv wide"><div class="k">Item detail</div><div class="v${r.length?"":" em"}">${r.join(" · ")||"—"}</div></div>`;
 }
-/* ── submit → create record in CRM ── */
 const btn=$("#send");
 btn.onclick=()=>{
   const e=$("#e2");
@@ -872,7 +861,7 @@ btn.onclick=()=>{
       if(!l._all&&s){
         const lip=s.price*(1-(b+ex)/100),tx=lip*(q||1)*GST/100;
         row.SKU={id:s.id};
-        row.List_Price=s.price;
+        row.List_Price1=s.price;
         row.Final_Price=+(s.price*(1-b/100)).toFixed(2);
         row.Lock_in_Price=+lip.toFixed(2);
         row.Tax=+tx.toFixed(2);
@@ -882,10 +871,6 @@ btn.onclick=()=>{
     })
   };
   Object.keys(rec).forEach(k=>{if(rec[k]===null)delete rec[k]});
-
-  /* resubmitting updates the SAME record. Status goes to Resubmit, which is
-     what the workflow watches, and the token is cleared so the mail can
-     mint a fresh one. */
   const editing=!!S.editId;
   if(editing){
     rec.id=S.editId;
@@ -895,7 +880,6 @@ btn.onclick=()=>{
     rec.Approval_Code="";
     delete rec.Subject;
   }
-
   btn.disabled=true;btn.textContent="Saving…";
   const call = editing
     ? ZOHO.CRM.API.updateRecord({Entity:"Discount_Requisitions",RecordID:S.editId,APIData:rec,Trigger:["workflow"]})
@@ -934,11 +918,6 @@ btn.onclick=()=>{
 };
 $("#again").onclick=()=>location.reload();
 
-/* ================= my requests =================
-   Two fetches: the user's own requisitions, then the authorizations that
-   came out of them. Joined on Approval_Code. Filtering happens here rather
-   than in a criteria query because criteria on Owner is unreliable.
-   Only the most recent 200 of each are examined.                        */
 const H={me:null,pend:[],rej:[],active:[],done:[],exp:[],tab:"pend",ready:false,auths:[]};
 
 function qStart(){
@@ -1072,11 +1051,6 @@ function drawHist(){
   });
 }
 
-
-/* ================= duplicate check =================
-   Runs on Continue. Warns, never blocks - the quantity may be spent, or the
-   deal may genuinely need its own code. Everything needed sits on the
-   authorization row itself, so no second query is required.            */
 const NOISE=["pvt","private","ltd","limited","llp","inc","incorporated","corp","corporation","company","co","and","the","of"];
 function nrm(s){
   let low=(s||"").toLowerCase().trim().replace("m/s "," ");
@@ -1145,11 +1119,6 @@ function showDupes(list,onGo){
   $("#dupGo").onclick=()=>{veil.classList.remove("open");onGo()};
 }
 
-
-/* ================= resubmit =================
-   Loads a rejected requisition back into the form. The SAME record is then
-   updated on Send - no new REQ number. Status goes to Resubmit, which is
-   what the workflow watches to fire the request mail again.            */
 function setCombo(inputSel, listSel, name){
   if(!name) return;
   $(inputSel).value=name;
@@ -1163,7 +1132,6 @@ function reopen(r){
   if(acc){ S.acc={id:acc.id,name:acc.name,gst:r.GSTIN||""}; setCombo("#i-account","#wa .lst",acc.name); }
   if(dlr){ S.dlr={id:dlr.id,name:dlr.name};                 setCombo("#i-dealer","#wd .lst",dlr.name); }
 
-  /* rebuild the buying mode from what was stored */
   if(acc&&dlr)      mode("both");
   else if(dlr&&!acc){ S.acc={id:dlr.id,name:dlr.name,gst:r.GSTIN||""}; setCombo("#i-account","#wa .lst",dlr.name); mode("via"); }
   else              mode("direct");
@@ -1194,14 +1162,28 @@ function reopen(r){
   rows.forEach(it=>{
     addLine();
     const el=$$(".li")[$$(".li").length-1];
+
+    /* set the SKU BEFORE the checkbox dispatch, so modes() (fired by the
+       dispatch below) is the one deciding whether to keep it - same order
+       a fresh line follows. Defensive about key casing since a couple of
+       older records may have been saved before List_Price1 existed. */
+    if(!it.All_SKUs){
+      const skuObj = it.SKU || it.Sku || null;
+      if(skuObj && (skuObj.id || skuObj.ID)){
+        el._sku = {
+          id: skuObj.id || skuObj.ID,
+          name: skuObj.name || skuObj.Name || "",
+          price: +(it.List_Price1 || it.List_Price || 0)
+        };
+        el.querySelector(".sku").value = el._sku.name;
+      }
+    }
+
     if(it.All_SKUs){ el.querySelector(".allsku").checked=true; }
     if(it.No_Cap)  { el.querySelector(".nocap").checked=true; }
     el.querySelector(".allsku").dispatchEvent(new Event("change"));
     el.querySelector(".nocap").dispatchEvent(new Event("change"));
-    if(!it.All_SKUs && it.SKU){
-      el._sku={id:it.SKU.id,name:it.SKU.name,price:+(it.List_Price1||0)};
-      el.querySelector(".sku").value=it.SKU.name;
-    }
+
     if(!it.No_Cap) el.querySelector(".qty").value=it.Qty||1;
     el.querySelector(".ed").value=it.Extra_Discount||0;
     el._drive="ed";
@@ -1215,9 +1197,8 @@ function reopen(r){
   show(1);
 }
 
-/* ── init ── */
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v19";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v20";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
