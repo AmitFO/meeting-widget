@@ -335,7 +335,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       <button type="button" class="addl" id="addl">+ Add SKU</button>
       <div class="tot">
         <div><div class="k">Total concession</div><div class="big" id="tT">₹0</div></div>
-        <div class="sp">allowed <span id="tA">₹0</span> · extra <b id="tE">₹0</b></div>
+
       </div>
     </div>
     <div class="act">
@@ -579,6 +579,7 @@ function addLine(){
     </div>
     <div class="mtr hidePrice">
       <div class="trk"><div class="sa" style="width:0"></div><div class="se" style="width:0"></div></div>
+      <div style="text-align:right;font-size:10.5px;color:var(--ink3);margin-top:6px">total <b class="tv">0%</b> · <b class="gv">₹0</b></div>
     </div>
     <div class="qerr" style="display:none;margin-top:8px;font-size:11.5px;color:var(--rd);font-weight:500">Enter a quantity, or tick No cap</div>
     <div class="warn">Any product in the catalogue, no quantity limit. Only the valid-till date stops this.</div>
@@ -652,6 +653,8 @@ function paint(){
       const exA=Math.max(0,+l.querySelector(".ed").value||0);
       l.querySelector(".sa").style.width=(Math.min(exA,b,SC)/SC*100)+"%";
       l.querySelector(".se").style.width=(Math.max(0,Math.min(exA,b+SC)-b)/SC*100)+"%";
+      l.querySelector(".tv").textContent=pct(exA)+"%";
+      l.querySelector(".gv").textContent="\u2014";
       return;
     }
     const q=Math.max(1,+l.querySelector(".qty").value||1);
@@ -666,10 +669,12 @@ function paint(){
       ex=Math.max(0,+l.querySelector(".ed").value||0);
     }
     l.querySelector(".lp").value=s?inr(s.price):"—";
+    l.querySelector(".tv").textContent=(s?pct(ex):"0")+"%";
     /* bar: green up to the standard rate, orange for anything beyond it */
     l.querySelector(".sa").style.width=(s?Math.min(ex,b,SC)/SC*100:0)+"%";
     l.querySelector(".se").style.width=(s?Math.max(0,Math.min(ex,b+SC)-b)/SC*100:0)+"%";
     if(!s){["fp","lip","tx","tl"].forEach(c=>l.querySelector("."+c).textContent="—");
+      l.querySelector(".gv").textContent="₹0.00";
       if(l._drive!=="gt"){l.querySelector(".gt").value="";}
       return}
     const p=s.price,lip=p*(1-ex/100),tx=lip*q*GST/100;
@@ -677,6 +682,7 @@ function paint(){
     l.querySelector(".lip").textContent=inr(lip);
     l.querySelector(".tx").textContent=inr(tx);
     l.querySelector(".tl").textContent=inr(lip*q+tx);
+    l.querySelector(".gv").textContent=inr(p*q*ex/100);
     if(l._drive!=="gt"){
       /* default stays zero until a real discount is entered */
       l.querySelector(".gt").value = ex===0 ? (0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})
@@ -1193,7 +1199,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v23";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v24";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
