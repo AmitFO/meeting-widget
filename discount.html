@@ -246,7 +246,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   <div class="tabs">
     <button class="tab on" id="t0">My requests</button>
     <button class="tab" id="t1">Request</button>
-    <button class="tab" id="t2">Send</button>
+    <button class="tab" id="t2">Mail</button>
     <span class="tdate" id="i-date"></span>
   </div>
 </div></div>
@@ -516,7 +516,7 @@ combo($("#i-account"),$("#wa .lst"),"Accounts",
   o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
   o=>{
     S.acc=o?{id:o.id,name:o.Account_Name,gst:o.GST_Number||""}:null;
-    if(o){$("#i-gstin").value=o.GST_Number||"";$("#gstinShow").textContent=o.GST_Number||"";ask()}
+    if(o){$("#i-gstin").value=o.GST_Number||"";$("#gstinShow").textContent=o.GST_Number?("GSTIN : "+o.GST_Number):"";ask()}
     else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#gstinShow").textContent="";$("#lbl-acc").textContent="Account Name";$("#wd").style.display="none";$("#i-dealer").value=""}
   });
 combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
@@ -1137,7 +1137,7 @@ function reopen(r){
 
   $("#i-subaccount").value = r.Sub_account1||"";
   $("#i-gstin").value      = r.GSTIN||"";
-  $("#gstinShow").textContent = r.GSTIN||"";
+  $("#gstinShow").textContent = r.GSTIN?("GSTIN : "+r.GSTIN):"";
   $("#i-payment").value    = r.Payment_Terms||"";
   $("#i-zone").value       = r.Zone||"";
   selToggle($("#i-payment"));selToggle($("#i-zone"));
@@ -1199,7 +1199,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v25";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v26";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
