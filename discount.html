@@ -690,7 +690,7 @@ function paint(){
     }
     sa+=p*q*Math.min(ex,b)/100;se+=p*q*Math.max(0,ex-b)/100;
   });
-  $("#tT").textContent=inr(sa+se);$("#tA").textContent=inr(sa);$("#tE").textContent=inr(se);
+  $("#tT").textContent=inr(sa+se);
   chips();
   const n=$$(".li").filter(l=>l._sku||l._all).length;
   const top=Math.max(0,...$$(".li").map(l=>+l.querySelector(".ed").value||0));
@@ -1199,7 +1199,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v24";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v25";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
