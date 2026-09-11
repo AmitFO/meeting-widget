@@ -295,10 +295,8 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
               <label for="i-account" id="lbl-acc">Account Name</label>
               <input type="text" id="i-account" placeholder="Search" autocomplete="off">
               <div class="lst"></div>
-            </div>
-            <div class="f">
-              <label for="i-gstin">GSTIN</label>
-              <input type="text" id="i-gstin" class="ro" readonly tabindex="-1" placeholder="—" style="text-transform:uppercase;font-size:14px">
+              <div id="gstinShow" style="font-size:11.5px;color:var(--ac2);margin-top:2px"></div>
+              <input type="hidden" id="i-gstin">
             </div>
             <div class="f" id="wd" style="display:none">
               <label for="i-dealer">Sub-dealer</label>
@@ -518,8 +516,8 @@ combo($("#i-account"),$("#wa .lst"),"Accounts",
   o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
   o=>{
     S.acc=o?{id:o.id,name:o.Account_Name,gst:o.GST_Number||""}:null;
-    if(o){$("#i-gstin").value=o.GST_Number||"";ask()}
-    else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#lbl-acc").textContent="Account Name";$("#wd").style.display="none";$("#i-dealer").value=""}
+    if(o){$("#i-gstin").value=o.GST_Number||"";$("#gstinShow").textContent=o.GST_Number||"";ask()}
+    else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#gstinShow").textContent="";$("#lbl-acc").textContent="Account Name";$("#wd").style.display="none";$("#i-dealer").value=""}
   });
 combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
   o=>{
@@ -575,18 +573,12 @@ function addLine(){
           <input type="number" class="qty num" value="0" min="1">
         </div>
         <div class="f lp-w hidePrice"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
-        <div class="f ad-w"><label>Allowed</label><input type="text" class="ad num ro" value="—" readonly tabindex="-1"></div>
-        <div class="f ed-w"><label>Extra</label><input type="number" class="ed num" value="0" min="0" max="60" step="0.00001"></div>
+        <div class="f ed-w"><label>Discount %</label><input type="number" class="ed num" value="0" min="0" max="100" step="0.00001"></div>
         <div class="f gt-w hidePrice"><label>Grand Total</label><input type="text" inputmode="decimal" class="gt num" placeholder="—"></div>
       </div>
     </div>
     <div class="mtr hidePrice">
       <div class="trk"><div class="sa" style="width:0"></div><div class="se" style="width:0"></div></div>
-      <div class="mlg">
-        <span><i class="a"></i>allowed <b class="av">0%</b></span>
-        <span><i class="e"></i>extra <b class="ev">0%</b></span>
-        <span style="margin-left:auto">total <b class="tv">0%</b> · <b class="gv">₹0</b></span>
-      </div>
     </div>
     <div class="qerr" style="display:none;margin-top:8px;font-size:11.5px;color:var(--rd);font-weight:500">Enter a quantity, or tick No cap</div>
     <div class="warn">Any product in the catalogue, no quantity limit. Only the valid-till date stops this.</div>
@@ -658,11 +650,8 @@ function paint(){
     const s=l._sku;
     if(l._all){
       const exA=Math.max(0,+l.querySelector(".ed").value||0);
-      l.querySelector(".ad").value=pct(b)+"%";
-      l.querySelector(".av").textContent=pct(b)+"%";
-      l.querySelector(".ev").textContent=pct(exA)+"%";
-      l.querySelector(".tv").textContent=pct(b+exA)+"%";
-      l.querySelector(".gv").textContent="\u2014";
+      l.querySelector(".sa").style.width=(Math.min(exA,b,SC)/SC*100)+"%";
+      l.querySelector(".se").style.width=(Math.max(0,Math.min(exA,b+SC)-b)/SC*100)+"%";
       return;
     }
     const q=Math.max(1,+l.querySelector(".qty").value||1);
@@ -671,35 +660,34 @@ function paint(){
       const gtv=+((l.querySelector(".gt").value||"").replace(/,/g,""))||0;
       let tp=0;
       if(gtv>0){const lipx=gtv/(q*(1+GST/100));tp=(1-lipx/s.price)*100;}
-      ex=Math.max(0,+(tp-b).toFixed(5));
+      ex=Math.max(0,+tp.toFixed(5));
       l.querySelector(".ed").value=ex;
     }else{
       ex=Math.max(0,+l.querySelector(".ed").value||0);
     }
     l.querySelector(".lp").value=s?inr(s.price):"—";
-    l.querySelector(".ad").value=s?pct(b)+"%":"—";
-    l.querySelector(".sa").style.width=(s?Math.min(b,SC)/SC*100:0)+"%";
-    l.querySelector(".se").style.width=(s?Math.min(ex,SC-b)/SC*100:0)+"%";
-    l.querySelector(".av").textContent=(s?pct(b):"0")+"%";
-    l.querySelector(".ev").textContent=pct(ex)+"%";
-    l.querySelector(".tv").textContent=(s?pct(b+ex):"0")+"%";
+    /* bar: green up to the standard rate, orange for anything beyond it */
+    l.querySelector(".sa").style.width=(s?Math.min(ex,b,SC)/SC*100:0)+"%";
+    l.querySelector(".se").style.width=(s?Math.max(0,Math.min(ex,b+SC)-b)/SC*100:0)+"%";
     if(!s){["fp","lip","tx","tl"].forEach(c=>l.querySelector("."+c).textContent="—");
-      l.querySelector(".gv").textContent="₹0.00";
       if(l._drive!=="gt"){l.querySelector(".gt").value="";}
       return}
-    const p=s.price,lip=p*(1-(b+ex)/100),tx=lip*q*GST/100;
-    l.querySelector(".fp").textContent=inr(p*(1-b/100));
+    const p=s.price,lip=p*(1-ex/100),tx=lip*q*GST/100;
+    l.querySelector(".fp").textContent=inr(lip);
     l.querySelector(".lip").textContent=inr(lip);
     l.querySelector(".tx").textContent=inr(tx);
     l.querySelector(".tl").textContent=inr(lip*q+tx);
-    l.querySelector(".gv").textContent=inr(p*q*(b+ex)/100);
-    if(l._drive!=="gt"){l.querySelector(".gt").value=(lip*q+tx).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});}
-    sa+=p*q*b/100;se+=p*q*ex/100;
+    if(l._drive!=="gt"){
+      /* default stays zero until a real discount is entered */
+      l.querySelector(".gt").value = ex===0 ? (0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})
+        : (lip*q+tx).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    sa+=p*q*Math.min(ex,b)/100;se+=p*q*Math.max(0,ex-b)/100;
   });
   $("#tT").textContent=inr(sa+se);$("#tA").textContent=inr(sa);$("#tE").textContent=inr(se);
   chips();
   const n=$$(".li").filter(l=>l._sku||l._all).length;
-  const top=Math.max(0,...$$(".li").map(l=>b+(+l.querySelector(".ed").value||0)));
+  const top=Math.max(0,...$$(".li").map(l=>+l.querySelector(".ed").value||0));
   $("#subj").textContent=`Discount approval · ${S.acc?S.acc.name:"Any"} · ${n} SKU · up to ${pct(top)}%`;
 }
 function chips(){
@@ -756,6 +744,7 @@ function resetForm(){
   $("#i-dealer").value="";
   $("#i-subaccount").value="";
   $("#i-gstin").value="";
+  $("#gstinShow").textContent="";
   $("#i-payment").value="";
   $("#i-zone").value="";
   selToggle($("#i-payment"));selToggle($("#i-zone"));
@@ -809,7 +798,7 @@ $("#go2").onclick=()=>{
 function review(){
   const b=baseOf();
   const r=$$(".li").filter(l=>l._sku||l._all).map(l=>
-    `${l._all?"All SKUs":l._sku.name} ${pct(b+(+l.querySelector(".ed").value||0))}% ×${l._nocap?"no cap":l.querySelector(".qty").value}`);
+    `${l._all?"All SKUs":l._sku.name} ${pct(+l.querySelector(".ed").value||0)}% ×${l._nocap?"no cap":l.querySelector(".qty").value}`);
   const it=[
     ["Account Name",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
     ["Sub-dealer",S.mode==="via"?(S.acc?S.acc.name:"—"):(S.mode==="both"&&S.dlr?S.dlr.name:"—")],
@@ -859,14 +848,14 @@ btn.onclick=()=>{
         All_SKUs:!!l._all,
         No_Cap:!!l._nocap,
         Allowed_Discount:b,
-        Extra_Discount:ex
+        Extra_Discount:+(ex-b).toFixed(5)
       };
       if(q!==null) row.Qty=q;
       if(!l._all&&s){
-        const lip=s.price*(1-(b+ex)/100),tx=lip*(q||1)*GST/100;
+        const lip=s.price*(1-ex/100),tx=lip*(q||1)*GST/100;
         row.SKU={id:s.id};
         row.List_Price1=s.price;
-        row.Final_Price=+(s.price*(1-b/100)).toFixed(2);
+        row.Final_Price=+lip.toFixed(2);
         row.Lock_in_Price=+lip.toFixed(2);
         row.Tax=+tx.toFixed(2);
         row.Total=+(lip*(q||1)+tx).toFixed(2);
@@ -1142,6 +1131,7 @@ function reopen(r){
 
   $("#i-subaccount").value = r.Sub_account1||"";
   $("#i-gstin").value      = r.GSTIN||"";
+  $("#gstinShow").textContent = r.GSTIN||"";
   $("#i-payment").value    = r.Payment_Terms||"";
   $("#i-zone").value       = r.Zone||"";
   selToggle($("#i-payment"));selToggle($("#i-zone"));
@@ -1190,7 +1180,7 @@ function reopen(r){
     el.querySelector(".nocap").dispatchEvent(new Event("change"));
 
     if(!it.No_Cap) el.querySelector(".qty").value=it.Qty||1;
-    el.querySelector(".ed").value=it.Extra_Discount||0;
+    el.querySelector(".ed").value=(+it.Allowed_Discount||0)+(+it.Extra_Discount||0);
     el._drive="ed";
   });
 
@@ -1203,7 +1193,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v22";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v23";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
