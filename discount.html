@@ -186,6 +186,12 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .uopt:hover .um,.uopt.hi .um{color:var(--ac2);opacity:.75}
 .unon{padding:10px 11px;font-size:12px;color:var(--ink4)}
 .chip .cnm{font-weight:600}
+#i-justification{min-height:120px;line-height:1.6;white-space:pre-wrap}
+.fchip{display:flex;align-items:center;gap:8px;padding:7px 10px;margin-top:6px;
+  background:var(--acs);border:1px solid var(--acl);border-radius:7px;font-size:12px;color:var(--ac2)}
+.fchip .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fchip .fsz{color:var(--ink3);font-size:11px}
+.fchip button{background:none;border:0;color:var(--ac);cursor:pointer;font-size:14px;line-height:1;padding:0 3px}
 .subj{padding:9px 11px;background:var(--sf2);border:1px solid var(--ln);border-radius:7px;
   font-size:12px;color:var(--ink2);word-break:break-word;line-height:1.5}
 .rev{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ln2)}
@@ -314,7 +320,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
           <div class="st">Parties</div>
           <div class="grid">
             <div class="f" id="wa">
-              <label for="i-account" id="lbl-acc">Account Name</label>
+              <label for="i-account" id="lbl-acc">Bill to</label>
               <input type="text" id="i-account" placeholder="Search" autocomplete="off">
               <div class="lst"></div>
               <div id="gstinShow" style="font-size:11.5px;color:var(--ac2);margin-top:2px"></div>
@@ -327,7 +333,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
             </div>
             <!-- Sub-account disabled per management call, kept for later -->
             <div class="f" id="ws" style="display:none">
-              <label for="i-subaccount">Sub-account</label>
+              <label for="i-subaccount">Ship to</label>
               <input type="text" id="i-subaccount" placeholder="Search, or type a new name" autocomplete="off">
               <div class="lst"></div>
               <div class="hint">Pick a match if it exists. If not, type the name and it will be used as it is.</div>
@@ -340,13 +346,6 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
                 <span class="ph on" id="dph">Select</span>
               </div>
             </div>
-          </div>
-        </div>
-        <div class="sec">
-          <div class="st">Reason</div>
-          <div class="f">
-            <label for="i-justification">Justification</label>
-            <textarea id="i-justification" placeholder="Why this discount"></textarea>
           </div>
         </div>
       </div>
@@ -377,13 +376,30 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       </div>
     </div>
     <div class="card">
-      <div class="ch"><h2>Subject</h2></div>
+      <div class="ch"><h2>Body</h2></div>
       <div class="cb">
         <div class="sec">
-          <div class="f"><label>Mail Subject</label><div class="subj" id="subj">—</div></div>
+          <div class="f">
+            <label for="i-justification">Justification</label>
+            <textarea id="i-justification" placeholder="Why this discount"></textarea>
+          </div>
         </div>
       </div>
     </div>
+    <div class="card">
+      <div class="ch"><h2>Attachments</h2></div>
+      <div class="cb">
+        <div class="sec">
+          <div class="f">
+            <label>Files</label>
+            <input type="file" id="i-files" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.webp" style="height:auto;padding:8px 10px;font-size:13px">
+            <div class="hint">PDF or image. They ride along with the approval mail.</div>
+            <div id="fileList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:none"><div class="subj" id="subj">—</div></div>
     <div class="card">
       <div class="ch"><h2>Review</h2></div>
       <div class="rev" id="rev"></div>
@@ -539,7 +555,7 @@ combo($("#i-account"),$("#wa .lst"),"Accounts",
   o=>{
     S.acc=o?{id:o.id,name:o.Account_Name,gst:o.GST_Number||""}:null;
     if(o){$("#i-gstin").value=o.GST_Number||"";$("#gstinShow").textContent=o.GST_Number?("GSTIN : "+o.GST_Number):"";ask()}
-    else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#gstinShow").textContent="";$("#lbl-acc").textContent="Account Name";$("#wd").style.display="none";$("#i-dealer").value=""}
+    else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#gstinShow").textContent="";$("#lbl-acc").textContent="Bill to";$("#wd").style.display="none";$("#i-dealer").value=""}
   });
 combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
   o=>{
@@ -562,7 +578,7 @@ function mode(m){
   const both=(m==="both");
   $("#wd").style.display = both ? "" : "none";
   if(!both){ S.dlr=null; $("#i-dealer").value=""; }
-  $("#lbl-acc").textContent = (m==="via") ? "Sub-dealer" : "Account Name";
+  $("#lbl-acc").textContent = (m==="via") ? "Sub-dealer" : "Bill to";
   $("#mtxt").innerHTML =
       m==="direct" ? "Checks <b>Account Name</b> on the order"
     : m==="via"    ? "Checks <b>Sub-dealer</b> on the order"
@@ -720,7 +736,7 @@ function paint(){
 }
 function chips(){
   const p=[];
-  if(S.acc)p.push([S.mode==="via"?"Sub-dealer":"Account",S.acc.name]);
+  if(S.acc)p.push([S.mode==="via"?"Sub-dealer":"Bill to",S.acc.name]);
   if(S.mode==="both"&&S.dlr)p.push(["Sub-dealer",S.dlr.name]);
   /* sub-account disabled, no longer part of the combination */
   if($("#i-payment").value)p.push(["Pay",$("#i-payment").value]);
@@ -782,6 +798,22 @@ function loadUsers(){
   }).catch(e=>{clearTimeout(guard);console.warn("user load failed",e);done([])});
 }
 
+/* files chosen on the Mail tab. They are uploaded to the requisition
+   record after it saves, so the approval mail can carry them. */
+S.files=[];
+function drawFiles(){
+  const box=$("#fileList"); if(!box) return;
+  box.innerHTML="";
+  S.files.forEach((f,i)=>{
+    const kb=Math.round(f.size/1024);
+    const el=document.createElement("div");
+    el.className="fchip";
+    el.innerHTML='<span class="fn"></span><span class="fsz">'+(kb>1024?(kb/1024).toFixed(1)+" MB":kb+" KB")+'</span><button type="button">\u00d7</button>';
+    el.querySelector(".fn").textContent=f.name;
+    el.querySelector("button").onclick=()=>{S.files.splice(i,1);drawFiles()};
+    box.appendChild(el);
+  });
+}
 const chipDraw={};
 function redrawAllChips(){Object.keys(chipDraw).forEach(k=>chipDraw[k]())}
 
@@ -904,10 +936,11 @@ function resetForm(){
   $("#i-justification").value="";
 
   $("#wd").style.display="none";
-  $("#lbl-acc").textContent="Account Name";
+  $("#lbl-acc").textContent="Bill to";
   $("#mst").classList.remove("show");
 
   redrawAllChips();
+  S.files=[]; drawFiles();
 
   $("#lines").innerHTML=""; S.n=0; addLine();
 
@@ -949,9 +982,9 @@ function review(){
   const r=$$(".li").filter(l=>l._sku||l._all).map(l=>
     `${l._all?"All SKUs":l._sku.name} ${pct(+l.querySelector(".ed").value||0)}% ×${l._nocap?"no cap":l.querySelector(".qty").value}`);
   const it=[
-    ["Account Name",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
+    ["Bill to",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
     ["Sub-dealer",S.mode==="via"?(S.acc?S.acc.name:"—"):(S.mode==="both"&&S.dlr?S.dlr.name:"—")],
-    ["Sub-account",subText()||"—"],
+    ["Ship to",subText()||"—"],
     ["GSTIN",$("#i-gstin").value.trim()||"—"],
     ["Payment Terms",$("#i-payment").value||"—"],
     ["Zone",$("#i-zone").value||"—"],
@@ -1031,6 +1064,7 @@ btn.onclick=()=>{
       const d=r&&r.data&&r.data[0];
       if(d&&d.code==="SUCCESS"){
         const rid=d.details?d.details.id:null;
+        if(rid&&S.files.length){ uploadFiles(rid) }
         $("#ref").textContent="…";
         $("#pl").textContent=rid?("Record ID "+rid):"";
         if(rid){
@@ -1058,6 +1092,18 @@ btn.onclick=()=>{
     })
     .finally(()=>{btn.disabled=false;btn.textContent="Send for approval"});
 };
+/* Attachments go onto the requisition record. The mail function reads
+   the record's attachments and adds them to the approval mail, so the
+   widget only has to get them onto the record. */
+function uploadFiles(rid){
+  S.files.forEach(f=>{
+    try{
+      ZOHO.CRM.API.attachFile({Entity:"Discount_Requisitions",RecordID:rid,File:{Name:f.name,Content:f}})
+        .then(r=>console.log("attached",f.name,r))
+        .catch(e=>console.warn("attach failed",f.name,e));
+    }catch(e){console.warn("attach threw",f.name,e)}
+  });
+}
 $("#again").onclick=()=>location.reload();
 
 const H={me:null,pend:[],rej:[],active:[],done:[],exp:[],tab:"pend",ready:false,auths:[]};
@@ -1334,7 +1380,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v31";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v32";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
@@ -1344,6 +1390,18 @@ dtoggle();
 ["#i-payment","#i-zone","#i-validtill","#i-gstin","#i-subaccount"].forEach(s=>$(s).addEventListener("input",paint));
 function selToggle(sel){sel.classList.toggle("selEmpty",!sel.value)}
 [$("#i-payment"),$("#i-zone")].forEach(sel=>{selToggle(sel);sel.addEventListener("change",()=>selToggle(sel))});
+(function(){
+  const fi=$("#i-files");
+  if(!fi) return;
+  fi.addEventListener("change",()=>{
+    [...fi.files].forEach(f=>{
+      if(f.size>20*1024*1024){alert(f.name+" is over 20 MB and was skipped.");return}
+      if(!S.files.some(x=>x.name===f.name&&x.size===f.size)) S.files.push(f);
+    });
+    fi.value="";
+    drawFiles();
+  });
+})();
 addLine();
 })();
 </script>
