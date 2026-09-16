@@ -331,8 +331,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
               <input type="text" id="i-dealer" placeholder="Search" autocomplete="off">
               <div class="lst"></div>
             </div>
-            <!-- Sub-account disabled per management call, kept for later -->
-            <div class="f" id="ws" style="display:none">
+            <div class="f" id="ws">
               <label for="i-subaccount">Ship to</label>
               <input type="text" id="i-subaccount" placeholder="Search, or type a new name" autocomplete="off">
               <div class="lst"></div>
@@ -738,7 +737,7 @@ function chips(){
   const p=[];
   if(S.acc)p.push([S.mode==="via"?"Sub-dealer":"Bill to",S.acc.name]);
   if(S.mode==="both"&&S.dlr)p.push(["Sub-dealer",S.dlr.name]);
-  /* sub-account disabled, no longer part of the combination */
+  if(subText())p.push(["Ship to",subText()]);
   if($("#i-payment").value)p.push(["Pay",$("#i-payment").value]);
   if($("#i-zone").value)p.push(["Zone",$("#i-zone").value]);
   $$(".li").forEach(l=>{if(l._all){p.push(["SKU","All SKUs"])}else if(l._sku){p.push(["SKU",l._sku.name])}});
@@ -1275,7 +1274,7 @@ function findDupes(){
       const aDlr=a.Sub_dealer_Name?a.Sub_dealer_Name.id:null;
       if(String(aAcc||"")!==String(accWant||""))return;
       if(String(aDlr||"")!==String(dlrWant||""))return;
-      /* sub-account disabled, no longer part of the combination */
+      if(!sameName(sub,a.Sub_Account_Name||""))return;
       if((a.Payment_Term||"")!==pay)return;
       if((a.Zone||"")!==zon)return;
       if(l._all){ if(!a.All_SKUs)return }
@@ -1380,7 +1379,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v33";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v34";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
