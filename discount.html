@@ -169,6 +169,9 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   border:1px solid var(--ln);border-radius:8px;box-shadow:var(--sh2);
   max-height:210px;overflow-y:auto;display:none}
 .ulst.open{display:block}
+#recCard{overflow:visible}
+#recCard .cb,#recCard .sec,#recCard .grid,#recCard .f{overflow:visible}
+.chipwrap[data-up="1"] .ulst{top:auto;bottom:calc(100% + 3px)}
 .uopt{padding:8px 11px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--ln2);
   display:flex;flex-direction:column;justify-content:center;min-height:40px}
 .uopt:last-child{border-bottom:0}
@@ -357,13 +360,13 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
     </div>
   </section>
   <section class="pane" id="p2">
-    <div class="card">
+    <div class="card" id="recCard">
       <div class="ch"><h2>Recipients</h2></div>
       <div class="cb">
         <div class="sec"><div class="grid">
           <div class="f full"><label>to</label><div class="chipwrap"><div class="chips" data-for="to"><input type="text" placeholder="Type a name"></div><div class="ulst"></div></div></div>
           <div class="f"><label>cc</label><div class="chipwrap"><div class="chips" data-for="cc"><input type="text" placeholder="Type a name"></div><div class="ulst"></div></div></div>
-          <div class="f"><label>bcc</label><div class="chipwrap"><div class="chips" data-for="bcc"><input type="text" placeholder="Type a name"></div><div class="ulst"></div></div></div>
+          <div class="f"><label>bcc</label><div class="chipwrap" data-up="1"><div class="chips" data-for="bcc"><input type="text" placeholder="Type a name"></div><div class="ulst"></div></div></div>
         </div></div>
       </div>
     </div>
@@ -1325,7 +1328,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v28";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v29";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
