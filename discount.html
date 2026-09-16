@@ -164,6 +164,19 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .chip button{background:none;border:0;color:var(--ac);cursor:pointer;font-size:13px;line-height:1;padding:0 2px}
 .chips input{border:0;padding:3px 5px;flex:1;min-width:120px;height:26px;box-shadow:none!important}
 .chips input:focus{outline:none;box-shadow:none!important}
+.chipwrap{position:relative}
+.ulst{position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:45;background:var(--sf);
+  border:1px solid var(--ln);border-radius:8px;box-shadow:var(--sh2);
+  max-height:210px;overflow-y:auto;display:none}
+.ulst.open{display:block}
+.uopt{padding:8px 11px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--ln2);
+  display:flex;flex-direction:column;justify-content:center;min-height:40px}
+.uopt:last-child{border-bottom:0}
+.uopt:hover,.uopt.hi{background:var(--acs);color:var(--ac2)}
+.uopt .um{font-size:10.5px;color:var(--ink3);margin-top:1px}
+.uopt:hover .um,.uopt.hi .um{color:var(--ac2);opacity:.75}
+.unon{padding:10px 11px;font-size:12px;color:var(--ink4)}
+.chip .cnm{font-weight:600}
 .subj{padding:9px 11px;background:var(--sf2);border:1px solid var(--ln);border-radius:7px;
   font-size:12px;color:var(--ink2);word-break:break-word;line-height:1.5}
 .rev{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--ln2)}
@@ -348,9 +361,9 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       <div class="ch"><h2>Recipients</h2></div>
       <div class="cb">
         <div class="sec"><div class="grid">
-          <div class="f full"><label>to</label><div class="chips" data-for="to"><input type="text" placeholder="name@teachmint.com"></div></div>
-          <div class="f"><label>cc</label><div class="chips" data-for="cc"><input type="text" placeholder="Add"></div></div>
-          <div class="f"><label>bcc</label><div class="chips" data-for="bcc"><input type="text" placeholder="Add"></div></div>
+          <div class="f full"><label>to</label><div class="chipwrap"><div class="chips" data-for="to"><input type="text" placeholder="Type a name"></div><div class="ulst"></div></div></div>
+          <div class="f"><label>cc</label><div class="chipwrap"><div class="chips" data-for="cc"><input type="text" placeholder="Type a name"></div><div class="ulst"></div></div></div>
+          <div class="f"><label>bcc</label><div class="chipwrap"><div class="chips" data-for="bcc"><input type="text" placeholder="Type a name"></div><div class="ulst"></div></div></div>
         </div></div>
       </div>
     </div>
@@ -440,7 +453,7 @@ function baseOf(){
   return DEFAULT_BASE;
 }
 
-ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; loadHistory(); });
+ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; loadUsers(); loadHistory(); });
 ZOHO.embeddedApp.init();
 function txtOf(o){
   return [o.Account_Name && (o.Account_Name.name||o.Account_Name),
@@ -712,22 +725,115 @@ function chips(){
   p.forEach(([k,x])=>{const e=document.createElement("span");e.className="cc";
     e.innerHTML=`<span class="k">${k}</span><span class="v">${x}</span>`;c.appendChild(e)});
 }
+/* ---- CRM users, loaded once, used by the to/cc/bcc name pickers ----
+   U.list holds {name,email}. The chips still store plain emails in
+   S.to / S.cc / S.bcc, so the submit payload is unchanged. U.byMail
+   only maps an email back to a display name for the chip label.    */
+const U={list:[],byMail:{},loaded:false};
+
+function loadUsers(){
+  return ZOHO.CRM.CONFIG.getUsers({Type:"ActiveUsers"})
+    .then(r=>{
+      const rows=(r&&r.users)?r.users:[];
+      U.list=rows.map(u=>({
+        name:(u.full_name||u.first_name||u.last_name||"").trim(),
+        email:(u.email||"").trim().toLowerCase()
+      })).filter(u=>u.email);
+      U.list.forEach(u=>{U.byMail[u.email]=u.name});
+      U.loaded=true;
+      redrawAllChips();
+    })
+    .catch(e=>{console.warn("user load failed",e);U.loaded=true});
+}
+
+const chipDraw={};
+function redrawAllChips(){Object.keys(chipDraw).forEach(k=>chipDraw[k]())}
+
 $$(".chips").forEach(box=>{
-  const key=box.dataset.for,inp=box.querySelector("input");
+  const key=box.dataset.for;
+  const inp=box.querySelector("input");
+  const list=box.parentNode.querySelector(".ulst");
+  let cur=[],hi=-1;
+
   box.onclick=()=>inp.focus();
-  inp.onfocus=()=>box.classList.add("foc");
-  inp.onblur=()=>{box.classList.remove("foc");go()};
+  inp.onfocus=()=>{box.classList.add("foc");if(inp.value)find(inp.value)};
+  inp.onblur=()=>{box.classList.remove("foc");setTimeout(()=>{list.classList.remove("open");takeTyped()},170)};
+  inp.oninput=()=>find(inp.value);
+
   inp.onkeydown=e=>{
-    if(e.key==="Enter"||e.key===","){e.preventDefault();go()}
-    if(e.key==="Backspace"&&!inp.value&&S[key].length){S[key].pop();draw()}
+    const os=list.querySelectorAll(".uopt");
+    if(e.key==="ArrowDown"&&os.length){e.preventDefault();hi=Math.min(hi+1,os.length-1);mark(os)}
+    else if(e.key==="ArrowUp"&&os.length){e.preventDefault();hi=Math.max(hi-1,0);mark(os)}
+    else if(e.key==="Enter"){
+      e.preventDefault();
+      if(hi>=0&&os[hi]){pick(cur[hi].email)}
+      else{takeTyped()}
+    }
+    else if(e.key==="Escape"){list.classList.remove("open")}
+    else if(e.key===","){e.preventDefault();takeTyped()}
+    else if(e.key==="Backspace"&&!inp.value&&S[key].length){S[key].pop();draw()}
   };
-  function go(){const v=inp.value.trim().replace(/,$/,"");
-    if(v&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)&&!S[key].includes(v)){S[key].push(v);inp.value=""}draw()}
-  function draw(){box.querySelectorAll(".chip").forEach(c=>c.remove());
-    S[key].forEach((a,i)=>{const c=document.createElement("span");c.className="chip";
-      c.innerHTML=`${a}<button type="button">×</button>`;
+
+  function mark(os){
+    os.forEach(o=>o.classList.remove("hi"));
+    if(os[hi]){os[hi].classList.add("hi");os[hi].scrollIntoView({block:"nearest"})}
+  }
+
+  function find(q){
+    q=(q||"").trim().toLowerCase();
+    hi=-1;
+    if(!q){list.classList.remove("open");return}
+    if(!U.loaded){
+      list.innerHTML='<div class="unon">Loading users…</div>';
+      list.classList.add("open");return;
+    }
+    cur=U.list.filter(u=>
+      !S[key].includes(u.email) &&
+      (u.name.toLowerCase().indexOf(q)>-1 || u.email.indexOf(q)>-1)
+    ).slice(0,20);
+    if(!cur.length){
+      list.innerHTML='<div class="unon">No matching user</div>';
+    }else{
+      list.innerHTML=cur.map((u,i)=>
+        `<div class="uopt" data-i="${i}">${u.name||u.email}<span class="um">${u.email}</span></div>`
+      ).join("");
+      list.querySelectorAll(".uopt").forEach(el=>{
+        el.onmousedown=ev=>{ev.preventDefault();pick(cur[+el.dataset.i].email)};
+      });
+    }
+    list.classList.add("open");
+  }
+
+  function pick(mail){
+    if(mail&&!S[key].includes(mail)){S[key].push(mail)}
+    inp.value="";
+    list.classList.remove("open");
+    draw();
+    inp.focus();
+  }
+
+  /* a raw address typed in full still works, so anyone outside CRM
+     can be added the old way */
+  function takeTyped(){
+    const v=inp.value.trim().replace(/,$/,"").toLowerCase();
+    if(v&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)&&!S[key].includes(v)){
+      S[key].push(v);inp.value="";draw();
+    }
+  }
+
+  function draw(){
+    box.querySelectorAll(".chip").forEach(c=>c.remove());
+    S[key].forEach((a,i)=>{
+      const nm=U.byMail[a]||"";
+      const c=document.createElement("span");
+      c.className="chip";
+      c.innerHTML=(nm?`<span class="cnm">${nm}</span>`:a)+'<button type="button">\u00d7</button>';
+      c.title=a;
       c.querySelector("button").onclick=ev=>{ev.stopPropagation();S[key].splice(i,1);draw()};
-      box.insertBefore(c,inp)})}
+      box.insertBefore(c,inp);
+    });
+  }
+  chipDraw[key]=draw;
 });
 function show(n){
   $$(".pane").forEach(p=>p.classList.remove("on"));$("#p"+n).classList.add("on");
@@ -761,10 +867,7 @@ function resetForm(){
   $("#lbl-acc").textContent="Account Name";
   $("#mst").classList.remove("show");
 
-  ["to","cc","bcc"].forEach(k=>{
-    const box=document.querySelector('.chips[data-for="'+k+'"]');
-    box.querySelectorAll(".chip").forEach(c=>c.remove());
-  });
+  redrawAllChips();
 
   $("#lines").innerHTML=""; S.n=0; addLine();
 
@@ -1145,17 +1248,9 @@ function reopen(r){
   $("#i-justification").value = r.Context||"";
 
   ["to","cc","bcc"].forEach(k=>{
-    S[k]=(r[k]||"").split(",").map(x=>x.trim()).filter(Boolean);
-    const box=document.querySelector('.chips[data-for="'+k+'"]');
-    box.querySelectorAll(".chip").forEach(c=>c.remove());
-    const inp=box.querySelector("input");
-    S[k].forEach((a,i)=>{
-      const c=document.createElement("span");c.className="chip";
-      c.innerHTML=a+'<button type="button">\u00d7</button>';
-      c.querySelector("button").onclick=ev=>{ev.stopPropagation();S[k].splice(i,1);c.remove()};
-      box.insertBefore(c,inp);
-    });
+    S[k]=(r[k]||"").split(",").map(x=>x.trim().toLowerCase()).filter(Boolean);
   });
+  redrawAllChips();
 
   $("#lines").innerHTML=""; S.n=0;
   const rows=r.Item_Detail||[];
@@ -1199,7 +1294,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v26";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v27";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
