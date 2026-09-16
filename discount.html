@@ -76,6 +76,12 @@ select{appearance:none;cursor:pointer;padding-right:26px;
   background-repeat:no-repeat;background-position:right 10px center}
 .ro{background:var(--sf2);color:var(--ink2);cursor:default}
 select.selEmpty{font-style:italic;color:var(--ink4)}
+/* the widget sits in a dark-themed iframe, so the native option list
+   inherits white text. Force it back to dark-on-white. */
+select{font-size:14px}
+select option{color:#1a1d23!important;background:#ffffff!important;font-size:14px!important;font-style:normal!important}
+select option[value=""]{color:#8b93a1!important;font-style:italic!important}
+select option:checked{background:#f3edff!important}
 /* empty date shows a Select placeholder */
 input[type=date].empty{color:transparent}
 input[type=date].empty::-webkit-datetime-edit{color:transparent}
@@ -1328,7 +1334,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v29";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v31";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
