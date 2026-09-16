@@ -453,7 +453,7 @@ function baseOf(){
   return DEFAULT_BASE;
 }
 
-ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; loadUsers(); loadHistory(); });
+ZOHO.embeddedApp.on("PageLoad",function(){ S.ready=true; loadHistory(); try{loadUsers()}catch(e){console.warn("users",e);U.loaded=true;redrawAllChips()} });
 ZOHO.embeddedApp.init();
 function txtOf(o){
   return [o.Account_Name && (o.Account_Name.name||o.Account_Name),
@@ -732,18 +732,45 @@ function chips(){
 const U={list:[],byMail:{},loaded:false};
 
 function loadUsers(){
-  return ZOHO.CRM.CONFIG.getUsers({Type:"ActiveUsers"})
-    .then(r=>{
-      const rows=(r&&r.users)?r.users:[];
-      U.list=rows.map(u=>({
-        name:(u.full_name||u.first_name||u.last_name||"").trim(),
-        email:(u.email||"").trim().toLowerCase()
-      })).filter(u=>u.email);
-      U.list.forEach(u=>{U.byMail[u.email]=u.name});
-      U.loaded=true;
-      redrawAllChips();
-    })
-    .catch(e=>{console.warn("user load failed",e);U.loaded=true});
+  const done=rows=>{
+    U.list=(rows||[]).map(u=>({
+      name:(u.full_name||u.name||((u.first_name||"")+" "+(u.last_name||""))).trim(),
+      email:(u.email||u.Email||"").trim().toLowerCase()
+    })).filter(u=>u.email);
+    U.list.forEach(u=>{U.byMail[u.email]=u.name||u.email});
+    U.loaded=true;
+    redrawAllChips();
+    console.log("users loaded:",U.list.length);
+  };
+
+  /* the SDK exposes the user list under more than one shape depending on
+     version, so try each and give up gracefully rather than hanging. */
+  let p=null;
+  try{
+    if(ZOHO.CRM.CONFIG&&ZOHO.CRM.CONFIG.getUsers){
+      p=ZOHO.CRM.CONFIG.getUsers({Type:"AllUsers"});
+    }else if(ZOHO.CRM.API&&ZOHO.CRM.API.getAllUsers){
+      p=ZOHO.CRM.API.getAllUsers({Type:"AllUsers"});
+    }
+  }catch(e){console.warn("getUsers threw",e)}
+
+  if(!p||typeof p.then!=="function"){ done([]); return; }
+
+  /* never let a silent hang leave the box saying Loading for ever */
+  const guard=setTimeout(()=>{if(!U.loaded)done([])},8000);
+
+  p.then(r=>{
+    clearTimeout(guard);
+    let rows=[];
+    if(r){
+      if(Array.isArray(r)) rows=r;
+      else if(Array.isArray(r.users)) rows=r.users;
+      else if(r.data&&Array.isArray(r.data)) rows=r.data;
+      else if(r.response&&Array.isArray(r.response.users)) rows=r.response.users;
+    }
+    console.log("getUsers raw:",r);
+    done(rows);
+  }).catch(e=>{clearTimeout(guard);console.warn("user load failed",e);done([])});
 }
 
 const chipDraw={};
@@ -785,6 +812,10 @@ $$(".chips").forEach(box=>{
     if(!q){list.classList.remove("open");return}
     if(!U.loaded){
       list.innerHTML='<div class="unon">Loading users…</div>';
+      list.classList.add("open");return;
+    }
+    if(!U.list.length){
+      list.innerHTML='<div class="unon">User list unavailable — type the full email address</div>';
       list.classList.add("open");return;
     }
     cur=U.list.filter(u=>
@@ -1294,7 +1325,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v27";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v28";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
