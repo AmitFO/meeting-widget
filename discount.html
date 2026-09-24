@@ -117,16 +117,16 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .lnums{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-start}
 .lnums .f{flex:0 0 auto;align-self:flex-start}
 .lnums .f>label{white-space:nowrap}
-.lnums .f.qty-w{width:86px}
-.lnums .f.lp-w{width:146px}
+.lnums .f.qty-w{width:78px}
+.lnums .f.lp-w{width:132px}
 .lnums .f.ad-w{width:96px}
-.lnums .f.ed-w{width:92px}
+.lnums .f.ed-w{width:88px}
 .anySku{padding:0 10px;height:36px;display:flex;align-items:center;border:1px dashed var(--acl);border-radius:7px;background:var(--acs);font-size:13px;color:var(--ac2)}
 .li.allmode .hidePrice{display:none}
 .li.nocap .qty-w input{background:var(--sf2);color:var(--ink4)}
 .warn{margin-top:11px;padding:9px 11px;background:var(--rds);border:1px solid #f3b9b9;border-radius:7px;font-size:11.5px;color:#b42318;display:none}
 .li.openend .warn{display:block}
-.lnums .f.gt-w{width:248px}
+.lnums .f.gt-w{width:198px}
 @media(max-width:400px){
   .lnums .f{flex:1 1 calc(50% - 5px);width:auto}
   .lnums .f>label{white-space:normal}
@@ -861,7 +861,7 @@ function addLine(){
       <div class="lnums">
         <div class="f lp-w hidePrice"><label>List Price</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ed-w"><label>Discount %</label><input type="number" class="ed num" value="0" min="0" max="100" step="0.00001"></div>
-        <div class="f gt-w hidePrice"><label>Unit Discounted Price (Excl. GST)</label><input type="text" inputmode="decimal" class="gt num" placeholder="—"></div>
+        <div class="f gt-w hidePrice"><label>Discounted Price (Excl. GST)</label><input type="text" inputmode="decimal" class="gt num" placeholder="—"></div>
         <div class="f qty-w">
           <label>Qty</label>
           <input type="number" class="qty num" value="0" min="1">
