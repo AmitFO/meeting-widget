@@ -43,7 +43,6 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink
   flex-wrap:wrap;box-shadow:var(--sh);min-height:44px}
 .combo>.lb{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink2);margin-right:2px}
-/* bordered sub-sections inside a card */
 .sec{border:1px solid var(--pln);border-radius:8px;padding:12px;margin-bottom:12px}
 .sec:last-child{margin-bottom:0}
 .sec>.st{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
@@ -76,13 +75,10 @@ select{appearance:none;cursor:pointer;padding-right:26px;
   background-repeat:no-repeat;background-position:right 10px center}
 .ro{background:var(--sf2);color:var(--ink2);cursor:default}
 select.selEmpty{font-style:italic;color:var(--ink4)}
-/* the widget sits in a dark-themed iframe, so the native option list
-   inherits white text. Force it back to dark-on-white. */
 select{font-size:14px}
 select option{color:#1a1d23!important;background:#ffffff!important;font-size:14px!important;font-style:normal!important}
 select option[value=""]{color:#8b93a1!important;font-style:italic!important}
 select option:checked{background:#f3edff!important}
-/* empty date shows a Select placeholder */
 input[type=date].empty{color:transparent}
 input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .datewrap{position:relative}
@@ -100,7 +96,6 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .opt:hover,.opt.hi{background:var(--acs);color:var(--ac2)}
 .opt .sm{font-size:10.5px;color:var(--ink3);margin-top:1px}
 .opt:hover .sm,.opt.hi .sm{color:var(--ac2);opacity:.7}
-.non{padding:10px 11px;font-size:12px;color:var(--ink4)}
 .useNew{border-bottom:1px solid var(--ln)!important;background:var(--acs)}
 .useNew b{color:var(--ac2)}
 .hint{font-size:10.5px;color:var(--ink4);margin-top:2px}
@@ -108,7 +103,8 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   background:var(--acs);border-radius:7px;font-size:11.5px;color:var(--ac2)}
 .mst.show{display:flex}
 .mst .sw{margin-left:auto;background:var(--sf);border:1px solid var(--acl);color:var(--ac2);
-  font-family:inherit;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:100px;cursor:pointer}
+  font-family:inherit;font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:100px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px}
 .li{border:1px solid var(--pln);border-radius:9px;padding:13px 14px;margin:10px 12px}
 .li:first-child{margin-top:12px}
 .lh{display:flex;align-items:center;gap:8px;margin-bottom:10px}
@@ -118,7 +114,6 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   cursor:pointer;font-size:16px;line-height:1;padding:3px 7px;border-radius:6px}
 .kill:hover{color:var(--rd);background:var(--rds)}
 .lr{display:grid;grid-template-columns:1fr;gap:11px}
-/* SKU spans, numeric fields sit compactly beside each other */
 .lnums{display:flex;gap:9px;flex-wrap:wrap}
 .lnums .f{flex:0 0 auto;align-self:flex-start}
 .lnums .f.qty-w{width:86px}
@@ -130,7 +125,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .li.nocap .qty-w input{background:var(--sf2);color:var(--ink4)}
 .warn{margin-top:11px;padding:9px 11px;background:var(--rds);border:1px solid #f3b9b9;border-radius:7px;font-size:11.5px;color:#b42318;display:none}
 .li.openend .warn{display:block}
-.lnums .f.gt-w{width:158px}
+.lnums .f.gt-w{width:196px}
 @media(max-width:400px){
   .lnums .f{flex:1 1 calc(50% - 5px);width:auto}
 }
@@ -148,7 +143,7 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   background:var(--ln);border:1px solid var(--ln);border-radius:7px;overflow:hidden}
 .rc{background:var(--sf2);padding:7px 9px;min-width:0}
 .rc .k{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--ink2);margin-bottom:1px;white-space:nowrap}
+  color:var(--ink2);margin-bottom:1px;white-space:normal;line-height:1.3}
 .rc .v{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rc.hl{background:var(--ams)}
@@ -217,11 +212,44 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   box-shadow:var(--sh2);overflow:hidden;transform:scale(.97);transition:transform .2s}
 .veil.open .modal{transform:none}
 .mh{padding:18px 18px 12px;font-size:15px;font-weight:700}
+.msub{padding:0 18px 12px;font-size:12.5px;color:var(--ink2);line-height:1.5;margin-top:-6px}
 .modes{padding:0 18px 18px;display:grid;gap:8px}
 .mc{text-align:left;padding:13px 14px;border:1px solid var(--ln);border-radius:8px;
   background:var(--sf);cursor:pointer;font-family:inherit;transition:border-color .12s,background .12s}
 .mc:hover{border-color:var(--ac);background:var(--acs)}
+.mc.sel{border-color:var(--ac);background:var(--acs)}
 .mc .t{font-size:14px;font-weight:600;color:var(--ink)}
+.mc .d{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.mc.sel .d{color:var(--ac2);opacity:.8}
+/* national distributor picker */
+.ndbox{border:1px solid var(--acl);border-radius:8px;background:var(--sf2);overflow:hidden}
+.ndrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 13px;
+  background:none;border:0;border-bottom:1px solid var(--ln2);font-family:inherit;cursor:pointer;
+  transition:background .12s}
+.ndrow:last-child{border-bottom:0}
+.ndrow:hover{background:var(--acs)}
+.ndrow .nm{flex:1;font-size:13px;font-weight:600;color:var(--ink);min-width:0}
+.ndrow .ct{font-size:13px;font-weight:600;color:var(--ink)}
+.ndrow .gs{font-size:10.5px;color:var(--ink3);margin-top:2px;font-variant-numeric:tabular-nums;
+  letter-spacing:.02em}
+.ndrow .arw{color:var(--ink4);font-size:15px;line-height:1;flex-shrink:0}
+.ndrow:hover .arw{color:var(--ac)}
+.ndhead{display:flex;align-items:center;gap:8px;padding:9px 13px;background:var(--acs);
+  border-bottom:1px solid var(--acl)}
+.ndhead .bk{background:none;border:0;color:var(--ac2);font-family:inherit;font-size:12px;
+  font-weight:600;cursor:pointer;padding:2px 4px;border-radius:5px}
+.ndhead .bk:hover{background:var(--sf)}
+.ndhead .tt{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ac2)}
+.ndscroll{max-height:250px;overflow-y:auto}
+.ndmsg{padding:14px 13px;font-size:12.5px;color:var(--ink3);text-align:center}
+.ndpick{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid var(--acl);
+  border-radius:7px;background:var(--acs);margin-top:8px}
+.ndpick .pn{flex:1;min-width:0}
+.ndpick .pt{font-size:12.5px;font-weight:600;color:var(--ac2)}
+.ndpick .pg{font-size:10.5px;color:var(--ink3);margin-top:1px;font-variant-numeric:tabular-nums}
+.ndpick .px{background:none;border:0;color:var(--ac);cursor:pointer;font-size:11.5px;font-weight:600;
+  padding:3px 7px;border-radius:5px}
+.ndpick .px:hover{background:var(--sf)}
 .done{text-align:center;padding:40px 20px}
 .tick{width:62px;height:62px;margin:0 auto 18px;border-radius:50%;
   background:linear-gradient(145deg,#16a34a,#047a37);color:#fff;display:grid;place-items:center;
@@ -435,17 +463,38 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 </div>
 <div class="veil" id="veil" role="dialog" aria-modal="true">
   <div class="modal">
-    <div class="mh" id="mh">How does this partner buy?</div>
-    <div class="modes">
-      <button type="button" class="mc" data-mode="direct">
-        <span class="t">Direct Billing</span>
-      </button>
-      <button type="button" class="mc" data-mode="via">
-        <span class="t">As a Sub dealer</span>
-      </button>
-      <button type="button" class="mc" data-mode="both">
-        <span class="t">Both</span>
-      </button>
+    <!-- step 1 : how is this order billed -->
+    <div id="mstep1">
+      <div class="mh" id="mh">How is this order billed?</div>
+      <div class="modes">
+        <button type="button" class="mc" data-route="direct">
+          <span class="t">Direct Billing</span>
+          <span class="d">We bill the partner you picked</span>
+        </button>
+        <button type="button" class="mc" data-route="nd">
+          <span class="t">Through National Distributor</span>
+          <span class="d">The partner you picked becomes the sub-dealer</span>
+        </button>
+      </div>
+    </div>
+    <!-- step 2 : which distributor -->
+    <div id="mstep2" style="display:none">
+      <div class="mh">Which distributor?</div>
+      <div class="modes">
+        <button type="button" class="mc" id="ndSpecificBtn">
+          <span class="t">A specific distributor</span>
+          <span class="d">Pick the branch that will be billed</span>
+        </button>
+        <div id="ndPickWrap" style="display:none"></div>
+        <button type="button" class="mc" id="ndAnyBtn">
+          <span class="t">Any distributor</span>
+          <span class="d">The branch is decided at order time</span>
+        </button>
+      </div>
+      <div style="padding:0 18px 18px;display:flex;gap:9px;justify-content:space-between;align-items:center">
+        <button class="btn bs" id="ndBack" style="height:34px;padding:0 14px;font-size:12.5px">← Back</button>
+        <button class="btn bp" id="ndSubmit" style="height:34px;padding:0 20px;font-size:12.5px" disabled>Submit</button>
+      </div>
     </div>
   </div>
 </div>
@@ -460,10 +509,35 @@ const PARTNER_BASE=[
 ];
 const GST=18, SC=40, DEFAULT_BASE=14;
 
-const S={mode:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false,editId:null,attempt:1};
+/* ---- national distributors ----------------------------------------
+   A branch counts as a real distributor only when the account name is
+   an exact match AND Creator Id is filled. That pair is what separates
+   the live branches from the duplicates, the PRIVATE LIMITED entries
+   and the sub-dealers that carry a distributor's name.
+   The margin is never shown here and never saved - the order check
+   adds it back when it compares.                                     */
+const ND_BRANDS=[
+  {key:"rashi",     name:"RASHI PERIPHERALS LIMITED"},
+  {key:"iris",      name:"IRIS GLOBAL SERVICES LIMITED"},
+  {key:"redington", name:"REDINGTON LIMITED"}
+];
+const ND_NAMES=ND_BRANDS.map(b=>b.name.toLowerCase());
+const isNDName=n=>ND_NAMES.indexOf((n||"").trim().toLowerCase())>-1;
+
+/* Panel codes only: X + 4 digits + 2 letters + 2 digits. A suffix is
+   allowed but it has to start with a space, so X2075PB14 - S passes
+   and X1065PA13U does not.                                           */
+const PANEL_RE=/^X\d{4}[A-Z]{2}\d{2}(\s.*)?$/i;
+const isPanel=code=>PANEL_RE.test((code||"").trim());
+
+const S={route:null,ndMode:null,nd:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false,editId:null,attempt:1};
 const inr=v=>"₹"+(+v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=v=>(+v||0).toFixed(5).replace(/0+$/,"").replace(/\.$/,"");
+const isND=()=>S.route==="nd";
 
+/* the entitlement bar always follows the partner being approved, never
+   the distributor billing the order. Distributors are kept out of the
+   Bill to search, so S.acc can only ever be that partner.            */
 function baseOf(){
   if(!S.acc||!S.acc.name)return DEFAULT_BASE;
   const n=S.acc.name.trim().toLowerCase();
@@ -497,7 +571,9 @@ function search(module,term){
     })
     .catch(e=>{console.warn("search failed",module,q,e);return []});
 }
-function combo(inp,list,module,render,onPick){
+/* sift is optional and runs on every result set, so it can depend on
+   state that changes after the combo was wired up. */
+function combo(inp,list,module,render,onPick,sift){
   let cur=[],hi=-1,timer=null;
   function draw(rows,msg){
     cur=rows;
@@ -531,11 +607,16 @@ function combo(inp,list,module,render,onPick){
       const asked=q;
       search(module,q).then(rows=>{
         if(inp.value!==asked)return;
-        draw(rows.slice(0,30), module==="Contacts" ? "No match \u2014 the name you typed will be used" : "No match in CRM");
+        let out=rows;
+        if(sift){ out=out.filter(sift) }
+        draw(out.slice(0,30),
+          module==="Contacts" ? "No match \u2014 the name you typed will be used"
+          : (sift&&rows.length&&!out.length) ? "No match you can pick here"
+          : "No match in CRM");
       });
     },350);
   }
-  inp.onfocus=()=>{if(inp.value)go(inp.value)};
+  inp.onfocus=()=>{if(inp.value&&!inp.readOnly)go(inp.value)};
   inp.oninput=()=>{onPick&&onPick(null);go(inp.value);paint()};
   inp.onblur=()=>setTimeout(()=>list.classList.remove("open"),160);
   inp.onkeydown=e=>{
@@ -549,13 +630,16 @@ function combo(inp,list,module,render,onPick){
     if(os[hi]){os[hi].classList.add("hi");os[hi].scrollIntoView({block:"nearest"})}
   };
 }
+/* Bill to never offers a national distributor. Routing through one is
+   a choice made in the popup, not something typed in here.           */
 combo($("#i-account"),$("#wa .lst"),"Accounts",
   o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
   o=>{
     S.acc=o?{id:o.id,name:o.Account_Name,gst:o.GST_Number||""}:null;
     if(o){$("#i-gstin").value=o.GST_Number||"";$("#gstinShow").textContent=o.GST_Number?("GSTIN : "+o.GST_Number):"";ask()}
-    else{S.mode=null;S.dlr=null;$("#mst").classList.remove("show");$("#i-gstin").value="";$("#gstinShow").textContent="";$("#lbl-acc").textContent="Bill to";$("#wd").style.display="none";$("#i-dealer").value=""}
-  });
+    else{clearRoute()}
+  },
+  o=>!isNDName(o.Account_Name));
 combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
   o=>{
     const nm=o.Full_Name||o.Last_Name||"";
@@ -566,28 +650,185 @@ combo($("#i-subaccount"),$("#ws .lst"),"Contacts",
 const subText=()=>$("#i-subaccount").value.trim();
 combo($("#i-dealer"),$("#wd .lst"),"Accounts",
   o=>`${o.Account_Name}${o.GST_Number?`<span class="sm">${o.GST_Number}</span>`:""}`,
-  o=>{S.dlr=o?{id:o.id,name:o.Account_Name}:null});
+  o=>{S.dlr=o?{id:o.id,name:o.Account_Name}:null},
+  o=>!isNDName(o.Account_Name));
+
+/* ================= billing route popup ================= */
 const veil=$("#veil");
+let ndDraft=null;              /* branch chosen inside the popup, not yet applied */
+const ndCache={};              /* brand key -> branches, fetched once per session */
+
 function ask(){
-  $("#mh").textContent="How does "+(S.acc?S.acc.name:"this partner")+" buy?";
-  veil.classList.add("open");setTimeout(()=>$(".mc").focus(),140);
+  $("#mh").textContent="How is "+(S.acc?S.acc.name:"this order")+" billed?";
+  ndDraft = S.nd ? Object.assign({},S.nd) : null;
+  step(1);
+  if(S.route==="nd"){ step(2); paintNdChoice(S.ndMode) }
+  veil.classList.add("open");
+  setTimeout(()=>{const b=$("#mstep1").style.display==="none"?$("#ndSpecificBtn"):$(".mc");b&&b.focus()},140);
 }
-function mode(m){
-  S.mode=m;veil.classList.remove("open");
-  const both=(m==="both");
-  $("#wd").style.display = both ? "" : "none";
-  if(!both){ S.dlr=null; $("#i-dealer").value=""; }
-  $("#lbl-acc").textContent = (m==="via") ? "Sub-dealer" : "Bill to";
-  $("#mtxt").innerHTML =
-      m==="direct" ? "Checks <b>Account Name</b> on the order"
-    : m==="via"    ? "Checks <b>Sub-dealer</b> on the order"
-                   : "Checks <b>Account Name</b> and <b>Sub-dealer</b> on the order";
-  $("#mst").classList.add("show");paint();
+function step(n){
+  $("#mstep1").style.display = n===1?"":"none";
+  $("#mstep2").style.display = n===2?"":"none";
 }
-$$(".mc").forEach(b=>b.onclick=()=>mode(b.dataset.mode));
+$$('#mstep1 .mc').forEach(b=>b.onclick=()=>{
+  if(b.dataset.route==="direct"){ applyRoute("direct",null,null); return }
+  step(2); paintNdChoice(null);
+});
+$("#ndBack").onclick=()=>{step(1)};
+$("#ndSpecificBtn").onclick=()=>paintNdChoice("specific");
+$("#ndAnyBtn").onclick=()=>paintNdChoice("any");
+$("#ndSubmit").onclick=()=>{
+  if($("#ndSubmit").disabled)return;
+  if(ndDraft) applyRoute("nd","specific",ndDraft);
+  else        applyRoute("nd","any",null);
+};
+
+function paintNdChoice(m){
+  $("#ndSpecificBtn").classList.toggle("sel",m==="specific");
+  $("#ndAnyBtn").classList.toggle("sel",m==="any");
+  $("#ndPickWrap").style.display = m==="specific" ? "" : "none";
+  if(m==="specific"){
+    if(ndDraft) drawNdPicked(); else drawNdBrands();
+  }else if(m==="any"){
+    ndDraft=null;
+  }
+  $("#ndSubmit").disabled = !(m==="any" || (m==="specific" && ndDraft));
+}
+function drawNdBrands(){
+  $("#ndPickWrap").innerHTML=
+    '<div class="ndbox">'+ND_BRANDS.map(b=>
+      `<button type="button" class="ndrow" data-k="${b.key}">
+         <span class="nm">${b.name}</span><span class="arw">&rsaquo;</span>
+       </button>`).join("")+'</div>';
+  $$("#ndPickWrap .ndrow").forEach(el=>el.onclick=()=>openBrand(el.dataset.k));
+}
+function drawNdPicked(){
+  $("#ndPickWrap").innerHTML=
+    `<div class="ndpick">
+       <div class="pn">
+         <div class="pt">${ndDraft.name} &middot; ${ndDraft.city||"\u2014"}</div>
+         ${ndDraft.gst?`<div class="pg">${ndDraft.gst}</div>`:""}
+       </div>
+       <button type="button" class="px">Change</button>
+     </div>`;
+  $("#ndPickWrap .px").onclick=()=>{ndDraft=null;drawNdBrands();$("#ndSubmit").disabled=true};
+}
+function openBrand(key){
+  const brand=ND_BRANDS.find(b=>b.key===key);
+  const shell=rows=>
+    '<div class="ndbox">'+
+      `<div class="ndhead"><button type="button" class="bk">&lsaquo; All distributors</button>
+         <span class="tt">${brand.name}</span></div>`+
+      `<div class="ndscroll">${rows}</div></div>`;
+  $("#ndPickWrap").innerHTML=shell('<div class="ndmsg">Loading branches\u2026</div>');
+  $("#ndPickWrap .bk").onclick=drawNdBrands;
+
+  loadBranches(brand).then(list=>{
+    if(!list.length){
+      $("#ndPickWrap").innerHTML=shell('<div class="ndmsg">No branch is set up for this distributor yet.</div>');
+      $("#ndPickWrap .bk").onclick=drawNdBrands;
+      return;
+    }
+    const rows=list.map((b,i)=>
+      `<button type="button" class="ndrow" data-i="${i}">
+         <span class="nm"><span class="ct">${b.city||"\u2014"}</span>${b.gst?`<span class="gs">${b.gst}</span>`:""}</span>
+       </button>`).join("");
+    $("#ndPickWrap").innerHTML=shell(rows);
+    $("#ndPickWrap .bk").onclick=drawNdBrands;
+    $$("#ndPickWrap .ndrow").forEach(el=>el.onclick=()=>{
+      ndDraft=list[+el.dataset.i];
+      drawNdPicked();
+      $("#ndSubmit").disabled=false;
+    });
+  });
+}
+/* exact account name plus a filled Creator Id - the same pair the
+   order check uses, so the widget and the check can never disagree. */
+function loadBranches(brand){
+  if(ndCache[brand.key]) return Promise.resolve(ndCache[brand.key]);
+  return ZOHO.CRM.API.searchRecord({
+      Entity:"Accounts",Type:"criteria",
+      Query:"(Account_Name:equals:"+brand.name+")",delay:false
+    })
+    .then(r=>{
+      const rows=(r&&r.data)?r.data:[];
+      const out=rows
+        .filter(o=>isNDName(o.Account_Name))
+        .filter(o=>String(o.Creator_Id||"").trim()!=="")
+        .map(o=>({
+          id:o.id,
+          name:brand.name,
+          city:(o.Billing_City1&&o.Billing_City1.name)?o.Billing_City1.name:"",
+          gst:o.GST_Number||""
+        }))
+        .sort((a,b)=>(a.city||"").localeCompare(b.city||""));
+      ndCache[brand.key]=out;
+      return out;
+    })
+    .catch(e=>{console.warn("branch load failed",brand.name,e);return []});
+}
+
+function applyRoute(route,ndMode,nd){
+  S.route=route; S.ndMode=ndMode||null; S.nd=nd||null;
+  veil.classList.remove("open");
+
+  const acc=$("#i-account"), dlr=$("#i-dealer");
+  if(route==="nd"){
+    /* Bill to shows the distributor, the partner drops to Sub-dealer.
+       Both are locked so the pair can only be changed together.      */
+    acc.readOnly=true; acc.classList.add("ro");
+    acc.value = S.ndMode==="specific"
+      ? S.nd.name+(S.nd.city?" \u2014 "+S.nd.city:"")
+      : "Any national distributor";
+    $("#lbl-acc").textContent="Bill to";
+    $("#gstinShow").textContent = (S.ndMode==="specific"&&S.nd.gst) ? ("GSTIN : "+S.nd.gst) : "";
+    $("#wd").style.display="";
+    dlr.readOnly=true; dlr.classList.add("ro");
+    dlr.value=S.acc?S.acc.name:"";
+    S.dlr=S.acc?{id:S.acc.id,name:S.acc.name}:null;
+    $("#mtxt").innerHTML = S.ndMode==="specific"
+      ? "Checks <b>"+S.nd.name+"</b> and <b>"+(S.nd.city||"branch")+"</b> as Bill to, and <b>"+(S.acc?S.acc.name:"the partner")+"</b> as Sub-dealer on the order"
+      : "Checks any national distributor as Bill to, and <b>"+(S.acc?S.acc.name:"the partner")+"</b> as Sub-dealer on the order";
+  }else{
+    acc.readOnly=false; acc.classList.remove("ro");
+    if(S.acc) acc.value=S.acc.name;
+    $("#lbl-acc").textContent="Bill to";
+    $("#gstinShow").textContent = (S.acc&&S.acc.gst) ? ("GSTIN : "+S.acc.gst) : "";
+    $("#wd").style.display="none";
+    dlr.readOnly=false; dlr.classList.remove("ro");
+    dlr.value=""; S.dlr=null;
+    $("#mtxt").innerHTML="Checks <b>Account Name</b> on the order";
+  }
+  $("#i-gstin").value = (route==="nd"&&S.ndMode==="specific") ? (S.nd.gst||"") : (S.acc?S.acc.gst||"":"");
+  $("#mst").classList.add("show");
+  refreshSkuMode();
+  paint();
+}
+function clearRoute(){
+  S.route=null;S.ndMode=null;S.nd=null;S.dlr=null;
+  const acc=$("#i-account"), dlr=$("#i-dealer");
+  acc.readOnly=false; acc.classList.remove("ro");
+  dlr.readOnly=false; dlr.classList.remove("ro"); dlr.value="";
+  $("#mst").classList.remove("show");
+  $("#i-gstin").value="";$("#gstinShow").textContent="";
+  $("#lbl-acc").textContent="Bill to";
+  $("#wd").style.display="none";
+  refreshSkuMode();
+}
 $("#swap").onclick=ask;
-veil.onclick=e=>{if(e.target===veil&&S.mode)veil.classList.remove("open")};
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.mode)veil.classList.remove("open")});
+veil.onclick=e=>{if(e.target===veil&&S.route)veil.classList.remove("open")};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&S.route)veil.classList.remove("open")});
+
+/* Only panels can be approved, on any route. The search will not
+   offer anything else, and lineCheck refuses it if one ever gets in. */
+function refreshSkuMode(){
+  $$(".li").forEach(l=>{
+    l.querySelector(".sku").placeholder="Search panels";
+    const h=l.querySelector(".skuHint");
+    if(h) h.style.display = l._all ? "none" : "";
+  });
+}
+
 function addLine(){
   const i=S.n++;const el=document.createElement("div");el.className="li";
   el.innerHTML=`
@@ -600,18 +841,19 @@ function addLine(){
           <label class="nocapTick" style="text-transform:uppercase;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.02em;color:#8b93a1;cursor:pointer;user-select:none;white-space:nowrap;line-height:1;background:none;border:0;padding:0;width:auto;height:auto;border-radius:0"><input type="checkbox" class="nocap" style="width:13px;height:13px;margin:0;padding:0;flex:0 0 auto;accent-color:#7c3aed;cursor:pointer;height:13px;border-radius:0"> Any Quantity</label>
           <label class="allTick" style="text-transform:uppercase;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.02em;color:#8b93a1;cursor:pointer;user-select:none;white-space:nowrap;line-height:1;background:none;border:0;padding:0;width:auto;height:auto;border-radius:0"><input type="checkbox" class="allsku" style="width:13px;height:13px;margin:0;padding:0;flex:0 0 auto;accent-color:#7c3aed;cursor:pointer;height:13px;border-radius:0"> All SKUs</label>
         </div>
-        <input type="text" class="sku" placeholder="Search" autocomplete="off">
+        <input type="text" class="sku" placeholder="Search panels" autocomplete="off">
         <div class="anySku" style="display:none">Any product in the catalogue</div>
         <div class="lst"></div>
+        <div class="hint skuHint">Panel SKUs only</div>
       </div>
       <div class="lnums">
+        <div class="f lp-w hidePrice"><label>List Price</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
+        <div class="f ed-w"><label>Discount %</label><input type="number" class="ed num" value="0" min="0" max="100" step="0.00001"></div>
+        <div class="f gt-w hidePrice"><label>Unit Discounted Price (Excl. GST)</label><input type="text" inputmode="decimal" class="gt num" placeholder="—"></div>
         <div class="f qty-w">
           <label>Qty</label>
           <input type="number" class="qty num" value="0" min="1">
         </div>
-        <div class="f lp-w hidePrice"><label>List Price.</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
-        <div class="f ed-w"><label>Discount %</label><input type="number" class="ed num" value="0" min="0" max="100" step="0.00001"></div>
-        <div class="f gt-w hidePrice"><label>Grand Total (incl. GST)</label><input type="text" inputmode="decimal" class="gt num" placeholder="—"></div>
       </div>
     </div>
     <div class="mtr hidePrice">
@@ -621,16 +863,17 @@ function addLine(){
     <div class="qerr" style="display:none;margin-top:8px;font-size:11.5px;color:var(--rd);font-weight:500">Enter a quantity, or tick No cap</div>
     <div class="warn">Any product in the catalogue, no quantity limit. Only the valid-till date stops this.</div>
     <div class="rs hidePrice">
-      <div class="rc"><div class="k">Final Price</div><div class="v fp">—</div></div>
       <div class="rc hl"><div class="k">Lock in Price</div><div class="v lip">—</div></div>
+      <div class="rc"><div class="k">Sub Total</div><div class="v st">—</div></div>
       <div class="rc"><div class="k">Tax</div><div class="v tx">—</div></div>
-      <div class="rc"><div class="k">Total</div><div class="v tl">—</div></div>
+      <div class="rc"><div class="k">Grand Total (Incl. GST)</div><div class="v tl">—</div></div>
     </div>`;
   $("#lines").appendChild(el);
   el._sku=null;
   combo(el.querySelector(".sku"),el.querySelector(".lst"),"Products",
     o=>`${o.Product_Name}${o.Product_Code?`<span class="sm">${o.Product_Code} · ${inr(o.Unit_Price||o.MRP||0)}</span>`:""}`,
-    o=>{el._sku=o?{id:o.id,name:o.Product_Name,price:+(o.Unit_Price||o.MRP||0)}:null;markQty(el)});
+    o=>{el._sku=o?{id:o.id,name:o.Product_Name,code:o.Product_Code||"",price:+(o.Unit_Price||o.MRP||0)}:null;markQty(el)},
+    o=>isPanel(o.Product_Code));
   el.querySelector(".kill").onclick=()=>{if($$(".li").length===1)return;el.remove();renum();syncAllSku();paint()};
   el._drive="ed";
   el._all=false; el._nocap=false;
@@ -645,6 +888,7 @@ function addLine(){
     el.querySelector(".nocapTick").style.color = el._nocap ? "#6d28d9" : "#8b93a1";
     el.querySelector(".sku").style.display=el._all?"none":"";
     el.querySelector(".anySku").style.display=el._all?"flex":"none";
+    el.querySelector(".skuHint").style.display=el._all?"none":"";
     if(el._all){el._sku=null;el.querySelector(".sku").value="";}
     const q=el.querySelector(".qty"); q.disabled=el._nocap;
     if(el._nocap){q.value="";}else if(!q.value){q.value=0;}
@@ -695,11 +939,17 @@ function paint(){
       return;
     }
     const q=Math.max(1,+l.querySelector(".qty").value||1);
+    /* the entered quantity, or 0 while it is still blank. The four cards
+       below stay dashed until a real quantity is in.                   */
+    const qRaw=+l.querySelector(".qty").value||0;
+    const qv=(!l._nocap&&qRaw>=1)?qRaw:0;
     let ex;
     if(l._drive==="gt"&&s){
+      /* the field holds one unit's price before tax, so quantity plays
+         no part in turning it back into a discount                     */
       const gtv=+((l.querySelector(".gt").value||"").replace(/,/g,""))||0;
       let tp=0;
-      if(gtv>0){const lipx=gtv/(q*(1+GST/100));tp=(1-lipx/s.price)*100;}
+      if(gtv>0&&s.price>0){tp=(1-gtv/s.price)*100;}
       ex=Math.max(0,+tp.toFixed(5));
       l.querySelector(".ed").value=ex;
     }else{
@@ -707,23 +957,21 @@ function paint(){
     }
     l.querySelector(".lp").value=s?inr(s.price):"—";
     l.querySelector(".tv").textContent=(s?pct(ex):"0")+"%";
-    /* bar: green up to the standard rate, orange for anything beyond it */
     l.querySelector(".sa").style.width=(s?Math.min(ex,b,SC)/SC*100:0)+"%";
     l.querySelector(".se").style.width=(s?Math.max(0,Math.min(ex,b+SC)-b)/SC*100:0)+"%";
-    if(!s){["fp","lip","tx","tl"].forEach(c=>l.querySelector("."+c).textContent="—");
+    if(!s){["lip","st","tx","tl"].forEach(c=>l.querySelector("."+c).textContent="—");
       l.querySelector(".gv").textContent="₹0.00";
       if(l._drive!=="gt"){l.querySelector(".gt").value="";}
       return}
-    const p=s.price,lip=p*(1-ex/100),tx=lip*q*GST/100;
-    l.querySelector(".fp").textContent=inr(lip);
+    const p=s.price,lip=p*(1-ex/100);
+    const sub=lip*qv,tx=sub*GST/100;
     l.querySelector(".lip").textContent=inr(lip);
-    l.querySelector(".tx").textContent=inr(tx);
-    l.querySelector(".tl").textContent=inr(lip*q+tx);
+    l.querySelector(".st").textContent  = qv>0?inr(sub):"—";
+    l.querySelector(".tx").textContent  = qv>0?inr(tx):"—";
+    l.querySelector(".tl").textContent  = qv>0?inr(sub+tx):"—";
     l.querySelector(".gv").textContent=inr(p*q*ex/100);
     if(l._drive!=="gt"){
-      /* default stays zero until a real discount is entered */
-      l.querySelector(".gt").value = ex===0 ? (0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2})
-        : (lip*q+tx).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+      l.querySelector(".gt").value = lip.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
     }
     sa+=p*q*Math.min(ex,b)/100;se+=p*q*Math.max(0,ex-b)/100;
   });
@@ -731,12 +979,20 @@ function paint(){
   chips();
   const n=$$(".li").filter(l=>l._sku||l._all).length;
   const top=Math.max(0,...$$(".li").map(l=>+l.querySelector(".ed").value||0));
-  $("#subj").textContent=`Discount approval · ${S.acc?S.acc.name:"Any"} · ${n} SKU · up to ${pct(top)}%`;
+  const who = isND()
+    ? (S.ndMode==="specific" ? S.nd.name+" / "+(S.acc?S.acc.name:"") : "Any ND / "+(S.acc?S.acc.name:""))
+    : (S.acc?S.acc.name:"Any");
+  $("#subj").textContent=`Discount approval · ${who} · ${n} SKU · up to ${pct(top)}%`;
 }
 function chips(){
   const p=[];
-  if(S.acc)p.push([S.mode==="via"?"Sub-dealer":"Bill to",S.acc.name]);
-  if(S.mode==="both"&&S.dlr)p.push(["Sub-dealer",S.dlr.name]);
+  if(isND()){
+    p.push(["Route", S.ndMode==="specific" ? "Through "+S.nd.name : "Through any ND"]);
+    if(S.ndMode==="specific"&&S.nd.city)p.push(["Branch",S.nd.city]);
+    if(S.acc)p.push(["Sub-dealer",S.acc.name]);
+  }else if(S.acc){
+    p.push(["Bill to",S.acc.name]);
+  }
   if(subText())p.push(["Ship to",subText()]);
   if($("#i-payment").value)p.push(["Pay",$("#i-payment").value]);
   if($("#i-zone").value)p.push(["Zone",$("#i-zone").value]);
@@ -749,10 +1005,6 @@ function chips(){
   p.forEach(([k,x])=>{const e=document.createElement("span");e.className="cc";
     e.innerHTML=`<span class="k">${k}</span><span class="v">${x}</span>`;c.appendChild(e)});
 }
-/* ---- CRM users, loaded once, used by the to/cc/bcc name pickers ----
-   U.list holds {name,email}. The chips still store plain emails in
-   S.to / S.cc / S.bcc, so the submit payload is unchanged. U.byMail
-   only maps an email back to a display name for the chip label.    */
 const U={list:[],byMail:{},loaded:false};
 
 function loadUsers(){
@@ -767,8 +1019,6 @@ function loadUsers(){
     console.log("users loaded:",U.list.length);
   };
 
-  /* the SDK exposes the user list under more than one shape depending on
-     version, so try each and give up gracefully rather than hanging. */
   let p=null;
   try{
     if(ZOHO.CRM.CONFIG&&ZOHO.CRM.CONFIG.getUsers){
@@ -780,7 +1030,6 @@ function loadUsers(){
 
   if(!p||typeof p.then!=="function"){ done([]); return; }
 
-  /* never let a silent hang leave the box saying Loading for ever */
   const guard=setTimeout(()=>{if(!U.loaded)done([])},8000);
 
   p.then(r=>{
@@ -797,8 +1046,6 @@ function loadUsers(){
   }).catch(e=>{clearTimeout(guard);console.warn("user load failed",e);done([])});
 }
 
-/* files chosen on the Mail tab. They are uploaded to the requisition
-   record after it saves, so the approval mail can carry them. */
 S.files=[];
 function drawFiles(){
   const box=$("#fileList"); if(!box) return;
@@ -883,8 +1130,6 @@ $$(".chips").forEach(box=>{
     inp.focus();
   }
 
-  /* a raw address typed in full still works, so anyone outside CRM
-     can be added the old way */
   function takeTyped(){
     const v=inp.value.trim().replace(/,$/,"").toLowerCase();
     if(v&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)&&!S[key].includes(v)){
@@ -911,8 +1156,6 @@ function show(n){
   $("#t0").className="tab"+(n===0?" on":"");
   $("#t1").className="tab"+(n===1?" on":"");
   $("#t2").className="tab"+(n===2?" on":"");
-  /* the combination banner only makes sense while building or reviewing
-     a request - hide it on My requests and on the done screen */
   $("#combo").style.display = (n===1||n===2) ? "" : "none";
   if(n===2)review();
   window.scrollTo({top:0,behavior:"smooth"});
@@ -920,8 +1163,10 @@ function show(n){
 $("#t0").onclick=()=>show(0);$("#t1").onclick=()=>show(1);$("#t2").onclick=()=>show(2);
 function resetForm(){
   S.editId=null; S.attempt=1;
-  S.acc=null; S.dlr=null; S.sub=null; S.mode=null;
+  S.acc=null; S.dlr=null; S.sub=null;
+  S.route=null; S.ndMode=null; S.nd=null;
   S.to=[]; S.cc=[]; S.bcc=[];
+  ndDraft=null;
 
   $("#i-account").value="";
   $("#i-dealer").value="";
@@ -934,9 +1179,7 @@ function resetForm(){
   $("#i-validtill").value="";
   $("#i-justification").value="";
 
-  $("#wd").style.display="none";
-  $("#lbl-acc").textContent="Bill to";
-  $("#mst").classList.remove("show");
+  clearRoute();
 
   redrawAllChips();
   S.files=[]; drawFiles();
@@ -954,8 +1197,13 @@ $("#newReq").onclick=()=>{
 function lineCheck(){
   const rows=$$(".li").filter(l=>l._sku||l._all);
   if(!rows.length) return "Add a SKU, or tick All SKUs on a line";
+  if(!S.route) return "Choose how this order is billed";
+  if(isND()&&S.ndMode==="specific"&&!S.nd) return "Pick the distributor branch";
   for(let i=0;i<rows.length;i++){
     const l=rows[i], n=l.querySelector(".sl").textContent;
+    if(l._sku&&!isPanel(l._sku.code)){
+      return "Line "+n+": only panel SKUs can be approved";
+    }
     if(!l._nocap){
       const q=+l.querySelector(".qty").value||0;
       if(q<1){
@@ -977,12 +1225,13 @@ $("#go2").onclick=()=>{
   show(2);
 };$("#back").onclick=()=>show(1);
 function review(){
-  const b=baseOf();
   const r=$$(".li").filter(l=>l._sku||l._all).map(l=>
     `${l._all?"All SKUs":l._sku.name} ${pct(+l.querySelector(".ed").value||0)}% ×${l._nocap?"no cap":l.querySelector(".qty").value}`);
+  const nd=isND();
   const it=[
-    ["Bill to",S.mode==="via"?"—":(S.acc?S.acc.name:"—")],
-    ["Sub-dealer",S.mode==="via"?(S.acc?S.acc.name:"—"):(S.mode==="both"&&S.dlr?S.dlr.name:"—")],
+    ["Billing route", !S.route ? "—" : (nd ? (S.ndMode==="specific" ? "Through a specific distributor" : "Through any distributor") : "Direct billing")],
+    ["Bill to", nd ? (S.ndMode==="specific" ? S.nd.name+(S.nd.city?" — "+S.nd.city:"") : "Any national distributor") : (S.acc?S.acc.name:"—")],
+    ["Sub-dealer", nd ? (S.acc?S.acc.name:"—") : "—"],
     ["Ship to",subText()||"—"],
     ["GSTIN",$("#i-gstin").value.trim()||"—"],
     ["Payment Terms",$("#i-payment").value||"—"],
@@ -1004,13 +1253,17 @@ btn.onclick=()=>{
   if(!S.to.length){e.textContent="Add a recipient";e.classList.add("show");return}
   e.classList.remove("show");
   const b=baseOf();
+  const nd=isND();
   const rec={
     Status:"Pending",
     Attempt_Number:1,
-    Account_Name : (S.mode==="via"||!S.acc)?null:{id:S.acc.id},
-    Sub_dealer   : S.mode==="via" ? (S.acc?{id:S.acc.id}:null)
-                 : S.mode==="both"? (S.dlr?{id:S.dlr.id}:null)
-                 : null,
+    /* Bill to holds the distributor branch on a specific-ND request and
+       is left empty on an any-ND one. Sub-dealer always holds the
+       partner the discount is actually for.                          */
+    Through_any_ND   : nd,
+    Account_Name : nd ? (S.ndMode==="specific" ? {id:S.nd.id} : null)
+                      : (S.acc?{id:S.acc.id}:null),
+    Sub_dealer   : nd ? (S.acc?{id:S.acc.id}:null) : null,
     Sub_account1 : subText()||null,
     GSTIN        : $("#i-gstin").value.trim()||null,
     Payment_Terms: $("#i-payment").value||null,
@@ -1091,9 +1344,6 @@ btn.onclick=()=>{
     })
     .finally(()=>{btn.disabled=false;btn.textContent="Send for approval"});
 };
-/* Attachments go onto the requisition record. The mail function reads
-   the record's attachments and adds them to the approval mail, so the
-   widget only has to get them onto the record. */
 function uploadFiles(rid){
   S.files.forEach(f=>{
     try{
@@ -1115,7 +1365,7 @@ function qStart(){
   return new Date(y,0,1);
 }
 const dmy=s=>{if(!s)return "\u2014";const d=new Date(s);return isNaN(d)?s:d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})};
-const partyOf=r=>(r.Account_Name&&r.Account_Name.name)||(r.Sub_dealer&&r.Sub_dealer.name)||"\u2014";
+const partyOf=r=>(r.Sub_dealer&&r.Sub_dealer.name)||(r.Account_Name&&r.Account_Name.name)||"\u2014";
 
 function grab(entity){
   return ZOHO.CRM.API.getAllRecords({Entity:entity,sort_by:"Created_Time",sort_order:"desc",per_page:200,page:1})
@@ -1170,6 +1420,12 @@ function loadHistory(){
   }).catch(()=>{H.ready=true;$("#hlist").innerHTML='<div class="hempty">Could not load your requests.</div>'});
 }
 
+function routeLabel(r){
+  if(!r.Through_any_ND) return "";
+  const a=r.Account_Name&&r.Account_Name.name;
+  return a ? " \u00b7 via "+a : " \u00b7 via any ND";
+}
+
 function drawHist(){
   const sets=[["pend","Pending",H.pend],["rej","Rejected",H.rej],["active","Active",H.active],["done","Fulfilled",H.done],["exp","Expired",H.exp]];
   if(H.tab==="pend"&&!H.pend.length){const f=sets.find(s=>s[2].length);if(f)H.tab=f[0]}
@@ -1189,7 +1445,7 @@ function drawHist(){
           <span class="hpill" style="background:var(--ams);color:var(--am)">awaiting decision</span>
           <span class="hpart">${partyOf(r)}</span>
         </div>
-        <div class="hmeta">${r.Name} \u00b7 ${n?n+" line"+(n>1?"s":""):"no lines"} \u00b7 raised ${dmy(r.Created_Time)}</div>
+        <div class="hmeta">${r.Name} \u00b7 ${n?n+" line"+(n>1?"s":""):"no lines"} \u00b7 raised ${dmy(r.Created_Time)}${routeLabel(r)}</div>
       </div>`}).join("");
     return;
   }
@@ -1203,7 +1459,7 @@ function drawHist(){
           <span class="hpill" style="background:var(--rds);color:var(--rd)">rejected</span>
           <span class="hpart">${partyOf(r)}</span>
         </div>
-        <div class="hmeta">${r.Name} \u00b7 attempt ${att} \u00b7 raised ${dmy(r.Created_Time)}</div>
+        <div class="hmeta">${r.Name} \u00b7 attempt ${att} \u00b7 raised ${dmy(r.Created_Time)}${routeLabel(r)}</div>
         ${why?`<div style="margin-top:7px;padding:9px 11px;background:var(--sf2);border-left:3px solid var(--rd);border-radius:0 7px 7px 0;font-size:12.5px;color:var(--ink);line-height:1.5">${why}</div>`:""}
         <button class="btn bp redo" data-i="${i}" style="margin-top:10px;height:32px;padding:0 15px;font-size:12.5px">Fix and resubmit</button>
       </div>`}).join("");
@@ -1226,7 +1482,7 @@ function drawHist(){
         <button class="hcopy" data-c="${g.code}">copy</button>
         <span class="hpart">${partyOf(g.req)}</span>
       </div>
-      <div class="hmeta">${g.req.Name} \u00b7 valid till ${g.till?dmy(g.till):"\u2014"}</div>
+      <div class="hmeta">${g.req.Name} \u00b7 valid till ${g.till?dmy(g.till):"\u2014"}${routeLabel(g.req)}</div>
       ${rows}
     </div>`}).join("");
 
@@ -1260,9 +1516,9 @@ function liveRow(a){
   return ((a.Approved_Quantity||0)-(a.Fulfilled_Quantity||0))>0;
 }
 function findDupes(){
-  const accWant = (S.mode==="via"||!S.acc)?null:S.acc.id;
-  const dlrWant = S.mode==="via" ? (S.acc?S.acc.id:null)
-                : S.mode==="both"? (S.dlr?S.dlr.id:null) : null;
+  const nd=isND();
+  const accWant = nd ? (S.ndMode==="specific" ? S.nd.id : null) : (S.acc?S.acc.id:null);
+  const dlrWant = nd ? (S.acc?S.acc.id:null) : null;
   const sub=subText(), pay=$("#i-payment").value||"", zon=$("#i-zone").value||"";
   const out=[];
   $$(".li").filter(l=>l._sku||l._all).forEach(l=>{
@@ -1270,6 +1526,9 @@ function findDupes(){
     const label=l._all?"All SKUs":(l._sku?l._sku.name:"");
     (H.auths||[]).forEach(a=>{
       if(!liveRow(a))return;
+      /* a distributor-routed approval is never a duplicate of a direct
+         one, even when every other field lines up */
+      if(!!a.Through_any_ND !== nd)return;
       const aAcc=a.Account_Name?a.Account_Name.id:null;
       const aDlr=a.Sub_dealer_Name?a.Sub_dealer_Name.id:null;
       if(String(aAcc||"")!==String(accWant||""))return;
@@ -1316,12 +1575,19 @@ function reopen(r){
   S.attempt=(r.Attempt_Number||1)+1;
 
   const acc=r.Account_Name, dlr=r.Sub_dealer;
-  if(acc){ S.acc={id:acc.id,name:acc.name,gst:r.GSTIN||""}; setCombo("#i-account","#wa .lst",acc.name); }
-  if(dlr){ S.dlr={id:dlr.id,name:dlr.name};                 setCombo("#i-dealer","#wd .lst",dlr.name); }
 
-  if(acc&&dlr)      mode("both");
-  else if(dlr&&!acc){ S.acc={id:dlr.id,name:dlr.name,gst:r.GSTIN||""}; setCombo("#i-account","#wa .lst",dlr.name); mode("via"); }
-  else              mode("direct");
+  if(r.Through_any_ND){
+    /* the partner sits in Sub-dealer, the distributor in Bill to */
+    if(dlr){ S.acc={id:dlr.id,name:dlr.name,gst:r.GSTIN||""}; }
+    if(acc){
+      applyRoute("nd","specific",{id:acc.id,name:acc.name,city:"",gst:r.GSTIN||""});
+    }else{
+      applyRoute("nd","any",null);
+    }
+  }else{
+    if(acc){ S.acc={id:acc.id,name:acc.name,gst:r.GSTIN||""}; setCombo("#i-account","#wa .lst",acc.name); }
+    applyRoute("direct",null,null);
+  }
 
   $("#i-subaccount").value = r.Sub_account1||"";
   $("#i-gstin").value      = r.GSTIN||"";
@@ -1344,16 +1610,13 @@ function reopen(r){
     addLine();
     const el=$$(".li")[$$(".li").length-1];
 
-    /* set the SKU BEFORE the checkbox dispatch, so modes() (fired by the
-       dispatch below) is the one deciding whether to keep it - same order
-       a fresh line follows. Defensive about key casing since a couple of
-       older records may have been saved before List_Price1 existed. */
     if(!it.All_SKUs){
       const skuObj = it.SKU || it.Sku || null;
       if(skuObj && (skuObj.id || skuObj.ID)){
         el._sku = {
           id: skuObj.id || skuObj.ID,
           name: skuObj.name || skuObj.Name || "",
+          code: skuObj.Product_Code || "",
           price: +(it.List_Price1 || it.List_Price || 0)
         };
         el.querySelector(".sku").value = el._sku.name;
@@ -1379,7 +1642,7 @@ function reopen(r){
 }
 
 const today=new Date();
-$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v34";
+$("#i-date").textContent=today.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+"  \u00b7  v35";
 const dv=$("#i-validtill");
 function dtoggle(){const has=!!dv.value;dv.classList.toggle("empty",!has);$("#dph").classList.toggle("on",!has)}
 dv.addEventListener("input",dtoggle);
