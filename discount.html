@@ -114,8 +114,9 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   cursor:pointer;font-size:16px;line-height:1;padding:3px 7px;border-radius:6px}
 .kill:hover{color:var(--rd);background:var(--rds)}
 .lr{display:grid;grid-template-columns:1fr;gap:11px}
-.lnums{display:flex;gap:9px;flex-wrap:wrap}
+.lnums{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-start}
 .lnums .f{flex:0 0 auto;align-self:flex-start}
+.lnums .f>label{white-space:nowrap}
 .lnums .f.qty-w{width:86px}
 .lnums .f.lp-w{width:146px}
 .lnums .f.ad-w{width:96px}
@@ -125,9 +126,10 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .li.nocap .qty-w input{background:var(--sf2);color:var(--ink4)}
 .warn{margin-top:11px;padding:9px 11px;background:var(--rds);border:1px solid #f3b9b9;border-radius:7px;font-size:11.5px;color:#b42318;display:none}
 .li.openend .warn{display:block}
-.lnums .f.gt-w{width:196px}
+.lnums .f.gt-w{width:248px}
 @media(max-width:400px){
   .lnums .f{flex:1 1 calc(50% - 5px);width:auto}
+  .lnums .f>label{white-space:normal}
 }
 .mtr{margin-top:11px}
 .trk{height:6px;background:var(--ln2);border-radius:100px;overflow:hidden;display:flex}
@@ -143,11 +145,13 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   background:var(--ln);border:1px solid var(--ln);border-radius:7px;overflow:hidden}
 .rc{background:var(--sf2);padding:7px 9px;min-width:0}
 .rc .k{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--ink2);margin-bottom:1px;white-space:normal;line-height:1.3}
+  color:var(--ink2);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rc .v{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rc.hl{background:var(--ams)}
 .rc.hl .k,.rc.hl .v{color:var(--am)}
+.tips{margin:0;padding:12px 14px 2px 31px;list-style:disc}
+.tips li{font-size:11.5px;color:var(--ink3);line-height:1.65}
 .addl{width:100%;padding:10px;background:var(--sf2);border:0;border-top:1px solid var(--ln2);
   font-family:inherit;font-size:12px;font-weight:600;color:var(--ac);cursor:pointer}
 .addl:hover{background:var(--acs)}
@@ -228,10 +232,10 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
   transition:background .12s}
 .ndrow:last-child{border-bottom:0}
 .ndrow:hover{background:var(--acs)}
-.ndrow .nm{flex:1;font-size:13px;font-weight:600;color:var(--ink);min-width:0}
-.ndrow .ct{font-size:13px;font-weight:600;color:var(--ink)}
-.ndrow .gs{font-size:10.5px;color:var(--ink3);margin-top:2px;font-variant-numeric:tabular-nums;
-  letter-spacing:.02em}
+.ndrow .nm{flex:1;font-size:13px;font-weight:600;color:var(--ink);min-width:0;display:block}
+.ndrow .ct{display:block;font-size:13px;font-weight:600;color:var(--ink);line-height:1.35}
+.ndrow .gs{display:block;font-size:10.5px;font-weight:500;color:var(--ink3);margin-top:3px;
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .ndrow .arw{color:var(--ink4);font-size:15px;line-height:1;flex-shrink:0}
 .ndrow:hover .arw{color:var(--ac)}
 .ndhead{display:flex;align-items:center;gap:8px;padding:9px 13px;background:var(--acs);
@@ -379,6 +383,12 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
     </div>
     <div class="card">
       <div class="ch"><h2>Item detail</h2></div>
+      <ul class="tips">
+        <li>Select the SKU.</li>
+        <li>Add the discount % or the discounted price, then the quantity.</li>
+        <li>Tick ALL SKUS to cover every panel, and ANY QUANTITY when the quantity is not known.</li>
+        <li>Use Add SKU to include another line.</li>
+      </ul>
       <div id="lines"></div>
       <button type="button" class="addl" id="addl">+ Add SKU</button>
       <div class="tot">
@@ -469,11 +479,9 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       <div class="modes">
         <button type="button" class="mc" data-route="direct">
           <span class="t">Direct Billing</span>
-          <span class="d">We bill the partner you picked</span>
         </button>
         <button type="button" class="mc" data-route="nd">
           <span class="t">Through National Distributor</span>
-          <span class="d">The partner you picked becomes the sub-dealer</span>
         </button>
       </div>
     </div>
@@ -483,12 +491,12 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       <div class="modes">
         <button type="button" class="mc" id="ndSpecificBtn">
           <span class="t">A specific distributor</span>
-          <span class="d">Pick the branch that will be billed</span>
+          <span class="d">Pick the ND that will be billed</span>
         </button>
         <div id="ndPickWrap" style="display:none"></div>
         <button type="button" class="mc" id="ndAnyBtn">
           <span class="t">Any distributor</span>
-          <span class="d">The branch is decided at order time</span>
+          <span class="d">The ND will be decided at order time</span>
         </button>
       </div>
       <div style="padding:0 18px 18px;display:flex;gap:9px;justify-content:space-between;align-items:center">
@@ -517,9 +525,9 @@ const GST=18, SC=40, DEFAULT_BASE=14;
    The margin is never shown here and never saved - the order check
    adds it back when it compares.                                     */
 const ND_BRANDS=[
-  {key:"rashi",     name:"RASHI PERIPHERALS LIMITED"},
-  {key:"iris",      name:"IRIS GLOBAL SERVICES LIMITED"},
-  {key:"redington", name:"REDINGTON LIMITED"}
+  {key:"rashi",     short:"Rashi",     name:"RASHI PERIPHERALS LIMITED"},
+  {key:"iris",      short:"IRIS",      name:"IRIS GLOBAL SERVICES LIMITED"},
+  {key:"redington", short:"Redington", name:"REDINGTON LIMITED"}
 ];
 const ND_NAMES=ND_BRANDS.map(b=>b.name.toLowerCase());
 const isNDName=n=>ND_NAMES.indexOf((n||"").trim().toLowerCase())>-1;
@@ -687,6 +695,9 @@ function paintNdChoice(m){
   $("#ndSpecificBtn").classList.toggle("sel",m==="specific");
   $("#ndAnyBtn").classList.toggle("sel",m==="any");
   $("#ndPickWrap").style.display = m==="specific" ? "" : "none";
+  /* while a specific distributor is being picked the other option would
+     read as a peer of the branches under it. Back reopens both.      */
+  $("#ndAnyBtn").style.display = m==="specific" ? "none" : "";
   if(m==="specific"){
     if(ndDraft) drawNdPicked(); else drawNdBrands();
   }else if(m==="any"){
@@ -706,7 +717,7 @@ function drawNdPicked(){
   $("#ndPickWrap").innerHTML=
     `<div class="ndpick">
        <div class="pn">
-         <div class="pt">${ndDraft.name} &middot; ${ndDraft.city||"\u2014"}</div>
+         <div class="pt">${ndDraft.short||ndDraft.name} ${ndDraft.city||""}</div>
          ${ndDraft.gst?`<div class="pg">${ndDraft.gst}</div>`:""}
        </div>
        <button type="button" class="px">Change</button>
@@ -731,7 +742,7 @@ function openBrand(key){
     }
     const rows=list.map((b,i)=>
       `<button type="button" class="ndrow" data-i="${i}">
-         <span class="nm"><span class="ct">${b.city||"\u2014"}</span>${b.gst?`<span class="gs">${b.gst}</span>`:""}</span>
+         <span class="nm"><span class="ct">${brand.short} ${b.city||"\u2014"}</span>${b.gst?`<span class="gs">${b.gst}</span>`:""}</span>
        </button>`).join("");
     $("#ndPickWrap").innerHTML=shell(rows);
     $("#ndPickWrap .bk").onclick=drawNdBrands;
@@ -758,6 +769,7 @@ function loadBranches(brand){
         .map(o=>({
           id:o.id,
           name:brand.name,
+          short:brand.short,
           city:(o.Billing_City1&&o.Billing_City1.name)?o.Billing_City1.name:"",
           gst:o.GST_Number||""
         }))
@@ -866,7 +878,7 @@ function addLine(){
       <div class="rc hl"><div class="k">Lock in Price</div><div class="v lip">—</div></div>
       <div class="rc"><div class="k">Sub Total</div><div class="v st">—</div></div>
       <div class="rc"><div class="k">Tax</div><div class="v tx">—</div></div>
-      <div class="rc"><div class="k">Grand Total (Incl. GST)</div><div class="v tl">—</div></div>
+      <div class="rc"><div class="k">Total (Incl. GST)</div><div class="v tl">—</div></div>
     </div>`;
   $("#lines").appendChild(el);
   el._sku=null;
