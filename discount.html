@@ -143,8 +143,8 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 .mlg b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 .rs{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:10px;
   background:var(--ln);border:1px solid var(--ln);border-radius:7px;overflow:hidden}
-.rc{background:var(--sf2);padding:7px 9px;min-width:0}
-.rc .k{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+.rc{background:var(--sf2);padding:7px 7px;min-width:0}
+.rc .k{font-size:9px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;
   color:var(--ink2);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rc .v{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -491,12 +491,12 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
       <div class="modes">
         <button type="button" class="mc" id="ndSpecificBtn">
           <span class="t">A specific distributor</span>
-          <span class="d">Pick the ND that will be billed</span>
+          <span class="d">Choose only if you know the ND and its branch</span>
         </button>
         <div id="ndPickWrap" style="display:none"></div>
         <button type="button" class="mc" id="ndAnyBtn">
           <span class="t">Any distributor</span>
-          <span class="d">The ND will be decided at order time</span>
+          <span class="d">Choose if you dont know the ND and it will be decided from order.</span>
         </button>
       </div>
       <div style="padding:0 18px 18px;display:flex;gap:9px;justify-content:space-between;align-items:center">
@@ -542,6 +542,10 @@ const S={route:null,ndMode:null,nd:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null
 const inr=v=>"₹"+(+v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=v=>(+v||0).toFixed(5).replace(/0+$/,"").replace(/\.$/,"");
 const isND=()=>S.route==="nd";
+/* The checkbox marks ANY ND only. A specific ND is recognised by the
+   distributor sitting in Bill to, which nothing but the ND route can
+   put there.                                                        */
+const recIsND=r=>!!(r&&(r.Through_any_ND||(r.Account_Name&&isNDName(r.Account_Name.name))));
 
 /* the entitlement bar always follows the partner being approved, never
    the distributor billing the order. Distributors are kept out of the
@@ -861,7 +865,7 @@ function addLine(){
       <div class="lnums">
         <div class="f lp-w hidePrice"><label>List Price</label><input type="text" class="lp num ro" value="—" readonly tabindex="-1"></div>
         <div class="f ed-w"><label>Discount %</label><input type="number" class="ed num" value="0" min="0" max="100" step="0.00001"></div>
-        <div class="f gt-w hidePrice"><label>Discounted Price (Excl. GST)</label><input type="text" inputmode="decimal" class="gt num" placeholder="—"></div>
+        <div class="f gt-w hidePrice"><label>Unit Offered Price(Excl GST)</label><input type="text" inputmode="decimal" class="gt num" placeholder="—"></div>
         <div class="f qty-w">
           <label>Qty</label>
           <input type="number" class="qty num" value="0" min="1">
@@ -878,7 +882,7 @@ function addLine(){
       <div class="rc hl"><div class="k">Lock in Price</div><div class="v lip">—</div></div>
       <div class="rc"><div class="k">Sub Total</div><div class="v st">—</div></div>
       <div class="rc"><div class="k">Tax</div><div class="v tx">—</div></div>
-      <div class="rc"><div class="k">Total (Incl. GST)</div><div class="v tl">—</div></div>
+      <div class="rc"><div class="k">Deal Value(Incl GST)</div><div class="v tl">—</div></div>
     </div>`;
   $("#lines").appendChild(el);
   el._sku=null;
@@ -1272,7 +1276,7 @@ btn.onclick=()=>{
     /* Bill to holds the distributor branch on a specific-ND request and
        is left empty on an any-ND one. Sub-dealer always holds the
        partner the discount is actually for.                          */
-    Through_any_ND   : nd,
+    Through_any_ND   : nd && S.ndMode==="any",
     Account_Name : nd ? (S.ndMode==="specific" ? {id:S.nd.id} : null)
                       : (S.acc?{id:S.acc.id}:null),
     Sub_dealer   : nd ? (S.acc?{id:S.acc.id}:null) : null,
@@ -1433,7 +1437,7 @@ function loadHistory(){
 }
 
 function routeLabel(r){
-  if(!r.Through_any_ND) return "";
+  if(!recIsND(r)) return "";
   const a=r.Account_Name&&r.Account_Name.name;
   return a ? " \u00b7 via "+a : " \u00b7 via any ND";
 }
@@ -1540,7 +1544,7 @@ function findDupes(){
       if(!liveRow(a))return;
       /* a distributor-routed approval is never a duplicate of a direct
          one, even when every other field lines up */
-      if(!!a.Through_any_ND !== nd)return;
+      if(recIsND(a) !== nd)return;
       const aAcc=a.Account_Name?a.Account_Name.id:null;
       const aDlr=a.Sub_dealer_Name?a.Sub_dealer_Name.id:null;
       if(String(aAcc||"")!==String(accWant||""))return;
@@ -1588,7 +1592,7 @@ function reopen(r){
 
   const acc=r.Account_Name, dlr=r.Sub_dealer;
 
-  if(r.Through_any_ND){
+  if(recIsND(r)){
     /* the partner sits in Sub-dealer, the distributor in Bill to */
     if(dlr){ S.acc={id:dlr.id,name:dlr.name,gst:r.GSTIN||""}; }
     if(acc){
