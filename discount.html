@@ -1313,8 +1313,14 @@ btn.onclick=()=>{
       return row;
     })
   };
-  Object.keys(rec).forEach(k=>{if(rec[k]===null)delete rec[k]});
   const editing=!!S.editId;
+  /* On a create a missing key is simply absent. On an update CRM reads a
+     missing key as leave unchanged, so the two party lookups must be sent
+     as an explicit null to be cleared - otherwise switching a rejected
+     request from a specific ND to any ND would leave the old distributor
+     sitting in Bill to.                                                */
+  const keepNull = editing ? ["Account_Name","Sub_dealer"] : [];
+  Object.keys(rec).forEach(k=>{if(rec[k]===null&&keepNull.indexOf(k)<0)delete rec[k]});
   if(editing){
     rec.id=S.editId;
     rec.Status="Resubmit";
