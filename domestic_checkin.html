@@ -66,23 +66,21 @@
   </div>
 
   <div class="field-group">
+    <div class="field-label">Meeting Start Time</div>
+    <input type="datetime-local" id="meetingStartTime">
+    <div class="field-hint">Pre-filled from CRM. Change only if start time differs.</div>
+  </div>
+
+  <div class="field-group">
     <div class="field-label">Meeting End Time</div>
     <input type="datetime-local" id="meetingEndTime">
     <div class="field-hint">Pre-filled from CRM. Change only if end time differs.</div>
   </div>
 
   <div class="field-group">
-    <div class="field-label">Meeting Type <span>*</span></div>
-    <select id="meetingType">
-      <option value="">-None-</option>
-      <option value="In-person Connect">In-person Connect</option>
-      <option value="Online Connect">Online Connect</option>
-    </select>
-  </div>
-
-  <div class="field-group">
     <div class="field-label">Description <span>*</span></div>
     <textarea id="meetingDescription" placeholder="Enter meeting description..."></textarea>
+    <div class="field-hint" id="purposeDisplay"></div>
   </div>
 
   <div class="field-group">
@@ -136,6 +134,7 @@ var FIELD_MEETING_TYPE     = "Meeting_Type";
 var FIELD_DESCRIPTION      = "Description";
 var FIELD_STATUS_MARKED_BY = "Status_Marked_by";
 var FIELD_END_DATETIME     = "End_DateTime";
+var FIELD_START_DATETIME   = "Start_DateTime";
 var UNIQUE_NUMBER_FIELD    = "Meeting_Unique_Number";
 var STAGE_COMPLETED        = "Conducted";
 var STAGE_CANCELLED        = "Cancelled";
@@ -149,8 +148,9 @@ var isProcessing        = false;
 var selectedFiles       = [];
 var totalUploadedCount  = 0;
 var totalUploadedBytes  = 0;
-var originalPurpose     = "";
-var originalEndDateTime = "";
+var originalPurpose      = "";
+var originalEndDateTime  = "";
+var originalStartDateTime = "";
 
 var stageEl        = document.getElementById("stage");
 var completeBtn    = document.getElementById("completeBtn");
@@ -160,8 +160,8 @@ var uploadImagesBtn= document.getElementById("uploadImagesBtn");
 var messageEl      = document.getElementById("message");
 var gpsEl          = document.getElementById("gpsInfo");
 var loaderEl       = document.getElementById("loader");
-var meetingTypeEl  = document.getElementById("meetingType");
 var descEl         = document.getElementById("meetingDescription");
+var startTimeEl    = document.getElementById("meetingStartTime");
 var endTimeEl      = document.getElementById("meetingEndTime");
 var imageGrid      = document.getElementById("imageGrid");
 var imageCount     = document.getElementById("imageCount");
@@ -297,8 +297,7 @@ function getCurrentLocation(){
 function processMeetingAction(targetStage){
   if(isProcessing||!meetingId)return;
   if(currentStage===STAGE_COMPLETED||currentStage===STAGE_CANCELLED||currentStage===STAGE_POSTPONED){showMessage("This meeting is already "+currentStage+".","info");return;}
-  meetingTypeEl.classList.remove("field-error"); descEl.classList.remove("field-error"); uploadBox.classList.remove("has-error");
-  if(!meetingTypeEl.value){showMessage("Please select a Meeting Type.","error");meetingTypeEl.classList.add("field-error");meetingTypeEl.focus();return;}
+  descEl.classList.remove("field-error"); uploadBox.classList.remove("has-error");
   if(!descEl.value||!descEl.value.trim()){showMessage("Please enter a Description.","error");descEl.classList.add("field-error");descEl.focus();return;}
   var imageMandatory=(originalPurpose==="Demo"||originalPurpose==="Training")&&targetStage===STAGE_COMPLETED;
   var hasImages=(totalUploadedCount>0)||(selectedFiles.length>0);
@@ -314,10 +313,13 @@ function processMeetingAction(targetStage){
       updateData[FIELD_ACTION_DATETIME]=getZohoDateTime();
       updateData[FIELD_LATITUDE]=parseFloat(location.latitude.toFixed(7));
       updateData[FIELD_LONGITUDE]=parseFloat(location.longitude.toFixed(7));
-      updateData[FIELD_MEETING_TYPE]=meetingTypeEl.value;
       updateData[FIELD_DESCRIPTION]=sanitizeText(descEl.value);
       updateData[FIELD_STATUS_MARKED_BY]=currentUser;
       // Only update End_DateTime if user changed it
+      var currentStartTimeInput=startTimeEl.value;
+      if(currentStartTimeInput&&currentStartTimeInput!==originalStartDateTime){
+        updateData[FIELD_START_DATETIME]=inputToZohoDate(currentStartTimeInput);
+      }
       var currentEndTimeInput=endTimeEl.value;
       if(currentEndTimeInput&&currentEndTimeInput!==originalEndDateTime){
         updateData[FIELD_END_DATETIME]=inputToZohoDate(currentEndTimeInput);
@@ -368,9 +370,11 @@ ZOHO.embeddedApp.on("PageLoad",function(data){
     if(!uniqueNumber||uniqueNumber===""||uniqueNumber===null){stageEl.textContent="Not a Check-In Meeting";showMessage("This is not a Check-In meeting. GPS cannot be captured.","error");return;}
     currentStage=meeting[FIELD_STAGE]||""; stageEl.textContent=currentStage||"Not Set";
     originalPurpose=meeting["Meeting_Purpose"]||""; updateImageLabel();
+    var purposeDisplay=document.getElementById("purposeDisplay");
+    if(originalPurpose){purposeDisplay.textContent="Meeting Purpose: "+originalPurpose;}
+    if(meeting[FIELD_START_DATETIME]){var startVal=zohoDateToInput(meeting[FIELD_START_DATETIME]);startTimeEl.value=startVal;originalStartDateTime=startVal;}
     if(meeting[FIELD_END_DATETIME]){var inputVal=zohoDateToInput(meeting[FIELD_END_DATETIME]);endTimeEl.value=inputVal;originalEndDateTime=inputVal;}
     if(meeting[FIELD_MEETING_TYPE])meetingTypeEl.value=meeting[FIELD_MEETING_TYPE];
-    if(meeting["Description"])descEl.value=meeting["Description"];
     if(currentStage===STAGE_COMPLETED){disableButtons();showMessage("This Meeting is already Conducted. You can still upload images.","info");return;}
     if(currentStage===STAGE_CANCELLED){disableButtons();showMessage("This Meeting is already Cancelled. You can still upload images.","info");return;}
     if(currentStage===STAGE_POSTPONED){disableButtons();showMessage("This Meeting is already Postponed. You can still upload images.","info");return;}
