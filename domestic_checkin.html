@@ -130,7 +130,7 @@ var FIELD_STAGE            = "Meeting_Status";
 var FIELD_ACTION_DATETIME  = "Action_Date_Time";
 var FIELD_LATITUDE         = "Meeting_Latitude";
 var FIELD_LONGITUDE        = "Meeting_Longitude";
-var FIELD_MEETING_LOCATION = "Meeting_Location";
+var FIELD_MAP_LINK         = "Map_Link";
 var FIELD_MEETING_TYPE     = "Meeting_Type";
 var FIELD_DESCRIPTION      = "Description";
 var FIELD_STATUS_MARKED_BY = "Status_Marked_by";
@@ -332,7 +332,7 @@ function processMeetingAction(targetStage){
       updateData[FIELD_LATITUDE]=parseFloat(location.latitude.toFixed(7));
       updateData[FIELD_LONGITUDE]=parseFloat(location.longitude.toFixed(7));
       // Google Maps link built from the captured coordinates
-      updateData[FIELD_MEETING_LOCATION]="https://www.google.com/maps?q="+updateData[FIELD_LATITUDE]+","+updateData[FIELD_LONGITUDE];
+      updateData[FIELD_MAP_LINK]="https://www.google.com/maps?q="+updateData[FIELD_LATITUDE]+","+updateData[FIELD_LONGITUDE];
       updateData[FIELD_DESCRIPTION]=sanitizeText(descEl.value);
       updateData[FIELD_STATUS_MARKED_BY]=currentUser;
       // Only update End_DateTime if user changed it
