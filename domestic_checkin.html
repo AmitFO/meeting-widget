@@ -130,6 +130,7 @@ var FIELD_STAGE            = "Meeting_Status";
 var FIELD_ACTION_DATETIME  = "Action_Date_Time";
 var FIELD_LATITUDE         = "Meeting_Latitude";
 var FIELD_LONGITUDE        = "Meeting_Longitude";
+var FIELD_MEETING_LOCATION = "Meeting_Location";
 var FIELD_MEETING_TYPE     = "Meeting_Type";
 var FIELD_DESCRIPTION      = "Description";
 var FIELD_STATUS_MARKED_BY = "Status_Marked_by";
@@ -145,6 +146,7 @@ var MAX_SIZE_BYTES         = 20 * 1024 * 1024;
 var meetingId           = null;
 var currentStage        = "";
 var isProcessing        = false;
+var alreadyMarked       = false;   // true when Action_Date_Time is already filled
 var selectedFiles       = [];
 var totalUploadedCount  = 0;
 var totalUploadedBytes  = 0;
@@ -294,9 +296,26 @@ function getCurrentLocation(){
   });
 }
 
+// Strict status enforcement: re-reads the record, and if Meeting_Status is not the
+// target value, writes it again (up to 3 checks). Fails loudly if it never sticks.
+function enforceStatus(targetStage){
+  var MAX_ATTEMPTS=3;
+  function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+  function check(attempt){
+    return ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:meetingId}).then(function(res){
+      var rec=res&&res.data&&res.data[0]?res.data[0]:null;
+      if(rec&&rec[FIELD_STAGE]===targetStage)return true;
+      if(attempt>=MAX_ATTEMPTS)throw new Error("Meeting Status could not be set to "+targetStage+". Please try again.");
+      var retryData={id:meetingId}; retryData[FIELD_STAGE]=targetStage;
+      return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:retryData,Trigger:[]}).then(function(){return wait(1000);}).then(function(){return check(attempt+1);});
+    });
+  }
+  return check(1);
+}
+
 function processMeetingAction(targetStage){
   if(isProcessing||!meetingId)return;
-  if(currentStage===STAGE_COMPLETED||currentStage===STAGE_CANCELLED||currentStage===STAGE_POSTPONED){showMessage("This meeting is already "+currentStage+".","info");return;}
+  if(alreadyMarked){showMessage("This meeting is already marked. It cannot be marked again.","info");return;}
   descEl.classList.remove("field-error"); uploadBox.classList.remove("has-error");
   if(!descEl.value||!descEl.value.trim()){showMessage("Please enter a Description.","error");descEl.classList.add("field-error");descEl.focus();return;}
   var imageMandatory=(originalPurpose==="Demo"||originalPurpose==="Training")&&targetStage===STAGE_COMPLETED;
@@ -310,9 +329,10 @@ function processMeetingAction(targetStage){
       var currentUser=""; if(userResponse&&userResponse.users&&userResponse.users[0]){currentUser=sanitizeText(userResponse.users[0].full_name||"");}
       var updateData={id:meetingId};
       updateData[FIELD_STAGE]=targetStage;
-      updateData[FIELD_ACTION_DATETIME]=getZohoDateTime();
       updateData[FIELD_LATITUDE]=parseFloat(location.latitude.toFixed(7));
       updateData[FIELD_LONGITUDE]=parseFloat(location.longitude.toFixed(7));
+      // Google Maps link built from the captured coordinates
+      updateData[FIELD_MEETING_LOCATION]="https://www.google.com/maps?q="+updateData[FIELD_LATITUDE]+","+updateData[FIELD_LONGITUDE];
       updateData[FIELD_DESCRIPTION]=sanitizeText(descEl.value);
       updateData[FIELD_STATUS_MARKED_BY]=currentUser;
       // Only update End_DateTime if user changed it
@@ -325,11 +345,21 @@ function processMeetingAction(targetStage){
         updateData[FIELD_END_DATETIME]=inputToZohoDate(currentEndTimeInput);
       }
       showMessage("Updating Meeting...","info");
-      return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:updateData,Trigger:[]});
+      return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:updateData,Trigger:[]}).then(function(resp){
+        if(resp&&resp.data&&resp.data[0]&&resp.data[0].code==="SUCCESS"){
+          showMessage("Verifying meeting status...","info");
+          return enforceStatus(targetStage).then(function(){
+            // Action_Date_Time is the "already marked" lock, so it is written last, only after the status is confirmed
+            var stamp={id:meetingId}; stamp[FIELD_ACTION_DATETIME]=getZohoDateTime();
+            return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:stamp,Trigger:[]});
+          });
+        }
+        return resp;
+      });
     });
   }).then(function(response){
     if(response&&response.data&&response.data[0]&&response.data[0].code==="SUCCESS"){
-      currentStage=targetStage; stageEl.textContent=targetStage;
+      currentStage=targetStage; stageEl.textContent=targetStage; alreadyMarked=true;
       if(filesToUpload.length>0){
         showMessage("Uploading "+totalImages+" image(s)...","info");
         var batchBytes=filesToUpload.reduce(function(s,f){return s+f.size;},0);
@@ -374,10 +404,7 @@ ZOHO.embeddedApp.on("PageLoad",function(data){
     if(originalPurpose){purposeDisplay.textContent="Meeting Purpose: "+originalPurpose;}
     if(meeting[FIELD_START_DATETIME]){var startVal=zohoDateToInput(meeting[FIELD_START_DATETIME]);startTimeEl.value=startVal;originalStartDateTime=startVal;}
     if(meeting[FIELD_END_DATETIME]){var inputVal=zohoDateToInput(meeting[FIELD_END_DATETIME]);endTimeEl.value=inputVal;originalEndDateTime=inputVal;}
-    if(meeting[FIELD_MEETING_TYPE])meetingTypeEl.value=meeting[FIELD_MEETING_TYPE];
-    if(currentStage===STAGE_COMPLETED){disableButtons();showMessage("This Meeting is already Conducted. You can still upload images.","info");return;}
-    if(currentStage===STAGE_CANCELLED){disableButtons();showMessage("This Meeting is already Cancelled. You can still upload images.","info");return;}
-    if(currentStage===STAGE_POSTPONED){disableButtons();showMessage("This Meeting is already Postponed. You can still upload images.","info");return;}
+    if(meeting[FIELD_ACTION_DATETIME]){alreadyMarked=true;disableButtons();showMessage("This Meeting is already marked ("+(currentStage||"status set")+"). You can still upload images.","info");return;}
     enableButtons();
   }).catch(function(error){stageEl.textContent="Error";showMessage(error&&error.message?error.message:"Unable to load Meeting.","error");});
 });
