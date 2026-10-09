@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Map</title>
+<script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: Arial, sans-serif; color: #222; background: #fff; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #e5e5e5; background: #fafafa; }
+  .bar label { font-size: 12px; color: #555; font-weight: 600; margin-right: 4px; }
+  .bar input, .bar select { padding: 7px 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; background: #fff; }
+  .bar button { padding: 8px 14px; border: 0; border-radius: 6px; background: #2e7d32; color: #fff; font-size: 13px; font-weight: bold; cursor: pointer; }
+  .bar button:disabled { opacity: .5; cursor: not-allowed; }
+  #count { font-size: 13px; color: #333; font-weight: 600; margin-left: auto; }
+  #wrap { position: relative; height: calc(100% - 52px); }
+  #map { height: 100%; width: 100%; }
+  #msg { position: absolute; z-index: 1000; top: 10px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 6px; font-size: 13px; display: none; background: #eef5ff; color: #174a7e; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+  #msg.err { background: #ffefef; color: #8b1a1a; }
+  .pop b { display: block; margin-bottom: 3px; }
+  .pop div { font-size: 12px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div><label for="day">Date</label><input type="date" id="day"></div>
+  <div><label for="user">User</label><select id="user"><option value="">All users</option></select></div>
+  <button id="showBtn">Show</button>
+  <span id="count"></span>
+</div>
+<div id="wrap">
+  <div id="msg"></div>
+  <div id="map"></div>
+</div>
+
+<script>
+var COLORS = ["#d32f2f","#1976d2","#388e3c","#f57c00","#7b1fa2","#00838f","#c2185b","#5d4037","#455a64","#afb42b","#0288d1","#e64a19"];
+var allRows = [];
+var layerGroup = null;
+var colorByUser = {};
+
+var map = L.map("map").setView([22.5, 79], 5);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 18,
+  attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+layerGroup = L.layerGroup().addTo(map);
+
+var dayEl = document.getElementById("day");
+var userEl = document.getElementById("user");
+var showBtn = document.getElementById("showBtn");
+var countEl = document.getElementById("count");
+var msgEl = document.getElementById("msg");
+
+function pad(n) { return n < 10 ? "0" + n : "" + n; }
+function todayStr() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function tzOffset() {
+  var m = -new Date().getTimezoneOffset(); var sign = m >= 0 ? "+" : "-"; m = Math.abs(m);
+  return sign + pad(Math.floor(m / 60)) + ":" + pad(m % 60);
+}
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function showMsg(t, isErr) { msgEl.textContent = t; msgEl.className = isErr ? "err" : ""; msgEl.style.display = t ? "block" : "none"; }
+
+// Fetch every meeting marked on the chosen day that has coordinates (COQL returns max 200 per call)
+function fetchDay(dateStr) {
+  var tz = tzOffset();
+  var from = dateStr + "T00:00:00" + tz;
+  var to = dateStr + "T23:59:59" + tz;
+  var rows = [];
+  function page(offset) {
+    var q = "select id, Event_Title, Meeting_Unique_Number, Meeting_Latitude, Meeting_Longitude, Action_Date_Time, Status_Marked_by, Meeting_Status " +
+            "from Events where (Action_Date_Time between '" + from + "' and '" + to + "') and Meeting_Latitude is not null " +
+            "limit 200 offset " + offset;
+    return ZOHO.CRM.API.coql({ select_query: q }).then(function (res) {
+      var data = res && res.data ? res.data : [];
+      rows = rows.concat(data);
+      if (data.length === 200) { return page(offset + 200); }
+      return rows;
+    });
+  }
+  return page(0);
+}
+
+function render() {
+  layerGroup.clearLayers();
+  var pick = userEl.value;
+  var shown = allRows.filter(function (r) {
+    return r.Meeting_Latitude != null && r.Meeting_Longitude != null && (!pick || r.Status_Marked_by === pick);
+  });
+  var pts = [];
+  shown.forEach(function (r) {
+    var user = r.Status_Marked_by || "Unknown";
+    var t = r.Action_Date_Time ? new Date(r.Action_Date_Time) : null;
+    var timeTxt = t && !isNaN(t) ? t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    var latlng = [Number(r.Meeting_Latitude), Number(r.Meeting_Longitude)];
+    pts.push(latlng);
+    L.circleMarker(latlng, { radius: 8, color: "#fff", weight: 2, fillColor: colorByUser[user] || "#555", fillOpacity: 0.95 })
+      .bindPopup('<div class="pop"><b>' + esc(r.Event_Title) + '</b>' +
+        '<div>' + esc(user) + (timeTxt ? ' &middot; ' + esc(timeTxt) : '') + '</div>' +
+        '<div>' + esc(r.Meeting_Unique_Number) + (r.Meeting_Status ? ' &middot; ' + esc(r.Meeting_Status) : '') + '</div></div>')
+      .addTo(layerGroup);
+  });
+  countEl.textContent = shown.length + " meeting(s)";
+  if (pts.length) { map.fitBounds(pts, { padding: [40, 40], maxZoom: 12 }); }
+  else { map.setView([22.5, 79], 5); }
+}
+
+function fillUsers() {
+  var names = {};
+  allRows.forEach(function (r) { if (r.Status_Marked_by) names[r.Status_Marked_by] = true; });
+  var list = Object.keys(names).sort();
+  colorByUser = {};
+  list.forEach(function (n, i) { colorByUser[n] = COLORS[i % COLORS.length]; });
+  userEl.innerHTML = '<option value="">All users</option>' +
+    list.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join("");
+}
+
+function load() {
+  var d = dayEl.value;
+  if (!d) { showMsg("Please pick a date.", true); return; }
+  showBtn.disabled = true; showMsg("Loading meetings...", false);
+  fetchDay(d).then(function (rows) {
+    allRows = rows; fillUsers(); render(); showBtn.disabled = false;
+    showMsg(rows.length ? "" : "No marked meetings with a location on this date.", false);
+    if (!rows.length) { setTimeout(function () { showMsg(""); }, 3500); }
+  }).catch(function (err) {
+    showBtn.disabled = false;
+    // COQL answers "no content" when there are no records; treat that as an empty day
+    allRows = []; fillUsers(); render();
+    var text = err && err.message ? err.message : "";
+    if (/no.?content|204/i.test(text) || !text) { showMsg("No marked meetings with a location on this date.", false); setTimeout(function () { showMsg(""); }, 3500); }
+    else { showMsg("Could not load meetings: " + text, true); }
+  });
+}
+
+dayEl.value = todayStr();
+showBtn.addEventListener("click", load);
+userEl.addEventListener("change", render);
+dayEl.addEventListener("change", load);
+
+ZOHO.embeddedApp.on("PageLoad", function () { load(); });
+ZOHO.embeddedApp.init();
+</script>
+</body>
+</html>
