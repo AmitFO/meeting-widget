@@ -6,40 +6,55 @@
 <title>Mark Meeting</title>
 <script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
 <style>
-  *{box-sizing:border-box}
-  body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#fff;color:#222}
-  .container{max-width:500px;margin:auto}
-  h2{margin:0 0 15px;font-size:18px;font-weight:bold}
-  .status{background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:16px}
-  .status-label{font-size:13px;color:#666}
-  .status-value{font-size:17px;font-weight:bold;margin-top:4px}
-  .field-group{margin-bottom:14px}
-  .field-label{font-size:13px;color:#555;font-weight:600;margin-bottom:5px}
-  select, textarea{
-    width:100%;padding:10px 12px;border:1px solid #ddd;
-    border-radius:8px;font-size:14px;font-family:Arial,sans-serif;
-    background:#fff;color:#222;outline:none;
-  }
-  select:focus, textarea:focus{border-color:#2e7d32;}
-  .field-error{border-color:#c62828 !important;background:#fff8f8 !important;}
-  textarea{resize:vertical;min-height:90px}
-  button{
-    width:100%;padding:14px;margin-bottom:12px;
-    border:0;border-radius:8px;font-size:16px;font-weight:bold;
-    cursor:pointer;-webkit-tap-highlight-color:transparent;
-    touch-action:manipulation;
-  }
-  #completeBtn{background:#2e7d32;color:white}
-  #cancelBtn{background:#c62828;color:white}
-  button:disabled{opacity:.5;cursor:not-allowed}
-  button:active:not(:disabled){opacity:0.8}
-  #message{display:none;padding:12px;margin-top:10px;border-radius:8px;font-size:14px}
-  .info{display:block!important;background:#eef5ff;color:#174a7e}
-  .success{display:block!important;background:#edf7ed;color:#1b5e20}
-  .error{display:block!important;background:#ffefef;color:#8b1a1a}
-  #gpsInfo{display:none;margin-top:12px;padding:10px;background:#f5f5f5;border-radius:8px;font-size:12px}
-  #loader{display:none;text-align:center;padding:10px;color:#555;font-size:13px}
-  .divider{height:1px;background:#eee;margin:14px 0}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #fff; color: #222; }
+  .container { max-width: 500px; margin: auto; padding: 20px; }
+  h2 { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+  .status { background: #f5f5f5; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+  .status-label { font-size: 13px; color: #666; }
+  .status-value { font-size: 17px; font-weight: bold; margin-top: 4px; }
+  .field-group { margin-bottom: 14px; }
+  .field-label { font-size: 13px; color: #555; font-weight: 600; margin-bottom: 5px; }
+  .field-label span { color: #c62828; }
+  select, textarea, input[type="datetime-local"] { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: Arial, sans-serif; background: #fff; color: #222; outline: none; }
+  select:focus, textarea:focus, input[type="datetime-local"]:focus { border-color: #2e7d32; }
+  .field-error { border-color: #c62828 !important; background: #fff8f8 !important; }
+  textarea { resize: vertical; min-height: 90px; }
+  .upload-box { border: 2px dashed #ddd; border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: border-color 0.2s; margin-bottom: 10px; }
+  .upload-box:hover { border-color: #2e7d32; }
+  .upload-box.has-error { border-color: #c62828; }
+  .upload-icon { font-size: 28px; margin-bottom: 6px; }
+  .upload-text { font-size: 13px; color: #555; }
+  .upload-sub { font-size: 11px; color: #999; margin-top: 3px; }
+  #imageInput { display: none; }
+  .image-count { font-size: 12px; color: #2e7d32; font-weight: 600; margin-bottom: 4px; }
+  .quota-row { display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 6px; }
+  .quota-row .quota-count { font-weight: 700; color: #333; }
+  .quota-bar-wrap { height: 5px; background: #eee; border-radius: 3px; margin-bottom: 8px; overflow: hidden; }
+  .quota-bar-fill { height: 100%; background: #2e7d32; border-radius: 3px; width: 0%; transition: width 0.3s; }
+  .image-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  .image-item { position: relative; border-radius: 6px; overflow: hidden; aspect-ratio: 1; background: #f5f5f5; }
+  .image-item img { width: 100%; height: 100%; object-fit: cover; }
+  .image-remove { position: absolute; top: 3px; right: 3px; background: rgba(198,40,40,0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
+  .upload-progress { font-size: 12px; color: #555; margin-top: 6px; }
+  .progress-bar-wrap { height: 6px; background: #eee; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .progress-bar { height: 100%; background: #2e7d32; border-radius: 3px; width: 0%; transition: width 0.3s; }
+  .size-info { font-size: 11px; color: #999; margin-top: 4px; }
+  button { width: 100%; padding: 14px; margin-bottom: 12px; border: 0; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  #completeBtn { background: #2e7d32; color: white; }
+  #cancelBtn { background: #c62828; color: white; }
+  #postponeBtn { background: #1565c0; color: white; }
+  #uploadImagesBtn { background: #546e7a; color: white; margin-top: 8px; display: none; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button:active:not(:disabled) { opacity: 0.8; }
+  #message { display: none; padding: 12px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
+  .info    { display: block !important; background: #eef5ff; color: #174a7e; }
+  .success { display: block !important; background: #edf7ed; color: #1b5e20; }
+  .error   { display: block !important; background: #ffefef; color: #8b1a1a; }
+  #gpsInfo { display: none; margin-top: 12px; padding: 10px; background: #f5f5f5; border-radius: 8px; font-size: 12px; }
+  #loader  { display: none; text-align: center; padding: 10px; color: #555; font-size: 13px; }
+  .divider { height: 1px; background: #eee; margin: 14px 0; }
+  .field-hint { font-size: 11px; color: #999; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -51,24 +66,50 @@
   </div>
 
   <div class="field-group">
-    <div class="field-label">Meeting Purpose</div>
-    <select id="meetingPurpose">
-      <option value="">-None-</option>
-      <option value="Demo">Demo</option>
-      <option value="Followup">Followup</option>
-      <option value="Installation">Installation</option>
-      <option value="Negotiation">Negotiation</option>
-      <option value="Others">Others</option>
-      <option value="Partner Meeting">Partner Meeting</option>
-      <option value="Prospecting">Prospecting</option>
-      <option value="Service">Service</option>
-      <option value="Training">Training</option>
-    </select>
+    <div class="field-label">Meeting Start Time</div>
+    <input type="datetime-local" id="meetingStartTime">
+    <div class="field-hint">Pre-filled from CRM. Change only if start time differs.</div>
   </div>
 
   <div class="field-group">
-    <div class="field-label">Description</div>
+    <div class="field-label">Meeting End Time</div>
+    <input type="datetime-local" id="meetingEndTime">
+    <div class="field-hint">Pre-filled from CRM. Change only if end time differs.</div>
+  </div>
+
+  <div class="field-group">
+    <div class="field-label">Description <span>*</span></div>
     <textarea id="meetingDescription" placeholder="Enter meeting description..."></textarea>
+    <div class="field-hint" id="purposeDisplay"></div>
+  </div>
+
+  <div class="field-group">
+    <div class="field-label">
+      Meeting Images
+      <span id="imgReqMark"></span>
+      <small id="imgReqHint" style="font-weight:400;color:#999;margin-left:4px;"></small>
+    </div>
+    <div class="upload-box" id="uploadBox" onclick="document.getElementById('imageInput').click()">
+      <div class="upload-icon">📷</div>
+      <div class="upload-text">Tap to select images</div>
+      <div class="upload-sub">Max 15 images · All formats · Max 20MB total</div>
+    </div>
+    <input type="file" id="imageInput" multiple accept="image/*" onchange="handleImageSelect(this)">
+    <div id="quotaArea" style="display:none;">
+      <div class="quota-bar-wrap"><div class="quota-bar-fill" id="quotaBarFill"></div></div>
+      <div class="quota-row">
+        <span class="quota-count" id="quotaCount">0 of 15 images</span>
+        <span id="quotaSize">0.00 / 20.00 MB</span>
+      </div>
+    </div>
+    <div class="image-count" id="imageCount"></div>
+    <div class="image-grid" id="imageGrid"></div>
+    <div class="size-info" id="sizeInfo"></div>
+    <div class="upload-progress" id="uploadProgress"></div>
+    <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <button id="uploadImagesBtn" onclick="uploadImagesOnly()">&#128247; Upload Images</button>
   </div>
 
   <div class="divider"></div>
@@ -76,224 +117,392 @@
   <h2>Mark Meeting</h2>
   <div id="loader">Please wait...</div>
   <button id="completeBtn" onclick="completeMeeting()" disabled>&#10003; Completed</button>
-  <button id="cancelBtn" onclick="cancelMeeting()" disabled>&#10005; Cancelled</button>
+  <button id="cancelBtn"   onclick="cancelMeeting()"   disabled>&#10005; Cancelled</button>
+  <button id="postponeBtn" onclick="postponeMeeting()" disabled>&#9200; Postponed</button>
   <div id="message"></div>
   <div id="gpsInfo"></div>
+
 </div>
 
 <script>
-const MODULE_API_NAME       = "Events";
-const FIELD_STAGE           = "Meeting_Stage";
-const FIELD_ACTION_DATETIME = "Action_Date_Time";
-const FIELD_COMPLETION_GPS  = "Meeting_Location";
-const FIELD_PURPOSE         = "Meeting_Purpose";
-const FIELD_DESCRIPTION     = "Description";
-const STAGE_COMPLETED       = "Completed";
-const STAGE_CANCELLED       = "Cancelled";
+/* =====================================================================
+   CONFIG - INTERNATIONAL CRM (API names confirmed by CRM admin)
+   ===================================================================== */
+var MODULE_API_NAME        = "Events";
+var FIELD_STAGE            = "Meeting_Stage";       // picklist: Planned, Completed, Cancelled, Postponed
+var FIELD_ACTION_DATETIME  = "Action_Date_Time";    // lock field
+var FIELD_LATITUDE         = "Meeting_Latitude";    // decimal, 6 places
+var FIELD_LONGITUDE        = "Meeting_Longitude";   // decimal, 6 places
+var FIELD_MAP_LINK         = "Meeting_Location";    // URL field, Google Maps link
+var FIELD_PURPOSE          = "Meeting_Purpose";     // filled at meeting creation
+var FIELD_DESCRIPTION      = "Description";
+var FIELD_STATUS_MARKED_BY = "Status_Marked_by";
+var FIELD_END_DATETIME     = "End_DateTime";
+var FIELD_START_DATETIME   = "Start_DateTime";
+var UNIQUE_NUMBER_FIELD    = "Meeting_Number";      // marking allowed only when filled
+var STAGE_COMPLETED        = "Completed";
+var STAGE_CANCELLED        = "Cancelled";
+var STAGE_POSTPONED        = "Postponed";
+// Meeting Purpose values that need at least 1 image when marked Completed
+var IMAGE_REQUIRED_PURPOSES = ["Demo", "Training"];
+var MAX_IMAGES             = 15;
+var MAX_SIZE_BYTES         = 20 * 1024 * 1024;
+var COORD_DECIMALS         = 6;
+/* ===================================================================== */
 
-var meetingId    = null;
-var currentStage = "";
-var isProcessing = false;
+var meetingId           = null;
+var currentStage        = "";
+var isProcessing        = false;
+var alreadyMarked       = false;   // true when Action_Date_Time is already filled
+var selectedFiles       = [];
+var totalUploadedCount  = 0;
+var totalUploadedBytes  = 0;
+var originalPurpose      = "";
+var originalEndDateTime  = "";
+var originalStartDateTime = "";
+var startOffset         = "";      // time zone offset of the CRM value, e.g. +04:00
+var endOffset           = "";
 
-var stageEl       = document.getElementById("stage");
-var completeBtn   = document.getElementById("completeBtn");
-var cancelBtn     = document.getElementById("cancelBtn");
-var messageEl     = document.getElementById("message");
-var gpsEl         = document.getElementById("gpsInfo");
-var loaderEl      = document.getElementById("loader");
-var purposeEl     = document.getElementById("meetingPurpose");
-var descEl        = document.getElementById("meetingDescription");
+var stageEl        = document.getElementById("stage");
+var completeBtn    = document.getElementById("completeBtn");
+var cancelBtn      = document.getElementById("cancelBtn");
+var postponeBtn    = document.getElementById("postponeBtn");
+var uploadImagesBtn= document.getElementById("uploadImagesBtn");
+var messageEl      = document.getElementById("message");
+var gpsEl          = document.getElementById("gpsInfo");
+var loaderEl       = document.getElementById("loader");
+var descEl         = document.getElementById("meetingDescription");
+var startTimeEl    = document.getElementById("meetingStartTime");
+var endTimeEl      = document.getElementById("meetingEndTime");
+var imageGrid      = document.getElementById("imageGrid");
+var imageCount     = document.getElementById("imageCount");
+var sizeInfo       = document.getElementById("sizeInfo");
+var uploadBox      = document.getElementById("uploadBox");
+var progressBar    = document.getElementById("progressBar");
+var progressWrap   = document.getElementById("progressWrap");
+var uploadProgress = document.getElementById("uploadProgress");
+var quotaArea      = document.getElementById("quotaArea");
+var quotaBarFill   = document.getElementById("quotaBarFill");
+var quotaCount     = document.getElementById("quotaCount");
+var quotaSize      = document.getElementById("quotaSize");
+var imgReqMark     = document.getElementById("imgReqMark");
+var imgReqHint     = document.getElementById("imgReqHint");
 
-function showMessage(msg, type) {
-  messageEl.textContent = msg;
-  messageEl.className   = type || "info";
-  messageEl.style.display = "block";
+/* ---------- Time zone helpers ---------- */
+function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+
+// Device offset as +HH:MM / -HH:MM
+function deviceOffset() {
+  var mins = -new Date().getTimezoneOffset();
+  var sign = mins >= 0 ? "+" : "-";
+  mins = Math.abs(mins);
+  return sign + pad2(Math.floor(mins / 60)) + ":" + pad2(mins % 60);
 }
-function enableButtons()  { completeBtn.disabled = false; cancelBtn.disabled = false; }
-function disableButtons() { completeBtn.disabled = true;  cancelBtn.disabled = true;  }
 
+// Offset at the end of a Zoho datetime string, or "" if none
+function extractOffset(zohoDate) {
+  if (!zohoDate) return "";
+  var s = zohoDate.toString();
+  var m = s.match(/([+-]\d{2}:\d{2})$/);
+  if (m) return m[1];
+  if (/Z$/.test(s)) return "+00:00";
+  return "";
+}
+
+function zohoDateToInput(zohoDate) {
+  if (!zohoDate) return "";
+  var d = zohoDate.toString().replace(" ", "T");
+  d = d.replace(/[+-]\d{2}:\d{2}$/, "").replace(/Z$/, "");
+  return d.substring(0, 16);
+}
+
+// Sends the edited time back with the same offset the CRM gave us
+function inputToZohoDate(inputValue, offset) {
+  if (!inputValue) return "";
+  return inputValue + ":00" + (offset || deviceOffset());
+}
+
+// Current time with the device offset, e.g. 2026-10-13T15:30:00+04:00
 function getZohoDateTime() {
   var now = new Date();
-  var pad = function(n){ return n < 10 ? "0" + n : n; };
-  return now.getFullYear() + "-" +
-         pad(now.getMonth() + 1) + "-" +
-         pad(now.getDate()) + "T" +
-         pad(now.getHours()) + ":" +
-         pad(now.getMinutes()) + ":" +
-         pad(now.getSeconds());
+  return now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate()) +
+         "T" + pad2(now.getHours()) + ":" + pad2(now.getMinutes()) + ":" + pad2(now.getSeconds()) +
+         deviceOffset();
 }
 
-function getCurrentLocation() {
-  return new Promise(function(resolve, reject) {
-    if (!navigator.geolocation) {
-      reject(new Error("GPS not supported on this device."));
-      return;
+/* ---------- General helpers ---------- */
+function isSuccess(resp) {
+  return !!(resp && resp.data && resp.data[0] && resp.data[0].code === "SUCCESS");
+}
+function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+function isImageRequiredPurpose(purpose) {
+  return IMAGE_REQUIRED_PURPOSES.indexOf(purpose) !== -1;
+}
+
+function updateImageLabel() {
+  if (isImageRequiredPurpose(originalPurpose)) {
+    imgReqMark.textContent = " *";
+    imgReqMark.style.color = "#c62828";
+    imgReqHint.textContent = "(at least 1 image required when marking Completed)";
+    imgReqHint.style.color = "#c62828";
+  } else {
+    imgReqMark.textContent = "";
+    imgReqHint.textContent = "(optional for this meeting purpose)";
+    imgReqHint.style.color = "#999";
+  }
+}
+
+function showMessage(msg, type) { messageEl.textContent = msg; messageEl.className = type || "info"; messageEl.style.display = "block"; }
+function enableButtons()  { completeBtn.disabled = false; cancelBtn.disabled = false; postponeBtn.disabled = false; }
+function disableButtons() { completeBtn.disabled = true;  cancelBtn.disabled = true;  postponeBtn.disabled = true;  }
+
+// Same cleanup as domestic: removes line breaks, hidden characters and iOS smart punctuation
+function sanitizeText(text) {
+  if (!text) return "";
+  return text.replace(/\r\n/g," ").replace(/\n/g," ").replace(/\r/g," ").replace(/\u2028/g," ").replace(/\u2029/g," ").replace(/\t/g," ").replace(/\u00A0/g," ").replace(/\u202F/g," ").replace(/\u00AD/g,"").replace(/[\u0000-\u001F\u007F-\u009F]/g," ").replace(/\u200B/g,"").replace(/\u200C/g,"").replace(/\u200D/g,"").replace(/\uFEFF/g,"").replace(/\u201C|\u201D/g,'"').replace(/\u2018|\u2019/g,"'").replace(/\u2026/g,"...").replace(/\u2014/g,"-").replace(/\u2013/g,"-").replace(/\s{2,}/g," ").trim();
+}
+
+function formatBytes(bytes) { if(bytes<1024)return bytes+" B"; if(bytes<1024*1024)return (bytes/1024).toFixed(1)+" KB"; return (bytes/(1024*1024)).toFixed(2)+" MB"; }
+function getTotalSize() { return selectedFiles.reduce(function(sum,f){return sum+f.size;},0); }
+
+/* ---------- Images ---------- */
+function updateQuotaDisplay() {
+  var pendingCount=selectedFiles.length; var pendingBytes=getTotalSize();
+  var totalCount=totalUploadedCount+pendingCount; var totalBytes=totalUploadedBytes+pendingBytes;
+  if(totalCount===0){quotaArea.style.display="none";return;}
+  quotaArea.style.display="block";
+  quotaBarFill.style.width=Math.min((totalBytes/MAX_SIZE_BYTES)*100,100)+"%";
+  var countLabel=totalCount+" of "+MAX_IMAGES+" images";
+  if(totalUploadedCount>0&&pendingCount>0){countLabel+=" ("+totalUploadedCount+" uploaded, "+pendingCount+" pending)";}
+  else if(totalUploadedCount>0){countLabel+=" ("+totalUploadedCount+" uploaded \u2713)";}
+  quotaCount.textContent=countLabel;
+  quotaSize.textContent=(totalBytes/(1024*1024)).toFixed(2)+" / 20.00 MB";
+}
+
+function updateImageUI() {
+  imageGrid.innerHTML=""; var total=getTotalSize();
+  imageCount.textContent=selectedFiles.length>0?selectedFiles.length+" image(s) selected":"";
+  sizeInfo.textContent=selectedFiles.length>0?"Total: "+formatBytes(total)+" / 20MB":"";
+  selectedFiles.forEach(function(file,index){var reader=new FileReader();reader.onload=function(e){var item=document.createElement("div");item.className="image-item";item.innerHTML='<img src="'+e.target.result+'" alt="img"/><button class="image-remove" onclick="removeImage('+index+')">&#10005;</button>';imageGrid.appendChild(item);};reader.readAsDataURL(file);});
+  if(selectedFiles.length>0){uploadImagesBtn.style.display="block";uploadImagesBtn.disabled=false;}else{uploadImagesBtn.style.display="none";uploadImagesBtn.disabled=true;}
+  updateQuotaDisplay();
+}
+
+function handleImageSelect(input) {
+  var files=Array.from(input.files); var remaining=MAX_IMAGES-totalUploadedCount-selectedFiles.length;
+  if(remaining<=0){showMessage("You have reached the maximum of "+MAX_IMAGES+" images.","error");input.value="";return;}
+  if(files.length>remaining){showMessage("You can only add "+remaining+" more image(s).","error");files=files.slice(0,remaining);}
+  var newTotal=totalUploadedBytes+getTotalSize()+files.reduce(function(s,f){return s+f.size;},0);
+  if(newTotal>MAX_SIZE_BYTES){showMessage("Total size would exceed 20MB.","error");input.value="";return;}
+  selectedFiles=selectedFiles.concat(files); input.value=""; updateImageUI();
+  if(messageEl.className==="error")messageEl.style.display="none";
+}
+
+function removeImage(index){selectedFiles.splice(index,1);updateImageUI();}
+
+// Counts an image as uploaded only when Zoho returns SUCCESS
+function uploadAttachments(recordId,filesToUpload){
+  return new Promise(function(resolve){
+    if(!filesToUpload||filesToUpload.length===0){resolve(0);return;}
+    progressWrap.style.display="block"; var successCount=0; var total=filesToUpload.length;
+    function uploadNext(i){
+      if(i>=total){resolve(successCount);return;}
+      var file=filesToUpload[i];
+      uploadProgress.textContent="Uploading "+(i+1)+" of "+total+"...";
+      progressBar.style.width=Math.round((i/total)*100)+"%";
+      ZOHO.CRM.API.attachFile({Entity:MODULE_API_NAME,RecordID:recordId,File:{Name:file.name,Content:file}}).then(function(res){
+        console.log("Upload "+(i+1)+" result:",JSON.stringify(res));
+        if(isSuccess(res)) successCount++;
+        progressBar.style.width=Math.round(((i+1)/total)*100)+"%";
+        uploadNext(i+1);
+      }).catch(function(err){console.log("Upload "+(i+1)+" error:",JSON.stringify(err));uploadNext(i+1);});
     }
-    navigator.geolocation.getCurrentPosition(
-      function(position) {
-        resolve({
-          latitude:  position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy:  position.coords.accuracy
-        });
-      },
-      function(error) {
-        var msg = "Unable to capture location.";
-        if (error.code === error.PERMISSION_DENIED)
-          msg = "Location permission denied. Please allow location and retry.";
-        else if (error.code === error.POSITION_UNAVAILABLE)
-          msg = "Location unavailable. Check GPS settings.";
-        else if (error.code === error.TIMEOUT)
-          msg = "Location request timed out. Please try again.";
-        reject(new Error(msg));
-      },
-      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
-    );
+    uploadNext(0);
   });
 }
 
-function updateMeeting(data) {
-  return ZOHO.CRM.API.updateRecord({
-    Entity:  MODULE_API_NAME,
-    APIData: data,
-    Trigger: []
+function uploadImagesOnly(){
+  if(isProcessing)return;
+  if(selectedFiles.length===0){showMessage("Please select at least 1 image.","error");uploadBox.classList.add("has-error");return;}
+  if(!meetingId){showMessage("Meeting record not found.","error");return;}
+  var filesToUpload=selectedFiles.slice(); var totalImages=filesToUpload.length;
+  isProcessing=true; uploadImagesBtn.disabled=true; showMessage("Uploading "+totalImages+" image(s)...","info");
+  uploadAttachments(meetingId,filesToUpload).then(function(successCount){
+    isProcessing=false; progressBar.style.width="100%";
+    if(successCount>0){
+      totalUploadedCount+=successCount;
+      totalUploadedBytes+=filesToUpload.slice(0,successCount).reduce(function(s,f){return s+f.size;},0);
+      selectedFiles=[]; updateImageUI(); uploadImagesBtn.style.display="none";
+      uploadProgress.textContent=totalUploadedCount+" image(s) uploaded \u2713";
+      showMessage(successCount+" of "+totalImages+" image(s) uploaded!"+(alreadyMarked?"":" You can now mark the meeting."),successCount===totalImages?"success":"info");
+    } else { uploadImagesBtn.disabled=false; showMessage("Upload failed. Please try again.","error"); }
+  }).catch(function(){isProcessing=false;uploadImagesBtn.disabled=false;showMessage("Upload failed.","error");});
+}
+
+/* ---------- GPS ---------- */
+function getCurrentLocation(){
+  return new Promise(function(resolve,reject){
+    if(!navigator.geolocation){reject(new Error("GPS not supported."));return;}
+    navigator.geolocation.getCurrentPosition(function(pos){resolve({latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:pos.coords.accuracy});},function(err){var msg="Unable to capture location.";if(err.code===err.PERMISSION_DENIED)msg="Location permission denied.";else if(err.code===err.POSITION_UNAVAILABLE)msg="Location unavailable.";else if(err.code===err.TIMEOUT)msg="Location timed out.";reject(new Error(msg));},{enableHighAccuracy:true,timeout:30000,maximumAge:0});
   });
 }
 
-function closeWidget() {
-  try { ZOHO.CRM.UI.Popup.close(); }
-  catch(e) { console.log("Popup close unavailable", e); }
+/* ---------- Status check and lock ---------- */
+// Re-reads the record; if Meeting_Stage is not the target, writes it again (up to 3 checks).
+function enforceStatus(targetStage){
+  var MAX_ATTEMPTS=3;
+  function check(attempt){
+    return ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:meetingId}).then(function(res){
+      var rec=res&&res.data&&res.data[0]?res.data[0]:null;
+      if(rec&&rec[FIELD_STAGE]===targetStage)return true;
+      if(attempt>=MAX_ATTEMPTS)throw new Error("Meeting Stage could not be set to "+targetStage+". Please try again.");
+      var retryData={id:meetingId}; retryData[FIELD_STAGE]=targetStage;
+      return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:retryData,Trigger:[]}).then(function(){return wait(1000);}).then(function(){return check(attempt+1);});
+    });
+  }
+  return check(1);
 }
 
-function processMeetingAction(targetStage) {
-  if (isProcessing || !meetingId) return;
-
-  if (currentStage === STAGE_COMPLETED || currentStage === STAGE_CANCELLED) {
-    showMessage("This meeting is already " + currentStage + ".", "info");
-    return;
-  }
-
-  // Mandatory field validation
-  purposeEl.classList.remove("field-error");
-  descEl.classList.remove("field-error");
-
-  if (!purposeEl.value || purposeEl.value === "") {
-    showMessage("Please select a Meeting Purpose before proceeding.", "error");
-    purposeEl.classList.add("field-error");
-    purposeEl.focus();
-    return;
-  }
-  if (!descEl.value || descEl.value.trim() === "") {
-    showMessage("Please enter a Description before proceeding.", "error");
-    descEl.classList.add("field-error");
-    descEl.focus();
-    return;
-  }
-
-  isProcessing = true;
-  disableButtons();
-  loaderEl.style.display = "block";
-  showMessage("Capturing your current location...", "info");
-
-  getCurrentLocation()
-    .then(function(location) {
-      var gpsValue = "https://www.google.com/maps?q=" + location.latitude.toFixed(7) + "," + location.longitude.toFixed(7);
-      gpsEl.textContent = "GPS captured | Accuracy: " + Math.round(location.accuracy) + "m";
-      gpsEl.style.display = "block";
-
-      var updateData = { id: meetingId };
-      updateData[FIELD_STAGE]           = targetStage;
-      updateData[FIELD_ACTION_DATETIME] = getZohoDateTime();
-      updateData[FIELD_COMPLETION_GPS]  = gpsValue;
-
-      if (purposeEl.value && purposeEl.value !== "") {
-        updateData[FIELD_PURPOSE] = purposeEl.value;
-      }
-      if (descEl.value && descEl.value.trim() !== "") {
-        updateData[FIELD_DESCRIPTION] = descEl.value.trim();
-      }
-
-      showMessage("Updating Meeting...", "info");
-      return updateMeeting(updateData);
-    })
-    .then(function(response) {
-      console.log("Update response:", response);
-      if (response && response.data && response.data[0] && response.data[0].code === "SUCCESS") {
-        currentStage = targetStage;
-        stageEl.textContent = targetStage;
-        showMessage("Meeting marked as " + targetStage + " successfully.", "success");
-        isProcessing = false;
-        loaderEl.style.display = "none";
-        setTimeout(closeWidget, 1500);
-      } else {
-        var errMsg = (response && response.data && response.data[0] && response.data[0].message)
-                     ? response.data[0].message
-                     : "Update failed. Check field API names.";
-        throw new Error(errMsg);
-      }
-    })
-    .catch(function(error) {
-      console.error("Meeting action error:", error);
-      showMessage(error && error.message ? error.message : "Unable to update the meeting.", "error");
-      isProcessing = false;
-      loaderEl.style.display = "none";
-      enableButtons();
+// Writes Action_Date_Time (the lock), retrying up to 3 times.
+function writeLock(){
+  var MAX_ATTEMPTS=3;
+  function attempt(n){
+    var stamp={id:meetingId}; stamp[FIELD_ACTION_DATETIME]=getZohoDateTime();
+    return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:stamp,Trigger:[]}).then(function(resp){
+      if(isSuccess(resp))return true;
+      if(n>=MAX_ATTEMPTS)return false;
+      return wait(1000).then(function(){return attempt(n+1);});
+    }).catch(function(){
+      if(n>=MAX_ATTEMPTS)return false;
+      return wait(1000).then(function(){return attempt(n+1);});
     });
+  }
+  return attempt(1);
 }
 
-function completeMeeting() { processMeetingAction(STAGE_COMPLETED); }
-function cancelMeeting()   { processMeetingAction(STAGE_CANCELLED);  }
-
-ZOHO.embeddedApp.on("PageLoad", function(data) {
-  console.log("Zoho PageLoad data:", data);
-
-  if (data && data.EntityId) {
-    meetingId = Array.isArray(data.EntityId) ? data.EntityId[0] : data.EntityId;
-  } else if (data && data.recordId) {
-    meetingId = data.recordId;
-  }
-
-  if (!meetingId) {
-    stageEl.textContent = "Record ID not found";
-    showMessage("Unable to identify the current Meeting record.", "error");
+function finishWithImages(targetStage, filesToUpload, totalImages, lockOk){
+  var lockNote = lockOk ? "" : " Note: the lock time could not be saved. Please inform your CRM admin.";
+  if(filesToUpload.length===0){
+    loaderEl.style.display="none"; isProcessing=false;
+    showMessage("Meeting marked as "+targetStage+"!"+lockNote, lockOk?"success":"info");
+    if(lockOk) setTimeout(function(){try{ZOHO.CRM.UI.Popup.close();}catch(e){}},2500);
     return;
   }
+  showMessage("Uploading "+totalImages+" image(s)...","info");
+  return uploadAttachments(meetingId,filesToUpload).then(function(successCount){
+    loaderEl.style.display="none"; isProcessing=false; progressBar.style.width="100%";
+    if(successCount>0){
+      totalUploadedCount+=successCount;
+      totalUploadedBytes+=filesToUpload.slice(0,successCount).reduce(function(s,f){return s+f.size;},0);
+    }
+    selectedFiles=[]; updateImageUI();
+    if(successCount===totalImages){
+      uploadProgress.textContent=totalUploadedCount+" image(s) uploaded \u2713";
+      showMessage("Meeting marked as "+targetStage+"! "+successCount+" image(s) uploaded."+lockNote, lockOk?"success":"info");
+      if(lockOk) setTimeout(function(){try{ZOHO.CRM.UI.Popup.close();}catch(e){}},2500);
+    } else {
+      // keep the popup open so the user can re-upload the failed images
+      showMessage("Meeting marked as "+targetStage+"! Only "+successCount+" of "+totalImages+" image(s) uploaded. Select the missing images again and tap Upload Images."+lockNote,"info");
+    }
+  });
+}
 
-  ZOHO.CRM.API.getRecord({ Entity: MODULE_API_NAME, RecordID: meetingId })
-    .then(function(response) {
-      if (!response || !response.data || !response.data.length)
-        throw new Error("Unable to load the Meeting record.");
+/* ---------- Main action ---------- */
+function processMeetingAction(targetStage){
+  if(isProcessing||!meetingId)return;
+  if(alreadyMarked){showMessage("This meeting is already marked. It cannot be marked again.","info");return;}
 
-      var meeting = response.data[0];
-      currentStage = meeting[FIELD_STAGE] || "";
-      stageEl.textContent = currentStage || "Not Set";
+  descEl.classList.remove("field-error"); uploadBox.classList.remove("has-error");
+  startTimeEl.classList.remove("field-error"); endTimeEl.classList.remove("field-error");
 
-      if (meeting[FIELD_PURPOSE]) {
-        purposeEl.value = meeting[FIELD_PURPOSE];
-      }
-      if (meeting[FIELD_DESCRIPTION]) {
-        descEl.value = meeting[FIELD_DESCRIPTION];
-      }
+  // Description: required, and must still have text after cleanup (iOS characters)
+  var cleanDesc=sanitizeText(descEl.value);
+  if(!cleanDesc){showMessage("Please enter a Description.","error");descEl.classList.add("field-error");descEl.focus();return;}
 
-      if (currentStage === STAGE_COMPLETED) {
-        disableButtons();
-        showMessage("This Meeting is already Completed.", "info");
-        return;
-      }
-      if (currentStage === STAGE_CANCELLED) {
-        disableButtons();
-        showMessage("This Meeting is already Cancelled.", "info");
-        return;
-      }
-      enableButtons();
-    })
-    .catch(function(error) {
-      console.error("Get Meeting Error:", error);
-      stageEl.textContent = "Error";
-      showMessage(error && error.message ? error.message : "Unable to load Meeting.", "error");
+  // End time must be after start time
+  if(startTimeEl.value&&endTimeEl.value&&endTimeEl.value<=startTimeEl.value){
+    showMessage("Meeting End Time must be after the Start Time.","error");
+    endTimeEl.classList.add("field-error"); endTimeEl.focus(); return;
+  }
+
+  // Images: at least 1 for image-required purposes marked Completed
+  var imageMandatory=isImageRequiredPurpose(originalPurpose)&&targetStage===STAGE_COMPLETED;
+  var hasImages=(totalUploadedCount>0)||(selectedFiles.length>0);
+  if(imageMandatory&&!hasImages){showMessage("Please upload at least 1 image for "+originalPurpose+" meetings marked as Completed.","error");uploadBox.classList.add("has-error");uploadBox.scrollIntoView({behavior:"smooth"});return;}
+
+  var filesToUpload=selectedFiles.slice(); var totalImages=filesToUpload.length;
+  var statusSaved=false;
+  isProcessing=true; disableButtons(); loaderEl.style.display="block"; showMessage("Capturing your current location...","info");
+
+  getCurrentLocation().then(function(location){
+    gpsEl.textContent="GPS captured | Accuracy: "+Math.round(location.accuracy)+"m"; gpsEl.style.display="block";
+    return ZOHO.CRM.CONFIG.getCurrentUser().then(function(userResponse){
+      var currentUser=""; if(userResponse&&userResponse.users&&userResponse.users[0]){currentUser=sanitizeText(userResponse.users[0].full_name||"");}
+      var lat=parseFloat(location.latitude.toFixed(COORD_DECIMALS));
+      var lng=parseFloat(location.longitude.toFixed(COORD_DECIMALS));
+      var updateData={id:meetingId};
+      updateData[FIELD_STAGE]=targetStage;
+      updateData[FIELD_LATITUDE]=lat;
+      updateData[FIELD_LONGITUDE]=lng;
+      if(FIELD_MAP_LINK){updateData[FIELD_MAP_LINK]="https://www.google.com/maps?q="+lat+","+lng;}
+      updateData[FIELD_DESCRIPTION]=cleanDesc;
+      updateData[FIELD_STATUS_MARKED_BY]=currentUser;
+      // Start/End only if the user changed them, sent with the CRM's own offset
+      if(startTimeEl.value&&startTimeEl.value!==originalStartDateTime){updateData[FIELD_START_DATETIME]=inputToZohoDate(startTimeEl.value,startOffset);}
+      if(endTimeEl.value&&endTimeEl.value!==originalEndDateTime){updateData[FIELD_END_DATETIME]=inputToZohoDate(endTimeEl.value,endOffset);}
+      showMessage("Updating Meeting...","info");
+      return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:updateData,Trigger:[]});
     });
+  }).then(function(resp){
+    if(!isSuccess(resp)){
+      var errData=resp&&resp.data&&resp.data[0]?resp.data[0]:{};
+      var detail=errData.details&&errData.details.api_name?" ("+errData.details.api_name+")":"";
+      throw new Error((errData.message||"Update failed.")+detail);
+    }
+    showMessage("Verifying meeting status...","info");
+    return enforceStatus(targetStage);
+  }).then(function(){
+    statusSaved=true;
+    currentStage=targetStage; stageEl.textContent=targetStage;
+    // From here the meeting counts as marked: buttons stay disabled even if the lock write fails
+    alreadyMarked=true; disableButtons();
+    return writeLock();
+  }).then(function(lockOk){
+    return finishWithImages(targetStage,filesToUpload,totalImages,lockOk);
+  }).catch(function(error){
+    isProcessing=false; loaderEl.style.display="none"; progressWrap.style.display="none";
+    showMessage(error&&error.message?error.message:"Unable to update the meeting.","error");
+    if(!statusSaved) enableButtons();
+  });
+}
+
+function completeMeeting(){processMeetingAction(STAGE_COMPLETED);}
+function cancelMeeting(){processMeetingAction(STAGE_CANCELLED);}
+function postponeMeeting(){processMeetingAction(STAGE_POSTPONED);}
+
+/* ---------- Page load ---------- */
+ZOHO.embeddedApp.on("PageLoad",function(data){
+  if(data&&data.EntityId){meetingId=Array.isArray(data.EntityId)?data.EntityId[0]:data.EntityId;}
+  else if(data&&data.recordId){meetingId=data.recordId;}
+  if(!meetingId){stageEl.textContent="Record ID not found";showMessage("Unable to identify the Meeting record.","error");return;}
+  ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:meetingId}).then(function(response){
+    if(!response||!response.data||!response.data.length)throw new Error("Unable to load the Meeting record.");
+    var meeting=response.data[0];
+    if(UNIQUE_NUMBER_FIELD){
+      var uniqueNumber=meeting[UNIQUE_NUMBER_FIELD];
+      if(!uniqueNumber){stageEl.textContent="Not a Check-In Meeting";showMessage("This is not a Check-In meeting. GPS cannot be captured.","error");return;}
+    }
+    currentStage=meeting[FIELD_STAGE]||""; stageEl.textContent=currentStage||"Not Set";
+    originalPurpose=meeting[FIELD_PURPOSE]||""; updateImageLabel();
+    var purposeDisplay=document.getElementById("purposeDisplay");
+    if(originalPurpose){purposeDisplay.textContent="Meeting Purpose: "+originalPurpose;}
+    if(meeting[FIELD_START_DATETIME]){var startVal=zohoDateToInput(meeting[FIELD_START_DATETIME]);startTimeEl.value=startVal;originalStartDateTime=startVal;startOffset=extractOffset(meeting[FIELD_START_DATETIME]);}
+    if(meeting[FIELD_END_DATETIME]){var endVal=zohoDateToInput(meeting[FIELD_END_DATETIME]);endTimeEl.value=endVal;originalEndDateTime=endVal;endOffset=extractOffset(meeting[FIELD_END_DATETIME]);}
+    if(meeting[FIELD_ACTION_DATETIME]){alreadyMarked=true;disableButtons();showMessage("This Meeting is already marked ("+(currentStage||"status set")+"). You can still upload images.","info");return;}
+    enableButtons();
+  }).catch(function(error){stageEl.textContent="Error";showMessage(error&&error.message?error.message:"Unable to load Meeting.","error");});
 });
-
 ZOHO.embeddedApp.init();
 </script>
 </body>
