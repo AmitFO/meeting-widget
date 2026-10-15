@@ -136,6 +136,11 @@
       <div><div class="field-label">From <span>*</span></div><input type="time" id="pdFrom"></div>
       <div><div class="field-label">To <span>*</span></div><input type="time" id="pdTo"></div>
     </div>
+    <div class="field-group" id="pdVenueWrap" style="display:none;">
+      <div class="field-label">Meeting Venue <span>*</span></div>
+      <select id="pdVenue"><option value="">Select venue</option><option value="In-office">In-office</option><option value="Client location">Client location</option><option value="Online">Online</option></select>
+      <div class="field-hint">The venue could not be read from this meeting, so please select it for the new meeting.</div>
+    </div>
     <div class="field-hint" style="margin:-4px 0 10px;">A new meeting is created on this date with the same title, purpose, venue and related record.</div>
     <div class="pd-error" id="pdError"></div>
     <button id="pdConfirm" type="button" onclick="confirmPostpone()">Confirm postpone</button>
@@ -170,6 +175,7 @@ var meetingData         = null;       // the meeting as loaded, used to copy fie
 var postponeData        = null;       // { date, from, to } chosen in the postpone panel
 var postponedCreatedId  = null;       // id of the new meeting once created (prevents a second one on retry)
 var postponeNote        = "";
+var FIELD_MEETING_VENUE = "Meeting_Venue__s";   // picklist: In-office / Client location / Online
 var meetingId           = null;
 var currentStage        = "";
 var isProcessing        = false;
@@ -353,7 +359,6 @@ function pdShowError(msg){ var e=document.getElementById("pdError"); e.textConte
 function missingForPostpone(){
   var m=meetingData||{}, miss=[];
   if(!m["Meeting_Purpose"]) miss.push("Meeting Purpose");
-  if(!m["Meeting_Venue__s"]) miss.push("Meeting Venue");
   if(!(m["What_Id"]&&m["What_Id"].id)) miss.push("Related To");
   return miss;
 }
@@ -363,6 +368,9 @@ function openPostponeBox(){
   if(miss.length){showMessage("Cannot postpone: "+miss.join(", ")+" must be filled on this meeting first.","error");return;}
   if(!FIELD_POSTPONED_TO_DATE){showMessage("The \"Postponed to\" field is not available on Meetings, or you do not have access to it. Please contact your admin.","error");return;}
   postponeData=null; pdShowError("");
+  var knownVenue=meetingData[FIELD_MEETING_VENUE]||"";
+  document.getElementById("pdVenueWrap").style.display=knownVenue?"none":"block";
+  if(!knownVenue) document.getElementById("pdVenue").value="";
   var dEl=document.getElementById("pdDate"),fEl=document.getElementById("pdFrom"),tEl=document.getElementById("pdTo");
   dEl.setAttribute("min",todayInputStr());
   // start with the original meeting's times, so only the date has to be chosen
@@ -387,22 +395,26 @@ function confirmPostpone(){
   if(isNaN(start.getTime())||isNaN(end.getTime())){pdShowError("The date or time is not valid.");return;}
   if(end<=start){pdShowError("The To time must be after the From time.");return;}
   if(start<=new Date()){pdShowError("Please choose a date and time in the future.");return;}
-  postponeData={date:date,from:from,to:to};
+  var tz=tzOffsetStr();
+  var venue=meetingData[FIELD_MEETING_VENUE]||document.getElementById("pdVenue").value;
+  if(!venue){pdShowError("Please select the Meeting Venue.");return;}
+  postponeData={venue:venue,date:date,from:from,to:to,startIso:date+"T"+from+":00"+tz,endIso:date+"T"+to+":00"+tz};
   processMeetingAction(STAGE_POSTPONED);
 }
-// the "Postponed to" date must really be saved on this meeting
+// the "Postponed to" date and time must really be saved on this meeting (Postponed_to is a Date-Time field)
 function ensurePostponedDate(){
+  function same(a,b){var x=new Date(a).getTime(),y=new Date(b).getTime();return !isNaN(x)&&!isNaN(y)&&x===y;}
   function read(){
     return ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:meetingId}).then(function(res){
       var rec=res&&res.data&&res.data[0]?res.data[0]:null;
-      return rec?String(rec[FIELD_POSTPONED_TO_DATE]||"").substring(0,10):"";
+      return rec?(rec[FIELD_POSTPONED_TO_DATE]||""):"";
     });
   }
   return read().then(function(v){
-    if(v===postponeData.date)return true;
-    var fix={id:meetingId}; fix[FIELD_POSTPONED_TO_DATE]=postponeData.date;
+    if(same(v,postponeData.startIso))return true;
+    var fix={id:meetingId}; fix[FIELD_POSTPONED_TO_DATE]=postponeData.startIso;
     return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:fix,Trigger:[]}).then(read).then(function(v2){
-      if(v2!==postponeData.date)throw new Error("Postponed to could not be saved. Please check your access to that field.");
+      if(!same(v2,postponeData.startIso))throw new Error("Postponed to could not be saved. Please check your access to that field.");
       return true;
     });
   });
@@ -414,10 +426,10 @@ function createPostponedMeeting(){
   var m=meetingData, pd=postponeData, tz=tzOffsetStr();
   var data={};
   data["Event_Title"]=m["Event_Title"];
-  data[FIELD_START_DATETIME]=pd.date+"T"+pd.from+":00"+tz;
-  data[FIELD_END_DATETIME]=pd.date+"T"+pd.to+":00"+tz;
+  data[FIELD_START_DATETIME]=pd.startIso;
+  data[FIELD_END_DATETIME]=pd.endIso;
   data["Meeting_Purpose"]=m["Meeting_Purpose"];
-  data["Meeting_Venue__s"]=m["Meeting_Venue__s"];
+  data[FIELD_MEETING_VENUE]=pd.venue;
   if(m["Meeting_Type"]) data["Meeting_Type"]=m["Meeting_Type"];
   if(m["Venue"]) data["Venue"]=m["Venue"];
   data["What_Id"]={id:m["What_Id"].id};
@@ -461,7 +473,7 @@ function processMeetingAction(targetStage){
       updateData[FIELD_MAP_LINK]="https://www.google.com/maps?q="+updateData[FIELD_LATITUDE]+","+updateData[FIELD_LONGITUDE];
       updateData[FIELD_DESCRIPTION]=sanitizeText(descEl.value);
       updateData[FIELD_STATUS_MARKED_BY]=currentUser;
-      if(targetStage===STAGE_POSTPONED&&postponeData&&FIELD_POSTPONED_TO_DATE){updateData[FIELD_POSTPONED_TO_DATE]=postponeData.date;}
+      if(targetStage===STAGE_POSTPONED&&postponeData&&FIELD_POSTPONED_TO_DATE){updateData[FIELD_POSTPONED_TO_DATE]=postponeData.startIso;}
       // Only update End_DateTime if user changed it
       var currentStartTimeInput=startTimeEl.value;
       if(currentStartTimeInput&&currentStartTimeInput!==originalStartDateTime){
@@ -529,6 +541,8 @@ ZOHO.embeddedApp.on("PageLoad",function(data){
     if(!response||!response.data||!response.data.length)throw new Error("Unable to load the Meeting record.");
     var meeting=response.data[0]; var uniqueNumber=meeting[UNIQUE_NUMBER_FIELD];
     meetingData=meeting;
+    var vk=Object.keys(meeting).filter(function(k){return /meeting.?venue/i.test(k);});
+    if(vk.length){FIELD_MEETING_VENUE=vk[0];}
     // use the "Postponed_to" field; if it is not on the record (no access / not created) look for any field named Postponed...
     if(!Object.prototype.hasOwnProperty.call(meeting,"Postponed_to")){
       var pk=Object.keys(meeting).filter(function(k){return /^postponed/i.test(k);});
@@ -543,7 +557,7 @@ ZOHO.embeddedApp.on("PageLoad",function(data){
     if(meeting[FIELD_END_DATETIME]){var inputVal=zohoDateToInput(meeting[FIELD_END_DATETIME]);endTimeEl.value=inputVal;originalEndDateTime=inputVal;}
     if(meeting[FIELD_ACTION_DATETIME]){alreadyMarked=true;disableButtons();showMessage("This Meeting is already marked ("+(currentStage||"status set")+"). You can still upload images.","info");return;}
     enableButtons();
-    if(FIELD_POSTPONED_TO_DATE&&meeting[FIELD_POSTPONED_TO_DATE]){showMessage("A postponed date ("+meeting[FIELD_POSTPONED_TO_DATE]+") is already saved on this meeting. Before postponing again, check that a new meeting for that date does not already exist.","info");}
+    if(FIELD_POSTPONED_TO_DATE&&meeting[FIELD_POSTPONED_TO_DATE]){showMessage("A postponed date ("+(isNaN(new Date(meeting[FIELD_POSTPONED_TO_DATE]).getTime())?meeting[FIELD_POSTPONED_TO_DATE]:new Date(meeting[FIELD_POSTPONED_TO_DATE]).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))+") is already saved on this meeting. Before postponing again, check that a new meeting for that date does not already exist.","info");}
   }).catch(function(error){stageEl.textContent="Error";showMessage(error&&error.message?error.message:"Unable to load Meeting.","error");});
 });
 ZOHO.embeddedApp.init();
