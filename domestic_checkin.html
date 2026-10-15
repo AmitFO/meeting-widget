@@ -137,11 +137,10 @@
       <div><div class="field-label">To <span>*</span></div><input type="time" id="pdTo"></div>
     </div>
     <div class="field-group" id="pdVenueWrap" style="display:none;">
-      <div class="field-label">Meeting Venue <span>*</span></div>
+      <div class="field-label">New Meeting Venue <span>*</span></div>
       <select id="pdVenue"><option value="">Select venue</option><option value="In-office">In-office</option><option value="Client location">Client location</option><option value="Online">Online</option></select>
-      <div class="field-hint">The venue could not be read from this meeting, so please select it for the new meeting.</div>
     </div>
-    <div class="field-hint" style="margin:-4px 0 10px;">A new meeting is created on this date with the same title, purpose, venue and related record.</div>
+    <div class="field-hint" id="pdNote" style="margin:-4px 0 10px;"></div>
     <div class="pd-error" id="pdError"></div>
     <button id="pdConfirm" type="button" onclick="confirmPostpone()">Confirm postpone</button>
     <button id="pdCancel" type="button" onclick="cancelPostpone()">Cancel</button>
@@ -371,6 +370,7 @@ function openPostponeBox(){
   var knownVenue=meetingData[FIELD_MEETING_VENUE]||"";
   document.getElementById("pdVenueWrap").style.display=knownVenue?"none":"block";
   if(!knownVenue) document.getElementById("pdVenue").value="";
+  document.getElementById("pdNote").textContent="Note: - "+(knownVenue?"":"The venue could not be read from this meeting, so please select it for the new meeting. ")+"A new meeting is created on this date with the same title, purpose, venue and related record.";
   var dEl=document.getElementById("pdDate"),fEl=document.getElementById("pdFrom"),tEl=document.getElementById("pdTo");
   dEl.setAttribute("min",todayInputStr());
   // start with the original meeting's times, so only the date has to be chosen
@@ -397,7 +397,7 @@ function confirmPostpone(){
   if(start<=new Date()){pdShowError("Please choose a date and time in the future.");return;}
   var tz=tzOffsetStr();
   var venue=meetingData[FIELD_MEETING_VENUE]||document.getElementById("pdVenue").value;
-  if(!venue){pdShowError("Please select the Meeting Venue.");return;}
+  if(!venue){pdShowError("Please select the New Meeting Venue.");return;}
   postponeData={venue:venue,date:date,from:from,to:to,startIso:date+"T"+from+":00"+tz,endIso:date+"T"+to+":00"+tz};
   processMeetingAction(STAGE_POSTPONED);
 }
