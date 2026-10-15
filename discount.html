@@ -510,11 +510,17 @@ input[type=date].empty::-webkit-datetime-edit{color:transparent}
 (function(){
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
+/* A national distributor has no entitlement of its own - it bills on
+   behalf of a sub-dealer and keeps a margin, which the order check adds
+   to the APPROVED discount, never to this limit. The raised limits that
+   used to sit here are gone, so every partner measures against 14%.
 const PARTNER_BASE=[
   {name:"iris global services limited", pct:15, needGst:true},
   {name:"redington limited",            pct:15},
   {contains:"rashi peripherals",        pct:16}
 ];
+*/
+const PARTNER_BASE=[];
 const GST=18, SC=40, DEFAULT_BASE=14;
 
 /* ---- national distributors ----------------------------------------
@@ -536,7 +542,23 @@ const isNDName=n=>ND_NAMES.indexOf((n||"").trim().toLowerCase())>-1;
    allowed but it has to start with a space, so X2075PB14 - S passes
    and X1065PA13U does not.                                           */
 const PANEL_RE=/^X\d{4}[A-Z]{2}\d{2}(\s.*)?$/i;
-const isPanel=code=>PANEL_RE.test((code||"").trim());
+
+/* Panels whose code does not fit the pattern above and is allowed
+   through by name. Each entry is a deliberate exception - the pattern
+   itself is not widened, so nothing else slips in with it. A code
+   listed here is matched exactly, so a longer variant of the same code
+   is a separate decision and has to be added on its own line.       */
+const PANEL_EXCEPTIONS=[
+  "X2086MXA7MD"
+];
+const EXC=PANEL_EXCEPTIONS.map(c=>c.trim().toUpperCase());
+
+const isPanel=code=>{
+  const c=(code||"").trim();
+  if(!c) return false;
+  if(PANEL_RE.test(c)) return true;
+  return EXC.indexOf(c.toUpperCase())>-1;
+};
 
 const S={route:null,ndMode:null,nd:null,to:[],cc:[],bcc:[],n:0,acc:null,dlr:null,sub:null,ready:false,editId:null,attempt:1};
 const inr=v=>"₹"+(+v||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1035,31 +1057,51 @@ function loadUsers(){
     console.log("users loaded:",U.list.length);
   };
 
-  let p=null;
-  try{
-    if(ZOHO.CRM.CONFIG&&ZOHO.CRM.CONFIG.getUsers){
-      p=ZOHO.CRM.CONFIG.getUsers({Type:"AllUsers"});
-    }else if(ZOHO.CRM.API&&ZOHO.CRM.API.getAllUsers){
-      p=ZOHO.CRM.API.getAllUsers({Type:"AllUsers"});
-    }
-  }catch(e){console.warn("getUsers threw",e)}
+  /* Zoho hands back at most 200 users per call and says so only in
+     info.more_records. One call therefore hides everybody past the
+     200th, which is why a recently added colleague would not appear
+     in to/cc/bcc. Page until more_records is false.                */
+  function fetchPage(page){
+    try{
+      if(ZOHO.CRM.CONFIG&&ZOHO.CRM.CONFIG.getUsers){
+        return ZOHO.CRM.CONFIG.getUsers({Type:"AllUsers",page:page,per_page:200});
+      }
+      if(ZOHO.CRM.API&&ZOHO.CRM.API.getAllUsers){
+        return ZOHO.CRM.API.getAllUsers({Type:"AllUsers",page:page,per_page:200});
+      }
+    }catch(e){console.warn("getUsers threw",e)}
+    return null;
+  }
+  function rowsOf(r){
+    if(!r) return [];
+    if(Array.isArray(r)) return r;
+    if(Array.isArray(r.users)) return r.users;
+    if(r.data&&Array.isArray(r.data)) return r.data;
+    if(r.response&&Array.isArray(r.response.users)) return r.response.users;
+    return [];
+  }
+  function moreAfter(r){
+    const i=r&&(r.info||(r.response&&r.response.info));
+    return !!(i&&i.more_records);
+  }
 
-  if(!p||typeof p.then!=="function"){ done([]); return; }
-
-  const guard=setTimeout(()=>{if(!U.loaded)done([])},8000);
-
-  p.then(r=>{
-    clearTimeout(guard);
-    let rows=[];
-    if(r){
-      if(Array.isArray(r)) rows=r;
-      else if(Array.isArray(r.users)) rows=r.users;
-      else if(r.data&&Array.isArray(r.data)) rows=r.data;
-      else if(r.response&&Array.isArray(r.response.users)) rows=r.response.users;
-    }
-    console.log("getUsers raw:",r);
-    done(rows);
-  }).catch(e=>{clearTimeout(guard);console.warn("user load failed",e);done([])});
+  const guard=setTimeout(()=>{if(!U.loaded)done(all)},15000);
+  const all=[];
+  function pull(page){
+    const p=fetchPage(page);
+    if(!p||typeof p.then!=="function"){ clearTimeout(guard); done(all); return; }
+    p.then(r=>{
+      all.push.apply(all,rowsOf(r));
+      /* stop at 10 pages so a bad response can never loop for ever */
+      if(moreAfter(r)&&page<10){ pull(page+1); }
+      else { clearTimeout(guard); done(all); }
+    }).catch(e=>{
+      clearTimeout(guard);
+      console.warn("user load failed on page",page,e);
+      done(all);
+    });
+  }
+  pull(1);
 }
 
 S.files=[];
