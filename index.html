@@ -186,8 +186,10 @@ var totalUploadedBytes  = 0;
 var originalPurpose      = "";
 var originalEndDateTime  = "";
 var originalStartDateTime = "";
-var FIELD_POSTPONED_TO_DATE = "Postponed_to";   // "Postponed to" Date/Time field (checked against the record at load)
+var FIELD_POSTPONED_TO_DATE = "Postponed_to";   // "Postponed to" field (checked against the record at load)
+var POSTPONED_TO_DATE_ONLY  = false;   // true: "Postponed to" is a Date field (saves 2026-10-22); false: Date/Time field
 var FIELD_MEETING_VENUE = "Meeting_Venue__s";   // picklist: In-office / Client location (found automatically at load)
+var venueKeys           = [];         // every field on the meeting whose name looks like "Meeting Venue"
 var meetingData         = null;       // the meeting as loaded, used to copy fields to the new meeting
 var postponeData        = null;       // { venue, date, from, to, startIso, endIso } chosen in the postpone panel
 var postponedCreatedId  = null;       // id of the new meeting once created (prevents a second one on retry)
@@ -493,9 +495,14 @@ function confirmPostpone(){
   postponeData={venue:venue,date:date,from:from,to:to,startIso:startIso,endIso:endIso};
   processMeetingAction(STAGE_POSTPONED);
 }
-// the "Postponed to" date and time must really be saved on this meeting (Postponed_to is a Date/Time field)
+// value written to "Postponed to": the date only, or the date and time
+function postponedToValue(){ return POSTPONED_TO_DATE_ONLY ? postponeData.date : postponeData.startIso; }
+// the "Postponed to" value must really be saved on this meeting
 function ensurePostponedDate(){
-  function same(a,b){var x=new Date(a).getTime(),y=new Date(b).getTime();return !isNaN(x)&&!isNaN(y)&&x===y;}
+  function same(a,b){
+    if(POSTPONED_TO_DATE_ONLY){ return String(a||"").substring(0,10)===String(b||"").substring(0,10)&&!!a; }
+    var x=new Date(a).getTime(),y=new Date(b).getTime();return !isNaN(x)&&!isNaN(y)&&x===y;
+  }
   function read(){
     return ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:meetingId}).then(function(res){
       var rec=res&&res.data&&res.data[0]?res.data[0]:null;
@@ -503,13 +510,23 @@ function ensurePostponedDate(){
     });
   }
   return read().then(function(v){
-    if(same(v,postponeData.startIso))return true;
-    var fix={id:meetingId}; fix[FIELD_POSTPONED_TO_DATE]=postponeData.startIso;
+    if(same(v,postponedToValue()))return true;
+    var fix={id:meetingId}; fix[FIELD_POSTPONED_TO_DATE]=postponedToValue();
     return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:fix,Trigger:[]}).then(read).then(function(v2){
-      if(!same(v2,postponeData.startIso))throw new Error("Postponed to could not be saved. Please check your access to that field.");
+      if(!same(v2,postponedToValue()))throw new Error("Postponed to could not be saved. Please check your access to that field.");
       return true;
     });
   });
+}
+// After creating: the new meeting must have the same venue (a workflow or default value may have changed it)
+function ensureNewVenue(newId,venue){
+  if(!newId||newId==="created"||!venue){ return Promise.resolve(true); }
+  return ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:newId}).then(function(res){
+    var rec=res&&res.data&&res.data[0]?res.data[0]:null;
+    if(!rec||rec[FIELD_MEETING_VENUE]===venue){ return true; }
+    var fix={id:newId}; fix[FIELD_MEETING_VENUE]=venue;
+    return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:fix,Trigger:[]}).then(function(){ return true; });
+  }).catch(function(){ return true; });   // the meeting itself was created; never block on this check
 }
 // creates the new meeting with the same title, purpose, venue and related record
 function createPostponedMeeting(){
@@ -521,6 +538,8 @@ function createPostponedMeeting(){
   data[FIELD_START_DATETIME]=pd.startIso;
   data[FIELD_END_DATETIME]=pd.endIso;
   data[FIELD_PURPOSE]=m[FIELD_PURPOSE];
+  // same venue as this meeting: every venue field that has a value is copied
+  venueKeys.forEach(function(k){ if(m[k]){ data[k]=m[k]; } });
   data[FIELD_MEETING_VENUE]=pd.venue;
   if(m["Meeting_Type"]) data["Meeting_Type"]=m["Meeting_Type"];
   if(m["Venue"]) data["Venue"]=m["Venue"];
@@ -534,9 +553,11 @@ function createPostponedMeeting(){
     var r=res&&res.data&&res.data[0];
     if(r&&r.code==="SUCCESS"){
       postponedCreatedId=(r.details&&r.details.id)||"created";
+      return ensureNewVenue(postponedCreatedId,pd.venue).then(function(){
       var s=new Date(pd.date+"T"+pd.from+":00");
       postponeNote=" New meeting created for "+s.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})+", "+pd.from+" - "+pd.to+".";
       return postponedCreatedId;
+      });
     }
     throw new Error("The new meeting could not be created: "+(r&&r.message?r.message:"unknown error")+". The meeting is marked Postponed. Tap Confirm postpone to try again.");
   });
@@ -602,7 +623,7 @@ function processMeetingAction(targetStage){
       if(FIELD_MAP_LINK){updateData[FIELD_MAP_LINK]="https://www.google.com/maps?q="+lat+","+lng;}
       updateData[FIELD_DESCRIPTION]=cleanDesc;
       updateData[FIELD_STATUS_MARKED_BY]=currentUser;
-      if(targetStage===STAGE_POSTPONED&&postponeData&&FIELD_POSTPONED_TO_DATE){updateData[FIELD_POSTPONED_TO_DATE]=postponeData.startIso;}
+      if(targetStage===STAGE_POSTPONED&&postponeData&&FIELD_POSTPONED_TO_DATE){updateData[FIELD_POSTPONED_TO_DATE]=postponedToValue();}
       // Start/End only if the user changed them, sent with the CRM's own offset
       if(startTimeEl.value&&startTimeEl.value!==originalStartDateTime){updateData[FIELD_START_DATETIME]=inputToZohoDate(startTimeEl.value,startOffset);}
       if(endTimeEl.value&&endTimeEl.value!==originalEndDateTime){updateData[FIELD_END_DATETIME]=inputToZohoDate(endTimeEl.value,endOffset);}
@@ -649,8 +670,9 @@ ZOHO.embeddedApp.on("PageLoad",function(data){
     if(!response||!response.data||!response.data.length)throw new Error("Unable to load the Meeting record.");
     var meeting=response.data[0];
     meetingData=meeting;
-    var vk=Object.keys(meeting).filter(function(k){return /meeting.?venue/i.test(k);});
-    if(vk.length){FIELD_MEETING_VENUE=vk[0];}
+    venueKeys=Object.keys(meeting).filter(function(k){return /meeting.?venue/i.test(k);});
+    if(venueKeys.indexOf("Meeting_Venue__s")>-1){FIELD_MEETING_VENUE="Meeting_Venue__s";}
+    else if(venueKeys.length){FIELD_MEETING_VENUE=venueKeys[0];}
     // use the "Postponed_to" field; if it is not on the record (no access / not created) look for any field named Postponed...
     if(!Object.prototype.hasOwnProperty.call(meeting,"Postponed_to")){
       var pk=Object.keys(meeting).filter(function(k){return /^postponed/i.test(k);});
