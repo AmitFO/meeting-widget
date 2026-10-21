@@ -548,7 +548,7 @@ function createPostponedMeeting(){
   if(m["Who_Id"]&&m["Who_Id"].id) data["Who_Id"]={id:m["Who_Id"].id};
   if(m["Owner"]&&m["Owner"].id) data["Owner"]={id:m["Owner"].id};
   data[FIELD_STAGE]="Planned";
-  data["Description"]="Rescheduled from "+(m[UNIQUE_NUMBER_FIELD]||"the earlier meeting")+" (postponed on "+todayInputStr()+")";
+  // Description is left blank on the new meeting
   return ZOHO.CRM.API.insertRecord({Entity:MODULE_API_NAME,APIData:data,Trigger:["workflow"]}).then(function(res){
     var r=res&&res.data&&res.data[0];
     if(r&&r.code==="SUCCESS"){
