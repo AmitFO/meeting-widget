@@ -542,6 +542,25 @@ function createPostponedMeeting(){
   });
 }
 
+// Readable message from any error: a normal Error, or the response object Zoho rejects with
+function errorText(error){
+  console.log("Meeting action error:", error);
+  try{ console.log(JSON.stringify(error)); }catch(e){}
+  if(error&&error.message){ return error.message; }
+  var d=error&&error.data&&error.data[0]?error.data[0]:(error&&error.code?error:null);
+  if(d){
+    var t=(d.message||d.code||"Update failed.");
+    if(d.details){
+      if(d.details.api_name){ t+=" (field: "+d.details.api_name+")"; }
+      if(d.details.expected_data_type){ t+=" (expected: "+d.details.expected_data_type+")"; }
+    }
+    if(d.code&&d.message){ t+=" ["+d.code+"]"; }
+    return t;
+  }
+  try{ var j=JSON.stringify(error); if(j&&j!=="{}"){ return "Unable to update the meeting: "+j.substring(0,300); } }catch(e){}
+  return "Unable to update the meeting.";
+}
+
 /* ---------- Main action ---------- */
 function processMeetingAction(targetStage){
   if(isProcessing||!meetingId)return;
@@ -612,7 +631,7 @@ function processMeetingAction(targetStage){
     return finishWithImages(targetStage,filesToUpload,totalImages,lockOk);
   }).catch(function(error){
     isProcessing=false; loaderEl.style.display="none"; progressWrap.style.display="none";
-    showMessage(error&&error.message?error.message:"Unable to update the meeting.","error");
+    showMessage(errorText(error),"error");
     if(!statusSaved) enableButtons();
   });
 }
