@@ -1,699 +1,695 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mark Meeting</title>
-<script src="https://live.zwidgets.com/js-sdk/1.0.5/ZohoEmbededAppSDK.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Event Form · Marketing Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #fff; color: #222; }
-  .container { max-width: 500px; margin: auto; padding: 20px; }
-  h2 { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
-  .status { background: #f5f5f5; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
-  .status-label { font-size: 13px; color: #666; }
-  .status-value { font-size: 17px; font-weight: bold; margin-top: 4px; }
-  .field-group { margin-bottom: 14px; }
-  .field-label { font-size: 13px; color: #555; font-weight: 600; margin-bottom: 5px; }
-  .field-label span { color: #c62828; }
-  select, textarea, input[type="datetime-local"], input[type="date"], input[type="time"] { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: Arial, sans-serif; background: #fff; color: #222; outline: none; }
-  select:focus, textarea:focus, input[type="datetime-local"]:focus, input[type="date"]:focus, input[type="time"]:focus { border-color: #2e7d32; }
-  .field-error { border-color: #c62828 !important; background: #fff8f8 !important; }
-  textarea { resize: vertical; min-height: 90px; }
-  .upload-box { border: 2px dashed #ddd; border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: border-color 0.2s; margin-bottom: 10px; }
-  .upload-box:hover { border-color: #2e7d32; }
-  .upload-box.has-error { border-color: #c62828; }
-  .upload-icon { font-size: 28px; margin-bottom: 6px; }
-  .upload-text { font-size: 13px; color: #555; }
-  .upload-sub { font-size: 11px; color: #999; margin-top: 3px; }
-  #imageInput { display: none; }
-  .image-count { font-size: 12px; color: #2e7d32; font-weight: 600; margin-bottom: 4px; }
-  .quota-row { display: flex; justify-content: space-between; font-size: 11px; color: #666; margin-bottom: 6px; }
-  .quota-row .quota-count { font-weight: 700; color: #333; }
-  .quota-bar-wrap { height: 5px; background: #eee; border-radius: 3px; margin-bottom: 8px; overflow: hidden; }
-  .quota-bar-fill { height: 100%; background: #2e7d32; border-radius: 3px; width: 0%; transition: width 0.3s; }
-  .image-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-  .image-item { position: relative; border-radius: 6px; overflow: hidden; aspect-ratio: 1; background: #f5f5f5; }
-  .image-item img { width: 100%; height: 100%; object-fit: cover; }
-  .image-remove { position: absolute; top: 3px; right: 3px; background: rgba(198,40,40,0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; }
-  .upload-progress { font-size: 12px; color: #555; margin-top: 6px; }
-  .progress-bar-wrap { height: 6px; background: #eee; border-radius: 3px; margin-top: 6px; overflow: hidden; }
-  .progress-bar { height: 100%; background: #2e7d32; border-radius: 3px; width: 0%; transition: width 0.3s; }
-  .size-info { font-size: 11px; color: #999; margin-top: 4px; }
-  button { width: 100%; padding: 14px; margin-bottom: 12px; border: 0; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  #completeBtn { background: #2e7d32; color: white; }
-  #cancelBtn { background: #c62828; color: white; }
-  #postponeBtn { background: #1565c0; color: white; }
-  #postponeBox { display: none; border: 1px solid #bbd3f0; background: #f4f8fe; border-radius: 10px; padding: 14px; margin: 4px 0 14px; }
-  #postponeBox .pp-title { font-size: 15px; font-weight: bold; margin-bottom: 10px; color: #0d47a1; }
-  #postponeBox .pp-row { display: flex; gap: 10px; }
-  #postponeBox .pp-row > div { flex: 1; min-width: 0; }
-  #postponeBox .pd-error { display: none; background: #ffefef; color: #8b1a1a; border-radius: 8px; padding: 10px; font-size: 13px; margin-bottom: 10px; }
-  #pdConfirm { background: #1565c0; color: white; margin-bottom: 8px; }
-  #pdCancel { background: #e0e0e0; color: #222; margin-bottom: 0; }
-  #uploadImagesBtn { background: #546e7a; color: white; margin-top: 8px; display: none; }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  button:active:not(:disabled) { opacity: 0.8; }
-  #message { display: none; padding: 12px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
-  .info    { display: block !important; background: #eef5ff; color: #174a7e; }
-  .success { display: block !important; background: #edf7ed; color: #1b5e20; }
-  .error   { display: block !important; background: #ffefef; color: #8b1a1a; }
-  #gpsInfo { display: none; margin-top: 12px; padding: 10px; background: #f5f5f5; border-radius: 8px; font-size: 12px; }
-  #loader  { display: none; text-align: center; padding: 10px; color: #555; font-size: 13px; }
-  .divider { height: 1px; background: #eee; margin: 14px 0; }
-  .field-hint { font-size: 11px; color: #999; margin-top: 4px; }
+:root{
+  --bg:#F5F7FA; --surface:#FFFFFF; --ink:#18202E; --muted:#5B6578; --line:#DCE1E8; --line-soft:#EBEEF2;
+  --gtm:#1F6F78; --gtm-soft:#E4F1F2; --mkt:#3A47A8; --mkt-soft:#E8EAF7;
+  --up:#A33A2B; --up-soft:#F8E6E3; --down:#2D7A4B; --down-soft:#E3F2E8; --focus:#3A47A8;
+  --field:#FFFFFF; --field-off:#F1F3F6;
+  color-scheme:light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#12161D; --surface:#1A2029; --ink:#E6E9EF; --muted:#9AA3B2; --line:#2E3644; --line-soft:#252C38;
+  --gtm:#5FB7C0; --gtm-soft:#1C3236; --mkt:#8E98E8; --mkt-soft:#232848;
+  --up:#E8857A; --up-soft:#3A2420; --down:#72C493; --down-soft:#1C3326; --focus:#8E98E8;
+  --field:#141920; --field-off:#1F2530; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#12161D; --surface:#1A2029; --ink:#E6E9EF; --muted:#9AA3B2; --line:#2E3644; --line-soft:#252C38;
+  --gtm:#5FB7C0; --gtm-soft:#1C3236; --mkt:#8E98E8; --mkt-soft:#232848;
+  --up:#E8857A; --up-soft:#3A2420; --down:#72C493; --down-soft:#1C3326; --focus:#8E98E8;
+  --field:#141920; --field-off:#1F2530; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 20px 120px}
+h1{font-size:24px;line-height:1.25;margin:0;font-weight:600;letter-spacing:-.01em}
+h2{font-size:17px;margin:0 0 4px;font-weight:600}
+p{margin:0}
+.sub{color:var(--muted);font-size:13.5px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.demo{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:13.5px}
+.demo .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.demo .seg button{border:0;background:transparent;padding:5px 12px;cursor:pointer}
+.demo .seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.linkbtn{border:0;background:none;color:var(--mkt);cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
+
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:22px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12.5px;border:1px solid var(--line);border-radius:20px;padding:3px 10px;background:var(--surface);white-space:nowrap}
+.chip b{font-weight:600}
+.you-gtm{border-color:var(--gtm);color:var(--gtm)}
+.you-mkt{border-color:var(--mkt);color:var(--mkt)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}
+.panel-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+
+.cats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cat{border:1px solid var(--line);border-radius:8px;background:var(--field);padding:14px;text-align:left;cursor:pointer}
+.cat strong{display:block;font-weight:600}
+.cat span{font-size:13px;color:var(--muted)}
+.cat[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.cat:disabled{cursor:default}
+.subtypes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pill{border:1px solid var(--line);border-radius:20px;background:var(--field);padding:6px 14px;cursor:pointer}
+.pill[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.auto-note{margin-top:12px;font-size:13.5px;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px 16px}
+.c2{grid-column:span 2}.c3{grid-column:span 3}.c4{grid-column:span 4}.c6{grid-column:span 6}
+label.f{display:block;font-size:13px;font-weight:500;margin-bottom:5px}
+label.f i{font-style:normal;color:var(--up)}
+.in{width:100%;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:8px 10px;min-height:38px}
+.in:disabled,.in[readonly]{background:var(--field-off);color:var(--muted)}
+textarea.in{min-height:72px;resize:vertical}
+.hint{font-size:12.5px;color:var(--muted);margin-top:4px}
+.hint.err{color:var(--up)}
+.hint.ok{color:var(--down)}
+.owner{display:flex;align-items:center;gap:8px;min-height:38px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--field-off)}
+.owner .dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.owner.found .dot{background:var(--down)}
+.typeahead{position:relative}
+.ta-list{position:absolute;z-index:5;left:0;right:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--line);border-radius:6px;max-height:200px;overflow:auto;list-style:none;padding:4px;margin-left:0}
+.ta-list li button{width:100%;text-align:left;border:0;background:none;padding:7px 8px;border-radius:4px;cursor:pointer}
+.ta-list li button:hover{background:var(--field-off)}
+
+/* Negotiation ledger */
+.ledger-wrap{overflow-x:auto}
+table.ledger{width:100%;border-collapse:collapse;min-width:640px}
+.ledger th,.ledger td{padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;text-align:left}
+.ledger thead th{font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
+.ledger thead th.gtm{color:var(--gtm);background:var(--gtm-soft)}
+.ledger thead th.mkt{color:var(--mkt);background:var(--mkt-soft)}
+.ledger td.gtm{background:color-mix(in srgb,var(--gtm-soft) 45%,transparent)}
+.ledger td.mkt{background:color-mix(in srgb,var(--mkt-soft) 45%,transparent)}
+.ledger th[scope="row"]{font-weight:500;width:24%}
+.ledger th[scope="row"] small{display:block;font-weight:400;color:var(--muted);font-size:12px;line-height:1.35}
+.ledger .in{min-width:0}
+.ledger tr.total th,.ledger tr.total td{font-weight:600;border-bottom:0}
+.ledger tr.commit th,.ledger tr.commit td{font-weight:600}
+.money{position:relative}
+.money::before{content:"₹";position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.money .in{padding-left:24px;text-align:right}
+.diff{display:inline-block;font-size:12.5px;border-radius:4px;padding:2px 7px;white-space:nowrap}
+.diff.same{color:var(--muted)}
+.diff.up{color:var(--up);background:var(--up-soft)}
+.diff.down{color:var(--down);background:var(--down-soft)}
+.static{min-height:38px;display:flex;align-items:center}
+.filecell{font-size:13px}
+.filecell input{max-width:100%;font-size:13px}
+.legend{font-size:13px;color:var(--muted)}
+
+/* Sample draft — the proposal sheet approvers see */
+.sheet-wrap{overflow-x:auto}
+table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
+.sheet th,.sheet td{border:1px solid var(--ink);padding:8px 10px;vertical-align:middle}
+.sheet thead th{font-weight:600;text-align:center}
+.sheet td.ev{font-weight:600}
+.sheet td.num{text-align:right}
+.sheet td.ctr{text-align:center}
+.sheet td.commit{font-size:20px;font-weight:700;text-align:center}
+.sheet small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.sheet tfoot td{font-weight:600}
+
+.remarks{margin-top:14px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:1040px;margin:0 auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.bar .msg{font-size:13.5px;color:var(--muted);max-width:560px}
+.bar .msg.err{color:var(--up)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:9px 16px;font-weight:500;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.reject{background:var(--up);border-color:var(--up);color:#fff}
+.btn.approve{background:var(--down);border-color:var(--down);color:#fff}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.hidden{display:none!important}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:6px;font-size:14px;z-index:20}
+
+@media (max-width:720px){
+  .cats{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr 1fr}
+  .c2,.c3,.c4,.c6{grid-column:span 2}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<style>
+.info{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 16px}
+.info div span{display:block;font-size:12.5px;color:var(--muted)}
+.info div b{font-weight:500}
+.opt{display:flex;flex-wrap:wrap;gap:6px}
+.opt button{border:1px solid var(--line);border-radius:6px;background:var(--field);padding:6px 10px;cursor:pointer;font-size:13.5px}
+.opt button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.ledger td{min-width:200px}
+.ledger tr.sub th{padding-top:18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);font-weight:600}
+.cellnote{font-size:12px;color:var(--muted);margin-top:4px}
+@media (max-width:720px){.info{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-<div class="container">
-
-  <div class="status">
-    <div class="status-label">Current Meeting Stage</div>
-    <div class="status-value" id="stage">Loading...</div>
+<div class="wrap">
+  <div id="demoBar" class="demo hidden" role="region" aria-label="Preview controls">
+    <span>Preview mode, no CRM connection.</span>
+    <span>View as
+      <span class="seg" role="group" aria-label="View as">
+        <button type="button" data-role="GTM" aria-pressed="false">GTM</button>
+        <button type="button" data-role="ZH" aria-pressed="false">ZH</button>
+        <button type="button" data-role="MKT" aria-pressed="true">Marketing</button>
+      </span>
+    </span>
+    <button type="button" class="linkbtn" id="loadSample">Load Jammu sample</button>
+    <button type="button" class="linkbtn" id="resetDemo">Start over</button>
   </div>
 
-  <div class="field-group">
-    <div class="field-label">Meeting Start Time</div>
-    <input type="datetime-local" id="meetingStartTime">
-    <div class="field-hint">Pre-filled from CRM. Change only if start time differs.</div>
+  <div class="head">
+    <div>
+      <h1 id="title">New event request</h1>
+      <p class="sub" id="subtitle">GTM and Marketing fill the same details side by side. Marketing’s figures go for approval.</p>
+    </div>
+    <div class="chips" id="chips"></div>
   </div>
 
-  <div class="field-group">
-    <div class="field-label">Meeting End Time</div>
-    <input type="datetime-local" id="meetingEndTime">
-    <div class="field-hint">Pre-filled from CRM. Change only if end time differs.</div>
-  </div>
+  <section class="panel" aria-labelledby="infoH">
+    <h2 id="infoH" style="margin-bottom:12px">Request</h2>
+    <div class="info" id="info"></div>
+  </section>
 
-  <div class="field-group">
-    <div class="field-label">Description <span>*</span></div>
-    <textarea id="meetingDescription" placeholder="Enter meeting description..."></textarea>
-    <div class="field-hint" id="purposeDisplay"></div>
-  </div>
+  <section class="panel" aria-labelledby="ledH">
+    <div class="panel-head">
+      <div><h2 id="ledH">Event details</h2><p class="sub">Each row shows GTM’s proposal next to Marketing’s figure.</p></div>
+      <p class="legend" id="legend"></p>
+    </div>
+    <div class="ledger-wrap"><table class="ledger" id="ledger"></table></div>
+    <div class="remarks hidden" id="remarksBox">
+      <label class="f" for="remarks">Rejection remarks <i>*</i></label>
+      <textarea class="in" id="remarks" placeholder="Explain what Marketing should renegotiate"></textarea>
+    </div>
+  </section>
 
-  <div class="field-group">
-    <div class="field-label">
-      Meeting Images
-      <span id="imgReqMark"></span>
-      <small id="imgReqHint" style="font-weight:400;color:#999;margin-left:4px;"></small>
-    </div>
-    <div class="upload-box" id="uploadBox" onclick="document.getElementById('imageInput').click()">
-      <div class="upload-icon">📷</div>
-      <div class="upload-text">Tap to select images</div>
-      <div class="upload-sub">Max 15 images · All formats · Max 20MB total</div>
-    </div>
-    <input type="file" id="imageInput" multiple accept="image/*" onchange="handleImageSelect(this)">
-    <div id="quotaArea" style="display:none;">
-      <div class="quota-bar-wrap"><div class="quota-bar-fill" id="quotaBarFill"></div></div>
-      <div class="quota-row">
-        <span class="quota-count" id="quotaCount">0 of 15 images</span>
-        <span id="quotaSize">0.00 / 20.00 MB</span>
-      </div>
-    </div>
-    <div class="image-count" id="imageCount"></div>
-    <div class="image-grid" id="imageGrid"></div>
-    <div class="size-info" id="sizeInfo"></div>
-    <div class="upload-progress" id="uploadProgress"></div>
-    <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-    <button id="uploadImagesBtn" onclick="uploadImagesOnly()">&#128247; Upload Images</button>
-  </div>
-
-  <div class="divider"></div>
-
-  <h2>Mark Meeting</h2>
-  <div id="loader">Please wait...</div>
-  <button id="completeBtn" onclick="completeMeeting()" disabled>&#10003; Completed</button>
-  <button id="cancelBtn"   onclick="cancelMeeting()"   disabled>&#10005; Cancelled</button>
-  <button id="postponeBtn" onclick="postponeMeeting()" disabled>&#9200; Postponed</button>
-  <div id="postponeBox">
-    <div class="pp-title">&#9200; Postpone to a new date</div>
-    <div class="field-group">
-      <div class="field-label">New date <span>*</span></div>
-      <input type="date" id="pdDate">
-    </div>
-    <div class="pp-row field-group">
-      <div><div class="field-label">From <span>*</span></div><input type="time" id="pdFrom"></div>
-      <div><div class="field-label">To <span>*</span></div><input type="time" id="pdTo"></div>
-    </div>
-    <div class="field-group" id="pdVenueWrap" style="display:none;">
-      <div class="field-label">New Meeting Venue <span>*</span></div>
-      <select id="pdVenue"><option value="">Select venue</option><option value="In-office">In-office</option><option value="Client location">Client location</option></select>
-    </div>
-    <div class="field-hint" id="pdNote" style="margin:-4px 0 10px;"></div>
-    <div class="pd-error" id="pdError"></div>
-    <button id="pdConfirm" type="button" onclick="confirmPostpone()">Confirm postpone</button>
-    <button id="pdCancel" type="button" onclick="cancelPostpone()">Cancel</button>
-  </div>
-  <div id="message"></div>
-  <div id="gpsInfo"></div>
-
+  <section class="panel" aria-labelledby="sheetH">
+    <div class="panel-head"><div><h2 id="sheetH">Sample draft</h2><p class="sub">Updates as figures change. Approvers see Marketing’s figures.</p></div></div>
+    <div class="sheet-wrap" id="sheet"></div>
+  </section>
 </div>
 
+<div class="bar" role="region" aria-label="Actions">
+  <div class="bar-in">
+    <p class="msg" id="msg" aria-live="polite"></p>
+    <div class="btns" id="btns"></div>
+  </div>
+</div>
+<div class="toast hidden" id="toast" role="status"></div>
+
 <script>
-/* =====================================================================
-   CONFIG - INTERNATIONAL CRM (API names confirmed by CRM admin)
-   ===================================================================== */
-var MODULE_API_NAME        = "Events";
-var FIELD_STAGE            = "Meeting_Stage";       // picklist: Planned, Completed, Cancelled, Postponed
-var FIELD_ACTION_DATETIME  = "Action_Date_Time";    // lock field
-var FIELD_LATITUDE         = "Meeting_Latitude";    // decimal, 6 places
-var FIELD_LONGITUDE        = "Meeting_Longitude";   // decimal, 6 places
-var FIELD_MAP_LINK         = "Meeting_Location";    // URL field, Google Maps link
-var FIELD_PURPOSE          = "Meeting_Purpose";     // filled at meeting creation
-var FIELD_DESCRIPTION      = "Description";
-var FIELD_STATUS_MARKED_BY = "Status_Marked_by";
-var FIELD_END_DATETIME     = "End_DateTime";
-var FIELD_START_DATETIME   = "Start_DateTime";
-var UNIQUE_NUMBER_FIELD    = "Meeting_Number";      // marking allowed only when filled
-var STAGE_COMPLETED        = "Completed";
-var STAGE_CANCELLED        = "Cancelled";
-var STAGE_POSTPONED        = "Postponed";
-// Meeting Purpose values that need at least 1 image when marked Completed
-var IMAGE_REQUIRED_PURPOSES = ["Demo", "Training"];
-var MAX_IMAGES             = 15;
-var MAX_SIZE_BYTES         = 20 * 1024 * 1024;
-var COORD_DECIMALS         = 6;
-/* ===================================================================== */
+/* ============ CONFIG: matches the Marketing Events module ============ */
+const CFG = {
+  // ---- Zoho login (from api-console.zoho.in > Client-based application) ----
+  CLIENT_ID:"PASTE_CLIENT_ID_HERE",
+  ACCOUNTS_URL:"https://accounts.zoho.in",
+  SCOPES:"ZohoCRM.modules.ALL,ZohoCRM.users.READ,ZohoCRM.files.CREATE",
+  // Zone (from District) → ZH user ID
+  ZH_BY_ZONE:{"North 1":"681278000000676466","East":"681278000000676466","North 2":"681278000000676433","South":"681278000000813134","West":"681278000000676418"},
+  MODULE:"Marketing_Events", PINCODE_MODULE:"Pincodes", DISTRICT_MODULE:"District", PARTNER_MODULE:"Accounts",
+  CAC:2000, FOUNDER_LIMIT:50000, PARTNER_MULTIPLIER:100,
+  MARKETING_KEYWORDS:["marketing"],          // role/profile name contains this → Marketing; else GTM
+  TAG:{ PENDING_GTM:"Send to GTM Approval", GTM_OK:"GTM Approved", PENDING_AV:"Send to AV's Approval" },
+  STATUS:{ DRAFT:"Draft", SUBMITTED:"Submitted", REJECTED:"Rejected", RESUBMITTED:"Resubmitted" }
+};
+const C = { status:"Status", tag:"Event_Tag", remarks:"Rejection_Remarks", district:"District", zh:"ZH", raisedBy:"Raised_by", number:"Event_Number", founder:"Founder_Approval_Needed" };
+const ATTENDEE = ["50 + KDMs","100 + KDMs","150 + KDMs","200 + KDMs","250 + KDMs","400 + KDMs","500 + KDMs"];
+const STATES = ["Andaman & Nicobar (UT)","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh (UT)","Chhattisgarh","Dadra & Nagar Haveli (UT) and Daman & Diu (UT)","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu & Kashmir(UT)","Jharkhand","Karnataka","Kerala","Ladakh (UT)","Lakshadweep (UT)","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Nepal","Odisha","Puducherry (UT)","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
+const CATS = ["End Customer Event","Partner Event","Partner Branding"];
+const EC_SUBS = ["Sponsored Event","Co-Sponsored Event"];
+// g = GTM field API name, m = Marketing field API name
+const FIELDS = [
+  {sec:"Event type", k:"cat", label:"Event category", g:"Event_s_Category", m:"Event_Category", type:"category", req:true},
+  {sec:"Event type", k:"sub", label:"Event sub type", g:"Event_s_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, show:s=>cat(s)!=="" && cat(s)!=="Partner Branding"},
+  {sec:"Basic details", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu"},
+  {sec:"Basic details", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true},
+  {sec:"Basic details", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true},
+  {sec:"Basic details", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
+  {sec:"Basic details", k:"city", label:"City", g:"Event_s_City", m:"City", type:"text", req:true},
+  {sec:"Basic details", k:"state", label:"State", g:"Event_s_State", m:"State", type:"select", options:STATES, req:true},
+  {sec:"Basic details", k:"partner", label:"Partner", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:s=>cat(s)==="Partner Event"||cat(s)==="Partner Branding"||sub(s)==="Co-Sponsored Event"},
+  {sec:"Basic details", k:"share", label:"Teachmint share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:s=>sub(s)==="Co-Sponsored Event"},
+  {sec:"Basic details", k:"agenda", label:"Event agenda", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
+  {sec:"Basic details", k:"photos", label:"Photographs", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true, accept:"image/*"},
+  {sec:"Basic details", k:"other", label:"Other details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
+  {sec:"Other details", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true},
+  {sec:"Other details", k:"floor", label:"Floor plan", g:"Event_s_Floor_Plan", m:"Floor_Plan", type:"file"},
+  {sec:"Other details", k:"stall", label:"Stall plan", g:"Event_s_Stall_Plan", m:"Stall_Plan", type:"file"},
+  {sec:"Other details", k:"spons", label:"Sponsorship cost", g:"Event_s_Sponsorship_Cost", m:"Sponsorship_Cost", type:"money", req:true},
+  {sec:"Other details", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, product standees, branding elements"},
+  {sec:"Other details", k:"proc", label:"Procurement cost", g:"Event_s_Procurement_Cost", m:"Procurement_Cost", type:"money", help:"Brochures, merchandise, paper bags, gifts"}
+];
+const FX = f => f; const byK = k => FIELDS.find(f=>f.k===k);
+const api = (side,k) => byK(k)[side==="GTM"?"g":"m"];
+const cmpFields = () => FIELDS.filter(f=>f.type!=="file");
 
-var meetingId           = null;
-var currentStage        = "";
-var isProcessing        = false;
-var alreadyMarked       = false;   // true when Action_Date_Time is already filled
-var selectedFiles       = [];
-var totalUploadedCount  = 0;
-var totalUploadedBytes  = 0;
-var originalPurpose      = "";
-var originalEndDateTime  = "";
-var originalStartDateTime = "";
-var FIELD_POSTPONED_TO_DATE = "Postponed_to";   // "Postponed to" field (checked against the record at load)
-var POSTPONED_TO_DATE_ONLY  = false;   // true: "Postponed to" is a Date field (saves 2026-10-22); false: Date/Time field
-var FIELD_MEETING_VENUE = "Meeting_Venue__s";   // picklist: In-office / Client location (found automatically at load)
-var venueKeys           = [];         // every field on the meeting whose name looks like "Meeting Venue"
-var meetingData         = null;       // the meeting as loaded, used to copy fields to the new meeting
-var postponeData        = null;       // { venue, date, from, to, startIso, endIso } chosen in the postpone panel
-var postponedCreatedId  = null;       // id of the new meeting once created (prevents a second one on retry)
-var postponeNote        = "";
-var startOffset         = "";      // time zone offset of the CRM value, e.g. +04:00
-var endOffset           = "";
+/* ============ STATE ============ */
+const S = { live:false, role:"MKT", user:{id:null,name:""}, recordId:null, rec:{}, saved:{}, files:{},
+  pin:{GTM:"idle",MKT:"idle"}, owner:null, zh:null, districtName:"", ownerDirty:false, busy:false };
+const cat = side => S.rec[api(side,"cat")] || "";
+const sub = side => S.rec[api(side,"sub")] || "";
 
-var stageEl        = document.getElementById("stage");
-var completeBtn    = document.getElementById("completeBtn");
-var cancelBtn      = document.getElementById("cancelBtn");
-var postponeBtn    = document.getElementById("postponeBtn");
-var uploadImagesBtn= document.getElementById("uploadImagesBtn");
-var messageEl      = document.getElementById("message");
-var gpsEl          = document.getElementById("gpsInfo");
-var loaderEl       = document.getElementById("loader");
-var descEl         = document.getElementById("meetingDescription");
-var startTimeEl    = document.getElementById("meetingStartTime");
-var endTimeEl      = document.getElementById("meetingEndTime");
-var imageGrid      = document.getElementById("imageGrid");
-var imageCount     = document.getElementById("imageCount");
-var sizeInfo       = document.getElementById("sizeInfo");
-var uploadBox      = document.getElementById("uploadBox");
-var progressBar    = document.getElementById("progressBar");
-var progressWrap   = document.getElementById("progressWrap");
-var uploadProgress = document.getElementById("uploadProgress");
-var quotaArea      = document.getElementById("quotaArea");
-var quotaBarFill   = document.getElementById("quotaBarFill");
-var quotaCount     = document.getElementById("quotaCount");
-var quotaSize      = document.getElementById("quotaSize");
-var imgReqMark     = document.getElementById("imgReqMark");
-var imgReqHint     = document.getElementById("imgReqHint");
-
-/* ---------- Time zone helpers ---------- */
-function pad2(n) { return n < 10 ? "0" + n : "" + n; }
-
-// Device offset as +HH:MM / -HH:MM
-function deviceOffset() {
-  var mins = -new Date().getTimezoneOffset();
-  var sign = mins >= 0 ? "+" : "-";
-  mins = Math.abs(mins);
-  return sign + pad2(Math.floor(mins / 60)) + ":" + pad2(mins % 60);
+/* ============ DATA LAYER ============ */
+const MOCK = {
+  pins:{
+    "180001":{district:{id:"d1",name:"Jammu"},state:"Jammu & Kashmir(UT)",zone:"North 1",owner:{id:"u1",name:"District owner, Jammu"}},
+    "560001":{district:{id:"d2",name:"Bengaluru Urban"},state:"Karnataka",zone:"South",owner:{id:"u2",name:"District owner, Bengaluru"}},
+    "110001":{district:{id:"d3",name:"New Delhi"},state:"Delhi",zone:"North 1",owner:{id:"u3",name:"District owner, New Delhi"}}
+  },
+  zh:{"North 1":{id:"zh1",name:"ZH, North 1"},"East":{id:"zh1",name:"ZH, North 1"},"North 2":{id:"zh2",name:"ZH, North 2"},"South":{id:"zh3",name:"ZH, South"},"West":{id:"zh4",name:"ZH, West"}},
+  partners:[{id:"p1",Account_Name:"Brightpath Learning Solutions"},{id:"p2",Account_Name:"Kashmir Edu Systems"},{id:"p3",Account_Name:"Northline Technologies"}],
+  store:null, n:0
+};
+const AUTH = {
+  key:"evf_token",
+  get(){ try{ const t = JSON.parse(sessionStorage.getItem(this.key)||"null"); return t && t.exp > Date.now()+60000 ? t : null; }catch(_){ return null; } },
+  set(t){ try{ sessionStorage.setItem(this.key, JSON.stringify(t)); }catch(_){} S.token = t; },
+  login(){ // Zoho's own sign-in page; returns here with a short-lived token
+    try{ sessionStorage.setItem("evf_stash", JSON.stringify({rec:S.rec, at:Date.now()})); }catch(_){}
+    const back = location.origin + location.pathname;
+    const q = new URLSearchParams({response_type:"token", client_id:CFG.CLIENT_ID, scope:CFG.SCOPES, redirect_uri:back, state:new URLSearchParams(location.search).get("id")||""});
+    location.href = CFG.ACCOUNTS_URL + "/oauth/v2/auth?" + q.toString();
+  },
+  fromHash(){ // after Zoho login: #access_token=...&expires_in=3600&api_domain=...&state=<record id>
+    if(!location.hash.includes("access_token")) return null;
+    const h = new URLSearchParams(location.hash.slice(1));
+    const t = {access:h.get("access_token"), api:h.get("api_domain")||"https://www.zohoapis.in", exp:Date.now()+Number(h.get("expires_in")||3600)*1000};
+    const id = h.get("state");
+    history.replaceState(null, "", location.pathname + (id ? "?id="+encodeURIComponent(id) : ""));
+    this.set(t); return t;
+  }
+};
+async function crm(path, opts={}){
+  const t = S.token || AUTH.get(); if(!t){ AUTH.login(); throw new Error("Signing in…"); }
+  const r = await fetch(t.api + "/crm/v6" + path, Object.assign({}, opts, {headers:Object.assign({Authorization:"Zoho-oauthtoken "+t.access}, opts.body && !(opts.body instanceof FormData) ? {"Content-Type":"application/json"} : {})}));
+  if(r.status===401){ AUTH.login(); throw new Error("Session expired, signing in again…"); }
+  if(r.status===204) return {};
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error((j.message||j.code||("HTTP "+r.status)) + (j.details&&j.details.api_name ? " ("+j.details.api_name+")" : ""));
+  return j;
 }
+const API = {
+  async currentUser(){
+    if(!S.live) return {role:S.role,id:"me",name:"Preview user"};
+    const u = ((await crm("/users?type=CurrentUser")).users||[])[0]||{};
+    const hay = (((u.role||{}).name||"")+" "+((u.profile||{}).name||"")).toLowerCase();
+    return {role: CFG.MARKETING_KEYWORDS.some(w=>hay.includes(w))?"MKT":"GTM", id:u.id, name:u.full_name||""};
+  },
+  async load(id){ return ((await crm("/"+CFG.MODULE+"/"+encodeURIComponent(id))).data||[])[0]||{}; },
+  async pincode(pin){
+    if(!S.live){ await wait(400); const p = MOCK.pins[pin]; return p ? Object.assign({},p,{zh:MOCK.zh[p.zone]||null}) : null; }
+    const p = ((await crm("/"+CFG.PINCODE_MODULE+"/search?criteria="+encodeURIComponent("(Name:equals:"+pin+")"))).data||[])[0];
+    if(!p||!p.District) return null;
+    const dist = ((await crm("/"+CFG.DISTRICT_MODULE+"/"+p.District.id)).data||[])[0];
+    if(!dist||!dist.Owner) return null;
+    const zid = CFG.ZH_BY_ZONE[dist.Zone||""], zh = zid ? {id:zid, name:(dist.Zone||"")+" ZH"} : null;
+    return {district:{id:dist.id,name:dist.Name}, state:dist.State||"", zone:dist.Zone||"", owner:{id:dist.Owner.id,name:dist.Owner.name}, zh};
+  },
+  async partners(q){
+    if(!S.live){ await wait(200); return MOCK.partners.filter(p=>p.Account_Name.toLowerCase().includes(q.toLowerCase())); }
+    return (await crm("/"+CFG.PARTNER_MODULE+"/search?word="+encodeURIComponent(q))).data||[];
+  },
+  async upload(file){
+    const fd = new FormData(); fd.append("file", file, file.name);
+    const row = ((await crm("/files", {method:"POST", body:fd})).data||[])[0];
+    if(!row||!row.details) throw new Error("File upload failed: "+file.name); return row.details.id;
+  },
+  async save(data){
+    if(!S.live){
+      await wait(350);
+      for(const [a,files] of Object.entries(S.files)) data[a] = (MOCK.store&&MOCK.store[a]||[]).concat(files.map(f=>({File_Name__s:f.name})));
+      if(!MOCK.store){ MOCK.n++; data[C.number] = "ME - "+String(MOCK.n).padStart(4,"0"); }
+      MOCK.store = Object.assign(MOCK.store||{}, structuredClone(data), {id:"demo-1"});
+      return "demo-1";
+    }
+    for(const [a,files] of Object.entries(S.files)){ const ids = []; for(const f of files) ids.push({file_id: await API.upload(f)}); if(ids.length) data[a] = ids; }
+    const body = JSON.stringify({data:[S.recordId ? Object.assign({id:S.recordId},data) : data], trigger:["workflow"]});
+    const row = ((await crm("/"+CFG.MODULE, {method:S.recordId?"PUT":"POST", body})).data||[])[0];
+    if(!row||row.code!=="SUCCESS") throw new Error((row&&(row.message+(row.details&&row.details.api_name?" ("+row.details.api_name+")":"")))||"CRM did not accept the record");
+    return S.recordId || row.details.id;
+  }
+};
+const wait = ms => new Promise(r=>setTimeout(r,ms));
 
-// Offset at the end of a Zoho datetime string, or "" if none
-function extractOffset(zohoDate) {
-  if (!zohoDate) return "";
-  var s = zohoDate.toString();
-  var m = s.match(/([+-]\d{2}:\d{2})$/);
-  if (m) return m[1];
-  if (/Z$/.test(s)) return "+00:00";
-  return "";
+/* ============ HELPERS ============ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = v => { const n = parseFloat(String(v==null?"":v).replace(/,/g,"")); return isNaN(n)?0:n; };
+const has = v => Array.isArray(v) ? v.length>0 : (v && typeof v==="object") ? !!v.id : (v!==undefined && v!==null && String(v).trim()!=="");
+const inr = n => "₹"+Math.round(n).toLocaleString("en-IN");
+const norm = (f,v) => f.type==="lookup" ? (v&&v.id)||"" : f.type==="money"||f.type==="percent" ? num(v) : String(v==null?"":v).trim();
+const show = (f,side) => !f.show || f.show(side);
+function ordinalDate(iso){ if(!iso) return ""; const d = new Date(iso+"T00:00:00"); if(isNaN(d)) return iso; const n=d.getDate(), s=(n%10===1&&n!==11)?"st":(n%10===2&&n!==12)?"nd":(n%10===3&&n!==13)?"rd":"th"; return n+s+" "+d.toLocaleString("en-GB",{month:"long"})+" "+d.getFullYear(); }
+function lakhs(n){ return n>=1e7 ? "₹"+(+(n/1e7).toFixed(2))+" Cr" : n>=1e5 ? "₹"+(+(n/1e5).toFixed(2))+" lakh" : inr(n); }
+function calc(side){
+  const g = k => num(S.rec[api(side,k)]);
+  const co = sub(side)==="Co-Sponsored Event";
+  const share = co ? (g("share")>0 ? Math.min(100,g("share")) : 100) : 100;
+  const spons = g("spons"), ours = spons*share/100, total = ours + g("prod") + g("proc");
+  let commit = "";
+  if(total){ if(cat(side)==="Partner Event") commit = lakhs(total*CFG.PARTNER_MULTIPLIER)+" billing"; else if(cat(side)==="End Customer Event") commit = Math.ceil(total/CFG.CAC)+" IFP"; }
+  return {spons,ours,share,co,prod:g("prod"),proc:g("proc"),total,commit};
 }
+function fileNames(v){ return Array.isArray(v) ? v.map(x=>x.File_Name__s||x.file_Name||x.name||"file").join(", ") : ""; }
 
-function zohoDateToInput(zohoDate) {
-  if (!zohoDate) return "";
-  var d = zohoDate.toString().replace(" ", "T");
-  d = d.replace(/[+-]\d{2}:\d{2}$/, "").replace(/Z$/, "");
-  return d.substring(0, 16);
-}
-
-// Sends the edited time back with the same offset the CRM gave us
-function inputToZohoDate(inputValue, offset) {
-  if (!inputValue) return "";
-  return inputValue + ":00" + (offset || deviceOffset());
-}
-
-// Current time with the device offset, e.g. 2026-10-13T15:30:00+04:00
-function getZohoDateTime() {
-  var now = new Date();
-  return now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate()) +
-         "T" + pad2(now.getHours()) + ":" + pad2(now.getMinutes()) + ":" + pad2(now.getSeconds()) +
-         deviceOffset();
-}
-
-/* ---------- General helpers ---------- */
-function isSuccess(resp) {
-  return !!(resp && resp.data && resp.data[0] && resp.data[0].code === "SUCCESS");
-}
-function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-
-function isImageRequiredPurpose(purpose) {
-  return IMAGE_REQUIRED_PURPOSES.indexOf(purpose) !== -1;
-}
-
-function updateImageLabel() {
-  if (isImageRequiredPurpose(originalPurpose)) {
-    imgReqMark.textContent = " *";
-    imgReqMark.style.color = "#c62828";
-    imgReqHint.textContent = "(at least 1 image required when marking Completed)";
-    imgReqHint.style.color = "#c62828";
+/* ============ PERMISSIONS ============ */
+function perms(){
+  const st = S.rec[C.status]||"", tag = S.rec[C.tag]||"", isNew = !S.recordId;
+  const p = {gtm:false, mkt:false, actions:[], note:""};
+  if(S.role!=="MKT"){
+    if(tag===CFG.TAG.PENDING_GTM && S.role==="ZH"){ p.gtm = true; p.actions = ["gtmReview"]; p.note = "Review Marketing’s figures. Keep them to approve, or change any and reject."; }
+    else if(tag===CFG.TAG.PENDING_GTM) p.note = "Waiting for the ZH to review.";
+    else if(isNew || st===CFG.STATUS.DRAFT){ p.gtm = true; p.actions = ["gtmSave"]; p.note = isNew ? "Fill your proposal and save. Marketing negotiates next." : "Marketing hasn’t submitted yet. You can still update your proposal."; }
+    else p.note = roNote(st,tag);
   } else {
-    imgReqMark.textContent = "";
-    imgReqHint.textContent = "(optional for this meeting purpose)";
-    imgReqHint.style.color = "#999";
+    if(isNew || st===CFG.STATUS.DRAFT || st===CFG.STATUS.REJECTED){ p.mkt = true; p.actions = ["mktSave","mktSubmit"]; p.note = st===CFG.STATUS.REJECTED ? "ZH changed some details. Check the remarks, renegotiate and resubmit." : "Save a draft anytime. Submit when your figures are final."; }
+    else if(tag===CFG.TAG.GTM_OK){ p.actions = ["sendAV"]; }
+    else p.note = roNote(st,tag);
   }
+  return p;
+}
+function roNote(st,tag){
+  if(tag===CFG.TAG.PENDING_GTM) return "Waiting for the ZH to review.";
+  if(tag===CFG.TAG.PENDING_AV) return "With AV for approval. No changes allowed.";
+  if(tag===CFG.TAG.GTM_OK) return "ZH approved. Marketing will send it to AV.";
+  if(st===CFG.STATUS.REJECTED) return "Rejected by the ZH. Waiting for Marketing to resubmit.";
+  if(st===CFG.STATUS.DRAFT) return "Draft. Marketing hasn’t submitted yet.";
+  return "This request is read-only for you.";
 }
 
-function showMessage(msg, type) { messageEl.textContent = msg; messageEl.className = type || "info"; messageEl.style.display = "block"; }
-function enableButtons()  { completeBtn.disabled = false; cancelBtn.disabled = false; postponeBtn.disabled = false; var a=document.getElementById("pdConfirm"),b=document.getElementById("pdCancel"); if(a)a.disabled=false; if(b)b.disabled=false; }
-function disableButtons() { completeBtn.disabled = true;  cancelBtn.disabled = true;  postponeBtn.disabled = true;  var a=document.getElementById("pdConfirm"),b=document.getElementById("pdCancel"); if(a)a.disabled=true; if(b)b.disabled=true; }
-
-// Same cleanup as domestic: removes line breaks, hidden characters and iOS smart punctuation
-function sanitizeText(text) {
-  if (!text) return "";
-  return text.replace(/\r\n/g," ").replace(/\n/g," ").replace(/\r/g," ").replace(/\u2028/g," ").replace(/\u2029/g," ").replace(/\t/g," ").replace(/\u00A0/g," ").replace(/\u202F/g," ").replace(/\u00AD/g,"").replace(/[\u0000-\u001F\u007F-\u009F]/g," ").replace(/\u200B/g,"").replace(/\u200C/g,"").replace(/\u200D/g,"").replace(/\uFEFF/g,"").replace(/\u201C|\u201D/g,'"').replace(/\u2018|\u2019/g,"'").replace(/\u2026/g,"...").replace(/\u2014/g,"-").replace(/\u2013/g,"-").replace(/\s{2,}/g," ").trim();
+/* ============ RENDER ============ */
+function render(){ const p = perms(); renderHead(); renderInfo(); renderLedger(p); renderSheet(); renderBar(p); }
+function renderHead(){
+  const r = S.rec, nm = r[api("MKT","name")] || r[api("GTM","name")];
+  $("title").textContent = nm || "New event request";
+  const who = {GTM:"GTM", MKT:"Marketing", ZH:"ZH (reviewer)"}[S.role];
+  const c = [`<span class="chip ${S.role==="MKT"?"you-mkt":"you-gtm"}">You’re here as <b>${who}</b></span>`];
+  if(r[C.status]) c.push(`<span class="chip">Status <b>${esc(r[C.status])}</b></span>`);
+  if(r[C.tag]) c.push(`<span class="chip">Tag <b>${esc(r[C.tag])}</b></span>`);
+  $("chips").innerHTML = c.join("");
 }
-
-function formatBytes(bytes) { if(bytes<1024)return bytes+" B"; if(bytes<1024*1024)return (bytes/1024).toFixed(1)+" KB"; return (bytes/(1024*1024)).toFixed(2)+" MB"; }
-function getTotalSize() { return selectedFiles.reduce(function(sum,f){return sum+f.size;},0); }
-
-/* ---------- Images ---------- */
-function updateQuotaDisplay() {
-  var pendingCount=selectedFiles.length; var pendingBytes=getTotalSize();
-  var totalCount=totalUploadedCount+pendingCount; var totalBytes=totalUploadedBytes+pendingBytes;
-  if(totalCount===0){quotaArea.style.display="none";return;}
-  quotaArea.style.display="block";
-  quotaBarFill.style.width=Math.min((totalBytes/MAX_SIZE_BYTES)*100,100)+"%";
-  var countLabel=totalCount+" of "+MAX_IMAGES+" images";
-  if(totalUploadedCount>0&&pendingCount>0){countLabel+=" ("+totalUploadedCount+" uploaded, "+pendingCount+" pending)";}
-  else if(totalUploadedCount>0){countLabel+=" ("+totalUploadedCount+" uploaded \u2713)";}
-  quotaCount.textContent=countLabel;
-  quotaSize.textContent=(totalBytes/(1024*1024)).toFixed(2)+" / 20.00 MB";
+function renderInfo(){
+  const r = S.rec, tot = calc("MKT").total || calc("GTM").total;
+  const items = [
+    ["Event number", r[C.number] || "Assigned on save"],
+    ["Event owner", S.owner ? S.owner.name : "From the pin code"],
+    ["Zonal head", S.zh ? S.zh.name : "From the district’s zone"],
+    ["District", S.districtName || "From the pin code"],
+    ["Raised by", (r[C.raisedBy]&&r[C.raisedBy].name) || (S.recordId ? "–" : S.user.name || "You")],
+    ["Founder approval", tot ? (calc("MKT").total>CFG.FOUNDER_LIMIT ? "Needed (above ₹50,000)" : "Not needed") : "–"]
+  ];
+  $("info").innerHTML = items.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
 }
-
-function updateImageUI() {
-  imageGrid.innerHTML=""; var total=getTotalSize();
-  imageCount.textContent=selectedFiles.length>0?selectedFiles.length+" image(s) selected":"";
-  sizeInfo.textContent=selectedFiles.length>0?"Total: "+formatBytes(total)+" / 20MB":"";
-  selectedFiles.forEach(function(file,index){var reader=new FileReader();reader.onload=function(e){var item=document.createElement("div");item.className="image-item";item.innerHTML='<img src="'+e.target.result+'" alt="img"/><button class="image-remove" onclick="removeImage('+index+')">&#10005;</button>';imageGrid.appendChild(item);};reader.readAsDataURL(file);});
-  if(selectedFiles.length>0){uploadImagesBtn.style.display="block";uploadImagesBtn.disabled=false;}else{uploadImagesBtn.style.display="none";uploadImagesBtn.disabled=true;}
-  updateQuotaDisplay();
+function cell(side,f,edit){
+  const a = api(side,f.k), v = S.rec[a], id = "x_"+a, lab = `aria-label="${esc(f.label)}, ${side==="GTM"?"GTM":"Marketing"}"`;
+  if(!show(f,side)) return `<span class="sub">–</span>`;
+  if(f.type==="category"){
+    if(!edit) return `<div class="static">${esc(v||"–")}</div>`;
+    return `<div class="opt" role="group" ${lab}>${CATS.map(c=>`<button type="button" data-set="${a}" data-val="${esc(c)}" aria-pressed="${v===c}">${esc(c)}</button>`).join("")}</div>`;
+  }
+  if(f.type==="subtype"){
+    if(cat(side)==="Partner Event") return `<div class="static">Partner Enablement Event</div><p class="cellnote">Set automatically</p>`;
+    if(!edit) return `<div class="static">${esc(v||"–")}</div>`;
+    return `<div class="opt" role="group" ${lab}>${EC_SUBS.map(c=>`<button type="button" data-set="${a}" data-val="${esc(c)}" aria-pressed="${v===c}">${esc(c)}</button>`).join("")}</div>`;
+  }
+  if(f.type==="file"){
+    const saved = fileNames(v), pend = (S.files[a]||[]).map(x=>x.name).join(", ");
+    if(!edit) return `<div class="filecell">${saved?esc(saved):'<span class="sub">No file</span>'}</div>`;
+    return `<div class="filecell"><input type="file" id="${id}" data-file="${a}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""} ${lab}>${saved?`<p class="cellnote">Saved: ${esc(saved)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}</div>`;
+  }
+  if(f.type==="lookup"){
+    if(!edit) return `<div class="static">${esc((v&&v.name)||"–")}</div>`;
+    return `<div class="typeahead"><input class="in" id="pq_${a}" data-pq="${a}" autocomplete="off" placeholder="Search partners" value="${esc((v&&v.name)||S.rec["_q_"+a]||"")}" ${lab}><ul class="ta-list hidden" id="pl_${a}"></ul></div>`;
+  }
+  if(!edit){
+    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":"";
+    return `<div class="static">${has(t)?esc(t):"–"}</div>`;
+  }
+  if(f.type==="textarea") return `<textarea class="in" id="${id}" data-api="${a}" ${lab}>${esc(v)}</textarea>`;
+  if(f.type==="select") return `<select class="in" id="${id}" data-api="${a}" ${lab}><option value="">Select</option>${f.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  const typ = f.type==="date"?"date":"text", im = (f.type==="money"||f.type==="pin")?'inputmode="numeric"':f.type==="percent"?'inputmode="decimal"':"";
+  const inp = `<input class="in" id="${id}" data-api="${a}" type="${typ}" value="${esc(v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""} ${lab}>`;
+  if(f.type==="money") return `<div class="money">${inp}</div>`;
+  if(f.type==="pin"){
+    const ps = S.pin[side], h = ps==="loading" ? `<p class="cellnote">Finding the event owner…</p>` : ps==="missing" ? `<p class="hint err">Pin code not mapped to a district in CRM.</p>` : ps==="found" ? `<p class="hint ok">Owner found</p>` : "";
+    return inp+h;
+  }
+  return inp;
 }
-
-function handleImageSelect(input) {
-  var files=Array.from(input.files); var remaining=MAX_IMAGES-totalUploadedCount-selectedFiles.length;
-  if(remaining<=0){showMessage("You have reached the maximum of "+MAX_IMAGES+" images.","error");input.value="";return;}
-  if(files.length>remaining){showMessage("You can only add "+remaining+" more image(s).","error");files=files.slice(0,remaining);}
-  var newTotal=totalUploadedBytes+getTotalSize()+files.reduce(function(s,f){return s+f.size;},0);
-  if(newTotal>MAX_SIZE_BYTES){showMessage("Total size would exceed 20MB.","error");input.value="";return;}
-  selectedFiles=selectedFiles.concat(files); input.value=""; updateImageUI();
-  if(messageEl.className==="error")messageEl.style.display="none";
+function diff(f){
+  if(f.type==="file") return "";
+  const g = S.rec[api("GTM",f.k)], m = S.rec[api("MKT",f.k)];
+  if(!has(g)&&!has(m)) return `<span class="diff same">–</span>`;
+  if(!has(g)) return `<span class="diff same">No GTM value</span>`;
+  if(!has(m)) return `<span class="diff same">No Marketing value</span>`;
+  if(f.type==="money"){ const d = num(m)-num(g); if(!d) return `<span class="diff same">Same</span>`; const pct = num(g)?" ("+(d>0?"+":"")+Math.round(d/num(g)*100)+"%)":""; return `<span class="diff ${d>0?"up":"down"}">${d>0?"+":"−"}${inr(Math.abs(d))}${pct}</span>`; }
+  return norm(f,g)===norm(f,m) ? `<span class="diff same">Same</span>` : `<span class="diff up">Differs</span>`;
 }
-
-function removeImage(index){selectedFiles.splice(index,1);updateImageUI();}
-
-// Counts an image as uploaded only when Zoho returns SUCCESS
-function uploadAttachments(recordId,filesToUpload){
-  return new Promise(function(resolve){
-    if(!filesToUpload||filesToUpload.length===0){resolve(0);return;}
-    progressWrap.style.display="block"; var successCount=0; var total=filesToUpload.length;
-    function uploadNext(i){
-      if(i>=total){resolve(successCount);return;}
-      var file=filesToUpload[i];
-      uploadProgress.textContent="Uploading "+(i+1)+" of "+total+"...";
-      progressBar.style.width=Math.round((i/total)*100)+"%";
-      ZOHO.CRM.API.attachFile({Entity:MODULE_API_NAME,RecordID:recordId,File:{Name:file.name,Content:file}}).then(function(res){
-        console.log("Upload "+(i+1)+" result:",JSON.stringify(res));
-        if(isSuccess(res)) successCount++;
-        progressBar.style.width=Math.round(((i+1)/total)*100)+"%";
-        uploadNext(i+1);
-      }).catch(function(err){console.log("Upload "+(i+1)+" error:",JSON.stringify(err));uploadNext(i+1);});
-    }
-    uploadNext(0);
+function renderLedger(p){
+  let h = `<thead><tr><th scope="col">Field</th><th scope="col" class="gtm">GTM proposed</th><th scope="col" class="mkt">Marketing (goes for approval)</th><th scope="col">Difference</th></tr></thead><tbody>`;
+  let sec = "";
+  for(const f of FIELDS){
+    if(!show(f,"GTM") && !show(f,"MKT")) continue;
+    if(f.sec!==sec){ sec = f.sec; h += `<tr class="sub"><th colspan="4" scope="rowgroup">${esc(sec)}</th></tr>`; }
+    h += `<tr><th scope="row">${esc(f.label)}${f.req?' <span style="color:var(--up)" aria-hidden="true">*</span>':""}${f.help?`<small>${esc(f.help)}</small>`:""}</th><td class="gtm">${cell("GTM",f,p.gtm)}</td><td class="mkt">${cell("MKT",f,p.mkt)}</td><td>${diff(f)}</td></tr>`;
+  }
+  const g = calc("GTM"), m = calc("MKT"), dt = (g.total&&m.total)? (()=>{const d=m.total-g.total; return d?`<span class="diff ${d>0?"up":"down"}">${d>0?"+":"−"}${inr(Math.abs(d))}</span>`:`<span class="diff same">Same</span>`;})() : "";
+  h += `<tr class="total"><th scope="row">Total event cost<small>${m.co||g.co?"Teachmint’s share + production + procurement":"GST and transport at actuals"}</small></th><td class="gtm">${g.total?inr(g.total):"–"}</td><td class="mkt">${m.total?inr(m.total):"–"}</td><td>${dt}</td></tr>`;
+  h += `<tr class="commit"><th scope="row">Business commitment<small>End customer: total ÷ ₹2,000. Partner: ₹1 lakh = ₹1 Cr</small></th><td class="gtm">${g.commit||"–"}</td><td class="mkt">${m.commit||"–"}</td><td></td></tr></tbody>`;
+  $("ledger").innerHTML = h;
+  $("legend").textContent = p.gtm ? "You edit the GTM column." : p.mkt ? "You edit the Marketing column." : "Read-only.";
+  const reviewing = p.actions.includes("gtmReview"), showR = (reviewing && changedKeys().length>0) || (!reviewing && S.rec[C.status]===CFG.STATUS.REJECTED && has(S.rec[C.remarks]));
+  $("remarksBox").classList.toggle("hidden",!showR);
+  $("remarks").disabled = !reviewing;
+  if(document.activeElement!==$("remarks")) $("remarks").value = S.rec[C.remarks]||"";
+}
+function renderSheet(){
+  const r = S.rec, side = calc("MKT").total ? "MKT" : "GTM", c = calc(side);
+  const pick = k => has(r[api("MKT",k)]) ? r[api("MKT",k)] : r[api("GTM",k)];
+  const venue = [String(pick("address")||"").split(/\n|,/)[0], pick("city")].filter(has).join(", ");
+  const gn = k => { if(side!=="MKT") return ""; const g = r[api("GTM",k)], m = r[api("MKT",k)]; return has(g)&&num(g)!==num(m)?`<small>GTM proposed ${inr(num(g))}</small>`:""; };
+  const rows = [[c.co?`Sponsorship cost<small>Teachmint ${c.share}% of ${inr(c.spons)}</small>`:"Sponsorship cost", c.co?c.ours:c.spons, "spons"],["Production cost",c.prod,"prod"],["Procurement expense",c.proc,"proc"]];
+  let h = `<table class="sheet"><thead><tr><th>Event</th><th>Venue</th><th>Date</th><th>Expected audience</th><th>Item</th><th>Cost</th><th>Business commitment</th></tr></thead><tbody>`;
+  rows.forEach((row,i)=>{
+    h += "<tr>";
+    if(i===0) h += `<td class="ev" rowspan="3">${esc(pick("name")||"Event name")}</td><td class="ctr" rowspan="3">${esc(venue||"Venue")}</td><td class="ctr" rowspan="3">${esc(ordinalDate(pick("date"))||"Date")}</td><td class="ctr" rowspan="3">${esc(pick("attendee")||"–")}</td>`;
+    h += `<td>${row[0]}</td><td class="num">${row[1]?Math.round(row[1]).toLocaleString("en-IN"):"–"}${gn(row[2])}</td>`;
+    if(i===0) h += `<td class="commit" rowspan="4">${esc(c.commit||"–")}</td>`;
+    h += "</tr>";
   });
+  h += `</tbody><tfoot><tr><td colspan="4">*GST &amp; transportation charges at actuals</td><td></td><td class="num">${c.total?Math.round(c.total).toLocaleString("en-IN"):"–"}</td></tr></tfoot></table>`;
+  if(side==="GTM" && c.total) h += `<p class="hint">Showing GTM’s figures until Marketing adds theirs.</p>`;
+  $("sheet").innerHTML = h;
+}
+function changedKeys(){ return cmpFields().filter(f=>show(f,"MKT")||show(f,"GTM")).filter(f=>norm(f,S.rec[f.g])!==norm(f,S.rec[f.m])).map(f=>f.k); }
+function renderBar(p){
+  const b = [];
+  if(p.actions.includes("gtmSave")) b.push(`<button class="btn primary" data-act="gtmSave">Save proposal</button>`);
+  if(p.actions.includes("mktSave")) b.push(`<button class="btn" data-act="mktSave">Save draft</button>`);
+  if(p.actions.includes("mktSubmit")) b.push(`<button class="btn primary" data-act="mktSubmit">${S.rec[C.status]===CFG.STATUS.REJECTED?"Resubmit to ZH":"Submit to ZH"}</button>`);
+  if(p.actions.includes("gtmReview")){ const n = changedKeys().length; if(n) b.push(`<button class="btn" data-act="gtmAccept">Accept Marketing’s values</button>`); b.push(n?`<button class="btn reject" data-act="gtmReject">Reject with ${n} change${n>1?"s":""}</button>`:`<button class="btn approve" data-act="gtmApprove">Approve</button>`); }
+  if(p.actions.includes("sendAV")){ b.push(`<button class="btn primary" data-act="sendAV">Send to AV</button>`); p.note = "ZH approved. Send it to AV."+(calc("MKT").total>CFG.FOUNDER_LIMIT?" Above ₹50,000, so Divyansh approves after AV.":""); }
+  $("btns").innerHTML = b.join("");
+  $("btns").querySelectorAll("button").forEach(x=>x.disabled = S.busy);
+  if(!$("msg").classList.contains("err")) $("msg").textContent = p.note;
 }
 
-function uploadImagesOnly(){
-  if(isProcessing)return;
-  if(selectedFiles.length===0){showMessage("Please select at least 1 image.","error");uploadBox.classList.add("has-error");return;}
-  if(!meetingId){showMessage("Meeting record not found.","error");return;}
-  var filesToUpload=selectedFiles.slice(); var totalImages=filesToUpload.length;
-  isProcessing=true; uploadImagesBtn.disabled=true; showMessage("Uploading "+totalImages+" image(s)...","info");
-  uploadAttachments(meetingId,filesToUpload).then(function(successCount){
-    isProcessing=false; progressBar.style.width="100%";
-    if(successCount>0){
-      totalUploadedCount+=successCount;
-      totalUploadedBytes+=filesToUpload.slice(0,successCount).reduce(function(s,f){return s+f.size;},0);
-      selectedFiles=[]; updateImageUI(); uploadImagesBtn.style.display="none";
-      uploadProgress.textContent=totalUploadedCount+" image(s) uploaded \u2713";
-      showMessage(successCount+" of "+totalImages+" image(s) uploaded!"+(alreadyMarked?"":" You can now mark the meeting."),successCount===totalImages?"success":"info");
-    } else { uploadImagesBtn.disabled=false; showMessage("Upload failed. Please try again.","error"); }
-  }).catch(function(){isProcessing=false;uploadImagesBtn.disabled=false;showMessage("Upload failed.","error");});
+/* ============ VALIDATION & ACTIONS ============ */
+function missing(side){
+  const out = [];
+  for(const f of FIELDS){ if(!f.req || !show(f,side)) continue; if(f.type==="subtype" && cat(side)==="Partner Event") continue; if(!has(S.rec[api(side,f.k)])) out.push(f.label.toLowerCase()); }
+  if(has(S.rec[api(side,"pin")]) && S.pin[side]==="missing") out.push("a mapped pin code");
+  return out;
 }
-
-/* ---------- GPS ---------- */
-function getCurrentLocation(){
-  return new Promise(function(resolve,reject){
-    if(!navigator.geolocation){reject(new Error("GPS not supported."));return;}
-    navigator.geolocation.getCurrentPosition(function(pos){resolve({latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:pos.coords.accuracy});},function(err){var msg="Unable to capture location.";if(err.code===err.PERMISSION_DENIED)msg="Location permission denied.";else if(err.code===err.POSITION_UNAVAILABLE)msg="Location unavailable.";else if(err.code===err.TIMEOUT)msg="Location timed out.";reject(new Error(msg));},{enableHighAccuracy:true,timeout:30000,maximumAge:0});
-  });
-}
-
-/* ---------- Status check and lock ---------- */
-// Re-reads the record; if Meeting_Stage is not the target, writes it again (up to 3 checks).
-function enforceStatus(targetStage){
-  var MAX_ATTEMPTS=3;
-  function check(attempt){
-    return ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:meetingId}).then(function(res){
-      var rec=res&&res.data&&res.data[0]?res.data[0]:null;
-      if(rec&&rec[FIELD_STAGE]===targetStage)return true;
-      if(attempt>=MAX_ATTEMPTS)throw new Error("Meeting Stage could not be set to "+targetStage+". Please try again.");
-      var retryData={id:meetingId}; retryData[FIELD_STAGE]=targetStage;
-      return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:retryData,Trigger:[]}).then(function(){return wait(1000);}).then(function(){return check(attempt+1);});
-    });
+function fail(list){ $("msg").textContent = "Add "+list.join(", ")+" to continue."; $("msg").classList.add("err"); }
+function sidePayload(side, onlyKeys){
+  const o = {};
+  for(const f of FIELDS){
+    if(f.type==="file") continue;
+    if(onlyKeys && !onlyKeys.includes(f.k)) continue;
+    const a = api(side,f.k); let v = S.rec[a];
+    if(f.type==="subtype" && cat(side)==="Partner Event") v = "Partner Enablement Event";
+    if(f.type==="lookup") v = v&&v.id ? {id:v.id} : null;
+    else if(f.type==="money"||f.type==="percent") v = has(v) ? num(v) : null;
+    else if(!has(v)) v = null;
+    o[a] = v;
   }
-  return check(1);
+  return o;
 }
-
-// Writes Action_Date_Time (the lock), retrying up to 3 times.
-function writeLock(){
-  var MAX_ATTEMPTS=3;
-  function attempt(n){
-    var stamp={id:meetingId}; stamp[FIELD_ACTION_DATETIME]=getZohoDateTime();
-    return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:stamp,Trigger:[]}).then(function(resp){
-      if(isSuccess(resp))return true;
-      if(n>=MAX_ATTEMPTS)return false;
-      return wait(1000).then(function(){return attempt(n+1);});
-    }).catch(function(){
-      if(n>=MAX_ATTEMPTS)return false;
-      return wait(1000).then(function(){return attempt(n+1);});
-    });
+function control(o){
+  o.Name = S.rec[api("MKT","name")] || S.rec[api("GTM","name")] || "Event request";
+  if(S.ownerDirty || !S.recordId){
+    if(S.owner) o.Owner = {id:S.owner.id};
+    if(S.rec[C.district]) o[C.district] = {id:S.rec[C.district]};
+    if(S.zh) o[C.zh] = {id:S.zh.id};
   }
-  return attempt(1);
+  if(!S.recordId && S.user.id && S.live) o[C.raisedBy] = {id:S.user.id};
+  if(!S.recordId && !S.live) o[C.raisedBy] = {id:"me",name:S.user.name};
+  return o;
 }
-
-function finishWithImages(targetStage, filesToUpload, totalImages, lockOk){
-  var lockNote = lockOk ? "" : " Note: the lock time could not be saved. Please inform your CRM admin.";
-  if(filesToUpload.length===0){
-    loaderEl.style.display="none"; isProcessing=false;
-    showMessage("Meeting marked as "+targetStage+"!"+postponeNote+lockNote, lockOk?"success":"info");
-    if(lockOk) setTimeout(function(){try{ZOHO.CRM.UI.Popup.close();}catch(e){}},2500);
-    return;
-  }
-  showMessage("Uploading "+totalImages+" image(s)...","info");
-  return uploadAttachments(meetingId,filesToUpload).then(function(successCount){
-    loaderEl.style.display="none"; isProcessing=false; progressBar.style.width="100%";
-    if(successCount>0){
-      totalUploadedCount+=successCount;
-      totalUploadedBytes+=filesToUpload.slice(0,successCount).reduce(function(s,f){return s+f.size;},0);
-    }
-    selectedFiles=[]; updateImageUI();
-    if(successCount===totalImages){
-      uploadProgress.textContent=totalUploadedCount+" image(s) uploaded \u2713";
-      showMessage("Meeting marked as "+targetStage+"! "+successCount+" image(s) uploaded."+postponeNote+lockNote, lockOk?"success":"info");
-      if(lockOk) setTimeout(function(){try{ZOHO.CRM.UI.Popup.close();}catch(e){}},2500);
-    } else {
-      // keep the popup open so the user can re-upload the failed images
-      showMessage("Meeting marked as "+targetStage+"! Only "+successCount+" of "+totalImages+" image(s) uploaded. Select the missing images again and tap Upload Images."+postponeNote+lockNote,"info");
-    }
-  });
+async function commit(data, okText){
+  S.busy = true; render();
+  try{
+    S.recordId = await API.save(data);
+    if(!S.live){ S.rec = structuredClone(MOCK.store); }
+    S.saved = structuredClone(S.rec); S.files = {}; S.ownerDirty = false;
+    toast(okText);
+    if(S.live){ history.replaceState(null,"","?id="+S.recordId); try{ const fresh = await API.load(S.recordId); loadRecord(fresh); }catch(_){} }
+  }catch(err){ $("msg").textContent = "Couldn’t save: "+(err.message||err); $("msg").classList.add("err"); }
+  S.busy = false; render();
 }
+const ACT = {
+  async gtmSave(){ const e = missing("GTM"); if(e.length) return fail(e);
+    const o = control(sidePayload("GTM")); if(!S.recordId) o[C.status] = CFG.STATUS.DRAFT;
+    attachFiles("GTM"); await commit(o, "Proposal saved. Marketing can now negotiate."); },
+  async mktSave(){ if(!has(S.rec[api("MKT","name")]) && !has(S.rec[api("GTM","name")])) return fail(["event name"]);
+    const o = control(sidePayload("MKT")); if(!S.recordId) o[C.status] = CFG.STATUS.DRAFT;
+    attachFiles("MKT"); await commit(o, "Draft saved."); },
+  async mktSubmit(){ const e = missing("MKT"); if(e.length) return fail(e);
+    const was = S.rec[C.status]===CFG.STATUS.REJECTED || S.rec[C.status]===CFG.STATUS.RESUBMITTED;
+    const o = control(sidePayload("MKT")); o[C.status] = was ? CFG.STATUS.RESUBMITTED : CFG.STATUS.SUBMITTED; o[C.tag] = CFG.TAG.PENDING_GTM;
+    attachFiles("MKT"); await commit(o, was ? "Resubmitted to the ZH." : "Submitted to the ZH."); },
+  async gtmApprove(){
+    const o = {}; for(const f of cmpFields()){ let v = S.rec[f.m]; if(f.type==="lookup") v = v&&v.id?{id:v.id}:null; else if(!has(v)) v = null; else if(f.type==="money"||f.type==="percent") v = num(v); o[f.g] = v; S.rec[f.g] = S.rec[f.m]; }
+    o[C.tag] = CFG.TAG.GTM_OK; o[C.remarks] = null;
+    await commit(o, "Approved. Marketing will be notified."); },
+  async gtmReject(){
+    const rm = $("remarks").value.trim(); if(!rm) return fail(["rejection remarks"]);
+    const changed = cmpFields().filter(f=>norm(f,S.rec[f.g])!==norm(f,S.saved[f.g])).map(f=>f.k);
+    const o = sidePayload("GTM", changed); o[C.tag] = null; o[C.status] = CFG.STATUS.REJECTED; // no tag on rejection; Marketing resubmits o[C.remarks] = rm;
+    await commit(o, "Sent back to Marketing with your changes."); },
+  gtmAccept(){ for(const f of cmpFields()) S.rec[f.g] = S.rec[f.m]; render(); },
+  async sendAV(){ await commit({[C.tag]:CFG.TAG.PENDING_AV}, "Sent to AV for approval."); }
+};
+function attachFiles(side){ const keep = {}; for(const f of FIELDS) if(f.type==="file"){ const a = api(side,f.k); if(S.files[a]&&S.files[a].length) keep[a] = S.files[a]; } S.files = keep; }
 
-/* ---------- Postpone: ask for a new date and time, then create the new meeting ---------- */
-function todayInputStr(){ var d=new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
-function pdShowError(msg){ var e=document.getElementById("pdError"); e.textContent=msg||""; e.style.display=msg?"block":"none"; }
-
-// The new meeting needs the same Meeting Purpose and Related To as this one
-function missingForPostpone(){
-  var m=meetingData||{}, miss=[];
-  if(!m[FIELD_PURPOSE]) miss.push("Meeting Purpose");
-  if(!(m["What_Id"]&&m["What_Id"].id)) miss.push("Related To");
-  return miss;
-}
-function openPostponeBox(){
-  if(isProcessing||alreadyMarked||!meetingData)return;
-  var miss=missingForPostpone();
-  if(miss.length){showMessage("Cannot postpone: "+miss.join(", ")+" must be filled on this meeting first.","error");return;}
-  if(!FIELD_POSTPONED_TO_DATE){showMessage("The \"Postponed to\" field is not available on Meetings, or you do not have access to it. Please contact your admin.","error");return;}
-  postponeData=null; pdShowError("");
-  var knownVenue=meetingData[FIELD_MEETING_VENUE]||"";
-  document.getElementById("pdVenueWrap").style.display=knownVenue?"none":"block";
-  if(!knownVenue) document.getElementById("pdVenue").value="";
-  document.getElementById("pdNote").textContent="Note: - "+(knownVenue?"":"The venue could not be read from this meeting, so please select it for the new meeting. ")+"A new meeting is created on this date with the same title, purpose, venue and related record.";
-  var dEl=document.getElementById("pdDate"),fEl=document.getElementById("pdFrom"),tEl=document.getElementById("pdTo");
-  dEl.setAttribute("min",todayInputStr());
-  // start with the original meeting's times, so only the date has to be chosen
-  if(!fEl.value&&meetingData[FIELD_START_DATETIME]) fEl.value=zohoDateToInput(meetingData[FIELD_START_DATETIME]).substring(11,16);
-  if(!tEl.value&&meetingData[FIELD_END_DATETIME])   tEl.value=zohoDateToInput(meetingData[FIELD_END_DATETIME]).substring(11,16);
-  document.getElementById("postponeBox").style.display="block";
-  showMessage("Choose the new date and time, then tap Confirm postpone.","info");
-  try{document.getElementById("postponeBox").scrollIntoView({behavior:"smooth"});}catch(e){}
-}
-function cancelPostpone(){
-  if(isProcessing)return;
-  postponeData=null; pdShowError("");
-  document.getElementById("postponeBox").style.display="none";
-  messageEl.style.display="none";
-}
-function confirmPostpone(){
-  if(isProcessing)return;
-  pdShowError("");
-  var date=document.getElementById("pdDate").value, from=document.getElementById("pdFrom").value, to=document.getElementById("pdTo").value;
-  if(!date||!from||!to){pdShowError("Please choose the new date and the From and To time.");return;}
-  // same time zone as the meeting's own times in CRM
-  var tz=startOffset||deviceOffset();
-  var startIso=date+"T"+from+":00"+tz, endIso=date+"T"+to+":00"+tz;
-  var start=new Date(startIso), end=new Date(endIso);
-  if(isNaN(start.getTime())||isNaN(end.getTime())){pdShowError("The date or time is not valid.");return;}
-  if(end<=start){pdShowError("The To time must be after the From time.");return;}
-  if(start<=new Date()){pdShowError("Please choose a date and time in the future.");return;}
-  var venue=meetingData[FIELD_MEETING_VENUE]||document.getElementById("pdVenue").value;
-  if(!venue){pdShowError("Please select the New Meeting Venue.");return;}
-  postponeData={venue:venue,date:date,from:from,to:to,startIso:startIso,endIso:endIso};
-  processMeetingAction(STAGE_POSTPONED);
-}
-// value written to "Postponed to": the date only, or the date and time
-function postponedToValue(){ return POSTPONED_TO_DATE_ONLY ? postponeData.date : postponeData.startIso; }
-// the "Postponed to" value must really be saved on this meeting
-function ensurePostponedDate(){
-  function same(a,b){
-    if(POSTPONED_TO_DATE_ONLY){ return String(a||"").substring(0,10)===String(b||"").substring(0,10)&&!!a; }
-    var x=new Date(a).getTime(),y=new Date(b).getTime();return !isNaN(x)&&!isNaN(y)&&x===y;
-  }
-  function read(){
-    return ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:meetingId}).then(function(res){
-      var rec=res&&res.data&&res.data[0]?res.data[0]:null;
-      return rec?(rec[FIELD_POSTPONED_TO_DATE]||""):"";
-    });
-  }
-  return read().then(function(v){
-    if(same(v,postponedToValue()))return true;
-    var fix={id:meetingId}; fix[FIELD_POSTPONED_TO_DATE]=postponedToValue();
-    return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:fix,Trigger:[]}).then(read).then(function(v2){
-      if(!same(v2,postponedToValue()))throw new Error("Postponed to could not be saved. Please check your access to that field.");
-      return true;
-    });
-  });
-}
-// After creating: the new meeting must have the same venue (a workflow or default value may have changed it)
-function ensureNewVenue(newId,venue){
-  if(!newId||newId==="created"||!venue){ return Promise.resolve(true); }
-  return ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:newId}).then(function(res){
-    var rec=res&&res.data&&res.data[0]?res.data[0]:null;
-    if(!rec||rec[FIELD_MEETING_VENUE]===venue){ return true; }
-    var fix={id:newId}; fix[FIELD_MEETING_VENUE]=venue;
-    return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:fix,Trigger:[]}).then(function(){ return true; });
-  }).catch(function(){ return true; });   // the meeting itself was created; never block on this check
-}
-// creates the new meeting with the same title, purpose, venue and related record
-function createPostponedMeeting(){
-  if(postponedCreatedId)return Promise.resolve(postponedCreatedId);
-  showMessage("Creating the new meeting...","info");
-  var m=meetingData, pd=postponeData;
-  var data={};
-  data["Event_Title"]=m["Event_Title"];
-  data[FIELD_START_DATETIME]=pd.startIso;
-  data[FIELD_END_DATETIME]=pd.endIso;
-  data[FIELD_PURPOSE]=m[FIELD_PURPOSE];
-  // same venue as this meeting: every venue field that has a value is copied
-  venueKeys.forEach(function(k){ if(m[k]){ data[k]=m[k]; } });
-  data[FIELD_MEETING_VENUE]=pd.venue;
-  if(m["Meeting_Type"]) data["Meeting_Type"]=m["Meeting_Type"];
-  if(m["Venue"]) data["Venue"]=m["Venue"];
-  data["What_Id"]={id:m["What_Id"].id};
-  if(m["$se_module"]) data["$se_module"]=m["$se_module"];
-  if(m["Who_Id"]&&m["Who_Id"].id) data["Who_Id"]={id:m["Who_Id"].id};
-  if(m["Owner"]&&m["Owner"].id) data["Owner"]={id:m["Owner"].id};
-  data[FIELD_STAGE]="Planned";
-  // Description is left blank on the new meeting
-  return ZOHO.CRM.API.insertRecord({Entity:MODULE_API_NAME,APIData:data,Trigger:["workflow"]}).then(function(res){
-    var r=res&&res.data&&res.data[0];
-    if(r&&r.code==="SUCCESS"){
-      postponedCreatedId=(r.details&&r.details.id)||"created";
-      return ensureNewVenue(postponedCreatedId,pd.venue).then(function(){
-      var s=new Date(pd.date+"T"+pd.from+":00");
-      postponeNote=" New meeting created for "+s.toLocaleDateString("en-GB",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})+", "+pd.from+" - "+pd.to+".";
-      return postponedCreatedId;
-      });
-    }
-    throw new Error("The new meeting could not be created: "+(r&&r.message?r.message:"unknown error")+". The meeting is marked Postponed. Tap Confirm postpone to try again.");
-  });
-}
-
-// Readable message from any error: a normal Error, or the response object Zoho rejects with
-function errorText(error){
-  console.log("Meeting action error:", error);
-  try{ console.log(JSON.stringify(error)); }catch(e){}
-  if(error&&error.message){ return error.message; }
-  var d=error&&error.data&&error.data[0]?error.data[0]:(error&&error.code?error:null);
-  if(d){
-    var t=(d.message||d.code||"Update failed.");
-    if(d.details){
-      if(d.details.api_name){ t+=" (field: "+d.details.api_name+")"; }
-      if(d.details.expected_data_type){ t+=" (expected: "+d.details.expected_data_type+")"; }
-    }
-    if(d.code&&d.message){ t+=" ["+d.code+"]"; }
-    return t;
-  }
-  try{ var j=JSON.stringify(error); if(j&&j!=="{}"){ return "Unable to update the meeting: "+j.substring(0,300); } }catch(e){}
-  return "Unable to update the meeting.";
-}
-
-/* ---------- Main action ---------- */
-function processMeetingAction(targetStage){
-  if(isProcessing||!meetingId)return;
-  if(alreadyMarked){showMessage("This meeting is already marked. It cannot be marked again.","info");return;}
-  if(targetStage===STAGE_POSTPONED&&!postponeData){openPostponeBox();return;}
-
-  descEl.classList.remove("field-error"); uploadBox.classList.remove("has-error");
-  startTimeEl.classList.remove("field-error"); endTimeEl.classList.remove("field-error");
-
-  // Description: required, and must still have text after cleanup (iOS characters)
-  var cleanDesc=sanitizeText(descEl.value);
-  if(!cleanDesc){showMessage("Please enter a Description.","error");descEl.classList.add("field-error");descEl.focus();return;}
-
-  // End time must be after start time
-  if(startTimeEl.value&&endTimeEl.value&&endTimeEl.value<=startTimeEl.value){
-    showMessage("Meeting End Time must be after the Start Time.","error");
-    endTimeEl.classList.add("field-error"); endTimeEl.focus(); return;
-  }
-
-  // Images: at least 1 for image-required purposes marked Completed
-  var imageMandatory=isImageRequiredPurpose(originalPurpose)&&targetStage===STAGE_COMPLETED;
-  var hasImages=(totalUploadedCount>0)||(selectedFiles.length>0);
-  if(imageMandatory&&!hasImages){showMessage("Please upload at least 1 image for "+originalPurpose+" meetings marked as Completed.","error");uploadBox.classList.add("has-error");uploadBox.scrollIntoView({behavior:"smooth"});return;}
-
-  var filesToUpload=selectedFiles.slice(); var totalImages=filesToUpload.length;
-  var statusSaved=false;
-  isProcessing=true; disableButtons(); loaderEl.style.display="block"; showMessage("Capturing your current location...","info");
-
-  getCurrentLocation().then(function(location){
-    gpsEl.textContent="GPS captured | Accuracy: "+Math.round(location.accuracy)+"m"; gpsEl.style.display="block";
-    return ZOHO.CRM.CONFIG.getCurrentUser().then(function(userResponse){
-      var currentUser=""; if(userResponse&&userResponse.users&&userResponse.users[0]){currentUser=sanitizeText(userResponse.users[0].full_name||"");}
-      var lat=parseFloat(location.latitude.toFixed(COORD_DECIMALS));
-      var lng=parseFloat(location.longitude.toFixed(COORD_DECIMALS));
-      var updateData={id:meetingId};
-      updateData[FIELD_STAGE]=targetStage;
-      updateData[FIELD_LATITUDE]=lat;
-      updateData[FIELD_LONGITUDE]=lng;
-      if(FIELD_MAP_LINK){updateData[FIELD_MAP_LINK]="https://www.google.com/maps?q="+lat+","+lng;}
-      updateData[FIELD_DESCRIPTION]=cleanDesc;
-      updateData[FIELD_STATUS_MARKED_BY]=currentUser;
-      if(targetStage===STAGE_POSTPONED&&postponeData&&FIELD_POSTPONED_TO_DATE){updateData[FIELD_POSTPONED_TO_DATE]=postponedToValue();}
-      // Start/End only if the user changed them, sent with the CRM's own offset
-      if(startTimeEl.value&&startTimeEl.value!==originalStartDateTime){updateData[FIELD_START_DATETIME]=inputToZohoDate(startTimeEl.value,startOffset);}
-      if(endTimeEl.value&&endTimeEl.value!==originalEndDateTime){updateData[FIELD_END_DATETIME]=inputToZohoDate(endTimeEl.value,endOffset);}
-      showMessage("Updating Meeting...","info");
-      return ZOHO.CRM.API.updateRecord({Entity:MODULE_API_NAME,APIData:updateData,Trigger:[]});
-    });
-  }).then(function(resp){
-    if(!isSuccess(resp)){
-      var errData=resp&&resp.data&&resp.data[0]?resp.data[0]:{};
-      var detail=errData.details&&errData.details.api_name?" ("+errData.details.api_name+")":"";
-      throw new Error((errData.message||"Update failed.")+detail);
-    }
-    showMessage("Verifying meeting status...","info");
-    return enforceStatus(targetStage).then(function(){
-      // for Postponed: the date must be saved and the new meeting created before the meeting is locked
-      return targetStage===STAGE_POSTPONED ? ensurePostponedDate().then(createPostponedMeeting) : null;
-    });
-  }).then(function(){
-    statusSaved=true;
-    document.getElementById("postponeBox").style.display="none";
-    currentStage=targetStage; stageEl.textContent=targetStage;
-    // From here the meeting counts as marked: buttons stay disabled even if the lock write fails
-    alreadyMarked=true; disableButtons();
-    return writeLock();
-  }).then(function(lockOk){
-    return finishWithImages(targetStage,filesToUpload,totalImages,lockOk);
-  }).catch(function(error){
-    isProcessing=false; loaderEl.style.display="none"; progressWrap.style.display="none";
-    showMessage(errorText(error),"error");
-    if(!statusSaved) enableButtons();
-  });
-}
-
-function completeMeeting(){processMeetingAction(STAGE_COMPLETED);}
-function cancelMeeting(){processMeetingAction(STAGE_CANCELLED);}
-function postponeMeeting(){openPostponeBox();}
-
-/* ---------- Page load ---------- */
-ZOHO.embeddedApp.on("PageLoad",function(data){
-  if(data&&data.EntityId){meetingId=Array.isArray(data.EntityId)?data.EntityId[0]:data.EntityId;}
-  else if(data&&data.recordId){meetingId=data.recordId;}
-  if(!meetingId){stageEl.textContent="Record ID not found";showMessage("Unable to identify the Meeting record.","error");return;}
-  ZOHO.CRM.API.getRecord({Entity:MODULE_API_NAME,RecordID:meetingId}).then(function(response){
-    if(!response||!response.data||!response.data.length)throw new Error("Unable to load the Meeting record.");
-    var meeting=response.data[0];
-    meetingData=meeting;
-    venueKeys=Object.keys(meeting).filter(function(k){return /meeting.?venue/i.test(k);});
-    if(venueKeys.indexOf("Meeting_Venue__s")>-1){FIELD_MEETING_VENUE="Meeting_Venue__s";}
-    else if(venueKeys.length){FIELD_MEETING_VENUE=venueKeys[0];}
-    // use the "Postponed_to" field; if it is not on the record (no access / not created) look for any field named Postponed...
-    if(!Object.prototype.hasOwnProperty.call(meeting,"Postponed_to")){
-      var pk=Object.keys(meeting).filter(function(k){return /^postponed/i.test(k);});
-      FIELD_POSTPONED_TO_DATE=pk.length?pk[0]:null;
-    }else{FIELD_POSTPONED_TO_DATE="Postponed_to";}
-    if(UNIQUE_NUMBER_FIELD){
-      var uniqueNumber=meeting[UNIQUE_NUMBER_FIELD];
-      if(!uniqueNumber){stageEl.textContent="Not a Check-In Meeting";showMessage("This is not a Check-In meeting. GPS cannot be captured.","error");return;}
-    }
-    currentStage=meeting[FIELD_STAGE]||""; stageEl.textContent=currentStage||"Not Set";
-    originalPurpose=meeting[FIELD_PURPOSE]||""; updateImageLabel();
-    var purposeDisplay=document.getElementById("purposeDisplay");
-    if(originalPurpose){purposeDisplay.textContent="Meeting Purpose: "+originalPurpose;}
-    if(meeting[FIELD_START_DATETIME]){var startVal=zohoDateToInput(meeting[FIELD_START_DATETIME]);startTimeEl.value=startVal;originalStartDateTime=startVal;startOffset=extractOffset(meeting[FIELD_START_DATETIME]);}
-    if(meeting[FIELD_END_DATETIME]){var endVal=zohoDateToInput(meeting[FIELD_END_DATETIME]);endTimeEl.value=endVal;originalEndDateTime=endVal;endOffset=extractOffset(meeting[FIELD_END_DATETIME]);}
-    if(meeting[FIELD_ACTION_DATETIME]){alreadyMarked=true;disableButtons();showMessage("This Meeting is already marked ("+(currentStage||"status set")+"). You can still upload images.","info");return;}
-    enableButtons();
-    if(FIELD_POSTPONED_TO_DATE&&meeting[FIELD_POSTPONED_TO_DATE]){showMessage("A postponed date ("+(isNaN(new Date(meeting[FIELD_POSTPONED_TO_DATE]).getTime())?meeting[FIELD_POSTPONED_TO_DATE]:new Date(meeting[FIELD_POSTPONED_TO_DATE]).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))+") is already saved on this meeting. Before postponing again, check that a new meeting for that date does not already exist.","info");}
-  }).catch(function(error){stageEl.textContent="Error";showMessage(error&&error.message?error.message:"Unable to load Meeting.","error");});
+/* ============ EVENTS ============ */
+document.addEventListener("click", e=>{
+  const set = e.target.closest("[data-set]");
+  if(set){ const a = set.dataset.set; S.rec[a] = set.dataset.val;
+    const side = FIELDS.some(f=>f.g===a) ? "GTM" : "MKT";
+    if(a===api(side,"cat")){ if(set.dataset.val==="Partner Event") S.rec[api(side,"sub")] = "Partner Enablement Event"; else if(!EC_SUBS.includes(S.rec[api(side,"sub")])) S.rec[api(side,"sub")] = ""; if(set.dataset.val==="Partner Branding") S.rec[api(side,"sub")] = ""; }
+    clearErr(); render(); return; }
+  const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
+  const pk = e.target.closest("[data-pick]"); if(pk){ S.rec[pk.dataset.pick] = {id:pk.dataset.id,name:pk.dataset.name}; render(); return; }
+  const role = e.target.closest("[data-role]"); if(role){ setRole(role.dataset.role); return; }
+  document.querySelectorAll(".ta-list").forEach(u=>u.classList.add("hidden"));
 });
-ZOHO.embeddedApp.init();
+document.addEventListener("input", e=>{
+  const a = e.target.dataset && e.target.dataset.api;
+  if(a){ let v = e.target.value; const f = FIELDS.find(x=>x.g===a||x.m===a); const side = f && f.g===a ? "GTM" : "MKT";
+    if(f && f.type==="pin"){ v = v.replace(/\D/g,"").slice(0,6); e.target.value = v; }
+    S.rec[a] = v; clearErr();
+    if(f && f.type==="pin") onPin(side, v);
+    soft(); }
+  if(e.target.dataset && e.target.dataset.pq) onPartner(e.target.dataset.pq, e.target.value);
+  if(e.target.id==="remarks") S.rec[C.remarks] = e.target.value;
+});
+document.addEventListener("change", e=>{
+  const fa = e.target.dataset && e.target.dataset.file; if(fa){ S.files[fa] = Array.from(e.target.files||[]); }
+  if(e.target.tagName==="SELECT" && e.target.dataset.api){ S.rec[e.target.dataset.api] = e.target.value; soft(); }
+});
+function soft(){ const el = document.activeElement, id = el&&el.id, pos = el&&el.selectionStart; render(); if(id && $(id)){ $(id).focus(); try{ if(pos!=null) $(id).setSelectionRange(pos,pos); }catch(_){} } }
+function clearErr(){ $("msg").classList.remove("err"); }
+const pinSeq = {GTM:0,MKT:0};
+async function onPin(side,pin){
+  if(pin.length!==6){ S.pin[side] = "idle"; return; }
+  const seq = ++pinSeq[side]; S.pin[side] = "loading"; soft();
+  try{
+    const res = await API.pincode(pin); if(seq!==pinSeq[side]) return;
+    if(!res) S.pin[side] = "missing";
+    else{
+      S.pin[side] = "found";
+      if(res.state) S.rec[api(side,"state")] = res.state;
+      if(!has(S.rec[api(side,"city")])) S.rec[api(side,"city")] = res.district.name;
+      // Owner follows Marketing's pin; GTM's pin is used only until Marketing enters one
+      if(side==="MKT" || !has(S.rec[api("MKT","pin")])){ S.owner = res.owner; S.zh = res.zh; S.districtName = res.district.name; S.rec[C.district] = res.district.id; S.ownerDirty = true; }
+    }
+  }catch(_){ S.pin[side] = "missing"; }
+  soft();
+}
+let taT;
+function onPartner(a,q){
+  S.rec["_q_"+a] = q; S.rec[a] = null; clearTimeout(taT);
+  const ul = $("pl_"+a); if(q.trim().length<2){ ul && ul.classList.add("hidden"); return; }
+  taT = setTimeout(async ()=>{
+    const list = await API.partners(q.trim()), u = $("pl_"+a); if(!u) return;
+    u.innerHTML = list.length ? list.slice(0,8).map(p=>`<li><button type="button" data-pick="${a}" data-id="${esc(p.id)}" data-name="${esc(p.Account_Name)}">${esc(p.Account_Name)}</button></li>`).join("") : `<li class="sub" style="padding:7px 8px">No partner matches “${esc(q)}”</li>`;
+    u.classList.remove("hidden");
+  },250);
+}
+let toastT; function toast(t){ const el = $("toast"); el.textContent = t; el.classList.remove("hidden"); clearTimeout(toastT); toastT = setTimeout(()=>el.classList.add("hidden"),2600); }
+
+/* ============ PREFILL ============ */
+function prefill(){
+  const tag = S.rec[C.tag], st = S.rec[C.status];
+  // GTM reviewing: empty GTM cells start with Marketing's value, so "agree" is the default
+  if(S.role==="ZH" && tag===CFG.TAG.PENDING_GTM){ for(const f of cmpFields()) if(!has(S.rec[f.g]) && has(S.rec[f.m])){ S.rec[f.g] = S.rec[f.m]; S.saved[f.g] = S.rec[f.m]; } }
+  // Marketing editing: empty Marketing cells start with GTM's proposal
+  if(S.role==="MKT" && (!st || st===CFG.STATUS.DRAFT)){ for(const f of cmpFields()) if(!has(S.rec[f.m]) && has(S.rec[f.g])) S.rec[f.m] = S.rec[f.g]; }
+}
+
+/* ============ PREVIEW MODE ============ */
+function setRole(r){
+  S.role = r; S.user = {id:"me", name:{GTM:"Preview GTM user",MKT:"Preview Marketing user",ZH:"Preview ZH"}[r]};
+  document.querySelectorAll("[data-role]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.role===r)));
+  if(S.recordId && MOCK.store){ S.rec = structuredClone(MOCK.store); S.saved = structuredClone(MOCK.store); }
+  prefill(); clearErr(); render();
+}
+function loadSample(){
+  S.recordId = null; MOCK.store = null; S.files = {};
+  S.rec = {Event_s_Category:"End Customer Event", Event_s_Sub_Type:"Sponsored Event", Event_s_Name:"Education Excellence Conclave – Jammu", Event_s_Date:"2026-10-10", Event_s_Address:"Vivanta Jammu, Kunjwani Bypass", Event_s_Pin_code:"180001", Event_s_City:"Jammu", Event_s_State:"Jammu & Kashmir(UT)", Event_s_Expected_Attendee:"200 + KDMs", Event_s_Sponsorship_Cost:"35000", Event_s_Production_Cost:"15000", Event_s_Procurement_Cost:"5000"};
+  const p = MOCK.pins["180001"]; S.owner = p.owner; S.zh = MOCK.zh[p.zone]; S.districtName = p.district.name; S.rec[C.district] = p.district.id; S.pin = {GTM:"found",MKT:"idle"}; S.ownerDirty = true;
+  S.saved = {}; setRole("GTM");
+  $("msg").textContent = "Sample loaded as GTM’s proposal. Save it, switch to Marketing to submit, then ZH to review."; 
+}
+function resetDemo(){ S.recordId = null; MOCK.store = null; S.rec = {}; S.saved = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.pin = {GTM:"idle",MKT:"idle"}; setRole("MKT"); }
+
+/* ============ BOOT ============ */
+function loadRecord(rec){
+  S.recordId = rec.id; S.rec = rec; S.saved = structuredClone(rec);
+  if(rec.Owner) S.owner = {id:rec.Owner.id,name:rec.Owner.name};
+  if(rec[C.zh]) S.zh = {id:rec[C.zh].id,name:rec[C.zh].name};
+  if(rec[C.district]){ S.districtName = rec[C.district].name; S.rec[C.district] = rec[C.district].id; S.saved[C.district] = rec[C.district].id; }
+  // The record's ZH reviews; everyone else who isn't Marketing works on the GTM side
+  if(S.role!=="MKT") S.role = (rec[C.zh] && rec[C.zh].id===S.user.id) ? "ZH" : "GTM";
+  prefill(); render();
+}
+async function boot(){
+  const id = new URLSearchParams(location.search).get("id");
+  const u = await API.currentUser(); S.role = u.role; S.user = {id:u.id, name:u.name};
+  if(id && S.live){ const rec = await API.load(id); if(!rec.id) throw new Error("Record not found or no access: "+id); loadRecord(rec); }
+  else {
+    try{ const st = JSON.parse(sessionStorage.getItem("evf_stash")||"null"); if(st && Date.now()-st.at < 600000 && !id) S.rec = st.rec||{}; }catch(_){}
+    prefill(); render();
+  }
+  try{ sessionStorage.removeItem("evf_stash"); }catch(_){}
+}
+const DEMO = CFG.CLIENT_ID.startsWith("PASTE") || new URLSearchParams(location.search).has("demo");
+if(!DEMO){
+  S.live = true;
+  S.token = AUTH.fromHash() || AUTH.get();
+  if(!S.token) AUTH.login();
+  else boot().catch(err=>{ $("msg").textContent = "Couldn’t load: "+(err.message||err); $("msg").classList.add("err"); render(); });
+} else {
+  $("demoBar").classList.remove("hidden");
+  $("loadSample").addEventListener("click",loadSample);
+  $("resetDemo").addEventListener("click",resetDemo);
+  boot();
+}
 </script>
 </body>
 </html>
