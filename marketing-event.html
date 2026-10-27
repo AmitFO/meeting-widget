@@ -3,10 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Event Form · Marketing Events</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Event Requests</title>
+<!--ZOHO_SDK--><script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script><!--/ZOHO_SDK-->
 <style>
 :root{
   --bg:#F5F7FA; --surface:#FFFFFF; --ink:#18202E; --muted:#5B6578; --line:#DCE1E8; --line-soft:#EBEEF2;
@@ -142,30 +140,16 @@ table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
   .c2,.c3,.c4,.c6{grid-column:span 2}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-</style>
-<style>
-.info{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 16px}
-.info div span{display:block;font-size:12.5px;color:var(--muted)}
-.info div b{font-weight:500}
-.opt{display:flex;flex-wrap:wrap;gap:6px}
-.opt button{border:1px solid var(--line);border-radius:6px;background:var(--field);padding:6px 10px;cursor:pointer;font-size:13.5px}
-.opt button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
-.ledger td{min-width:200px}
-.ledger tr.sub th{padding-top:18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);font-weight:600}
-.cellnote{font-size:12px;color:var(--muted);margin-top:4px}
-@media (max-width:720px){.info{grid-template-columns:1fr 1fr}}
-.listhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:18px}
-.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
-.filters .in{max-width:300px}
-table.list{width:100%;border-collapse:collapse;min-width:720px}
-.list th,.list td{padding:10px 12px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:middle;font-size:14px}
-.list thead th{font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
-.list tbody tr:hover{background:var(--field-off)}
-.list .open{border:0;background:none;padding:0;color:var(--mkt);font:inherit;font-weight:600;cursor:pointer;text-align:left}
-.list .open:hover{text-decoration:underline}
-.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:13.5px;color:var(--muted)}
-.empty{padding:28px 12px;text-align:center;color:var(--muted)}
-.back{margin-bottom:10px;display:inline-block}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+.form-grid .full{grid-column:1/-1}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.summary div{background:var(--field-off);border-radius:8px;padding:12px}
+.summary span{display:block;font-size:12.5px;color:var(--muted)}
+.summary b{font-size:18px;font-weight:600}
+.note{font-size:13px;color:var(--muted);background:var(--field-off);border-radius:6px;padding:8px 12px;margin-bottom:14px}
+.note.warn{color:var(--up);background:var(--up-soft)}
+.side-gtm{border-color:var(--gtm)!important;color:var(--gtm)!important}
+@media (max-width:720px){.form-grid,.summary{grid-template-columns:1fr}.listhead .btn{width:100%}.bar .btns{width:100%}.bar .btn{flex:1}}
 </style>
 </head>
 <body>
@@ -175,17 +159,16 @@ table.list{width:100%;border-collapse:collapse;min-width:720px}
     <span>View as
       <span class="seg" role="group" aria-label="View as">
         <button type="button" data-role="GTM" aria-pressed="false">GTM</button>
-        <button type="button" data-role="ZH" aria-pressed="false">ZH</button>
         <button type="button" data-role="MKT" aria-pressed="true">Marketing</button>
       </span>
     </span>
-    <button type="button" class="linkbtn" id="loadSample">Load Jammu sample</button>
     <button type="button" class="linkbtn" id="resetDemo">Start over</button>
   </div>
 
-  <section id="listView" class="hidden" aria-labelledby="listH">
+  <!-- HOME: list of requests -->
+  <section id="listView" aria-labelledby="listH">
     <div class="listhead">
-      <div><h1 id="listH">Event requests</h1><p class="sub">Open a request to view or edit it, or start a new one.</p></div>
+      <div><h1 id="listH">Event requests</h1><p class="sub">Open a request to view or edit it, or raise a new one.</p></div>
       <button type="button" class="btn primary" id="newBtn">+ New event</button>
     </div>
     <div class="panel">
@@ -199,215 +182,139 @@ table.list{width:100%;border-collapse:collapse;min-width:720px}
     </div>
   </section>
 
-  <div id="formView">
-  <button type="button" class="linkbtn back" id="backBtn">← All requests</button>
-  <div class="head">
-    <div>
-      <h1 id="title">New event request</h1>
-      <p class="sub" id="subtitle">GTM and Marketing fill the same details side by side. Marketing’s figures go for approval.</p>
+  <!-- FORM: one set of values, saved to the GTM or Marketing fields by login -->
+  <div id="formView" class="hidden">
+    <button type="button" class="linkbtn back" id="backBtn">← All requests</button>
+    <div class="head">
+      <div><h1 id="title">New event request</h1><p class="sub" id="subtitle"></p></div>
+      <div class="chips" id="chips"></div>
     </div>
-    <div class="chips" id="chips"></div>
-  </div>
-
-  <section class="panel" aria-labelledby="infoH">
-    <h2 id="infoH" style="margin-bottom:12px">Request</h2>
-    <div class="info" id="info"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="ledH">
-    <div class="panel-head">
-      <div><h2 id="ledH">Event details</h2><p class="sub">Each row shows GTM’s proposal next to Marketing’s figure.</p></div>
-      <p class="legend" id="legend"></p>
-    </div>
-    <div class="ledger-wrap"><table class="ledger" id="ledger"></table></div>
-    <div class="remarks hidden" id="remarksBox">
-      <label class="f" for="remarks">Rejection remarks <i>*</i></label>
-      <textarea class="in" id="remarks" placeholder="Explain what Marketing should renegotiate"></textarea>
-    </div>
-  </section>
-
-  <section class="panel" aria-labelledby="sheetH">
-    <div class="panel-head"><div><h2 id="sheetH">Sample draft</h2><p class="sub">Updates as figures change. Approvers see Marketing’s figures.</p></div></div>
-    <div class="sheet-wrap" id="sheet"></div>
-  </section>
+    <div id="notes"></div>
+    <section class="panel" aria-labelledby="infoH"><h2 id="infoH" style="margin-bottom:12px">Request</h2><div class="info" id="info"></div></section>
+    <section class="panel" aria-labelledby="typeH"><h2 id="typeH" style="margin-bottom:12px">Event type</h2><div class="form-grid" id="secType"></div></section>
+    <section class="panel" aria-labelledby="basicH"><h2 id="basicH" style="margin-bottom:12px">Basic details</h2><div class="form-grid" id="secBasic"></div></section>
+    <section class="panel" aria-labelledby="otherH"><h2 id="otherH" style="margin-bottom:12px">Other details</h2><div class="form-grid" id="secOther"></div></section>
+    <section class="panel" aria-labelledby="sumH"><h2 id="sumH" style="margin-bottom:12px">Summary</h2><div class="summary" id="summary"></div></section>
+    <section class="panel hidden" id="remarksPanel" aria-labelledby="remH">
+      <h2 id="remH" style="margin-bottom:8px">ZH rejection remarks</h2>
+      <p class="sub" style="margin-bottom:8px">Paste what the ZH wrote in their email reply.</p>
+      <label class="hidden" for="remarks">Rejection remarks</label>
+      <textarea class="in" id="remarks"></textarea>
+    </section>
   </div>
 </div>
 
-<div class="bar" id="bar" role="region" aria-label="Actions">
-  <div class="bar-in">
-    <p class="msg" id="msg" aria-live="polite"></p>
-    <div class="btns" id="btns"></div>
-  </div>
+<div class="bar hidden" id="bar" role="region" aria-label="Actions">
+  <div class="bar-in"><p class="msg" id="msg" aria-live="polite"></p><div class="btns" id="btns"></div></div>
 </div>
 <div class="toast hidden" id="toast" role="status"></div>
 
 <script>
-/* ============ CONFIG: matches the Marketing Events module ============ */
+/* ============ CONFIG ============ */
 const CFG = {
-  // ---- Zoho login (from api-console.zoho.in > Client-based application) ----
-  CLIENT_ID:"1000.CAQUX01690P2VGPJ608D4DYUTQWWEP",
-  ACCOUNTS_URL:"https://accounts.zoho.in",
-  SCOPES:"ZohoCRM.modules.ALL,ZohoCRM.users.READ,ZohoCRM.files.CREATE",
-  // Zone (from District) → ZH user ID
-  ZH_BY_ZONE:{"North 1":"681278000000676466","East":"681278000000676466","North 2":"681278000000676433","South":"681278000000813134","West":"681278000000676418"},
   MODULE:"Marketing_Events", PINCODE_MODULE:"Pincodes", DISTRICT_MODULE:"District", PARTNER_MODULE:"Accounts",
   CAC:2000, FOUNDER_LIMIT:50000, PARTNER_MULTIPLIER:100,
-  MARKETING_KEYWORDS:["marketing"],          // role/profile name contains this → Marketing; else GTM
-  TAG:{ PENDING_GTM:"Send to GTM Approval", GTM_OK:"GTM Approved", PENDING_AV:"Send to AV's Approval" },
+  MARKETING_KEYWORDS:["marketing"],   // role or profile name contains this → Marketing; everyone else → GTM
+  ZH_BY_ZONE:{"North 1":{id:"681278000000676466",name:"Vivek Mishra"},"East":{id:"681278000000676466",name:"Vivek Mishra"},"North 2":{id:"681278000000676433",name:"Suraj Agrahari"},"South":{id:"681278000000813134",name:"Swapnil Omprakash Mandhana"},"West":{id:"681278000000676418",name:"Hariom Shivhare"}},
+  TAG:{ PENDING_ZH:"Send to GTM Approval", ZH_OK:"GTM Approved", PENDING_AV:"Send to AV's Approval" },
   STATUS:{ DRAFT:"Draft", SUBMITTED:"Submitted", REJECTED:"Rejected", RESUBMITTED:"Resubmitted" }
 };
-const C = { status:"Status", tag:"Event_Tag", remarks:"Rejection_Remarks", district:"District", zh:"ZH", raisedBy:"Raised_by", number:"Event_Number", founder:"Founder_Approval_Needed" };
+const C = {status:"Status", tag:"Event_Tag", remarks:"Rejection_Remarks", district:"District", zh:"ZH", raisedBy:"Raised_by", number:"Event_Number"};
 const ATTENDEE = ["50 + KDMs","100 + KDMs","150 + KDMs","200 + KDMs","250 + KDMs","400 + KDMs","500 + KDMs"];
 const STATES = ["Andaman & Nicobar (UT)","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh (UT)","Chhattisgarh","Dadra & Nagar Haveli (UT) and Daman & Diu (UT)","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu & Kashmir(UT)","Jharkhand","Karnataka","Kerala","Ladakh (UT)","Lakshadweep (UT)","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Nepal","Odisha","Puducherry (UT)","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
-const CATS = ["End Customer Event","Partner Event","Partner Branding"];
-const EC_SUBS = ["Sponsored Event","Co-Sponsored Event"];
-// g = GTM field API name, m = Marketing field API name
+const CATS = ["End Customer Event","Partner Event","Partner Branding"], EC_SUBS = ["Sponsored Event","Co-Sponsored Event"];
+// k = key in the form, g = GTM field, m = Marketing field
 const FIELDS = [
-  {sec:"Event type", k:"cat", label:"Event category", g:"Event_s_Category", m:"Event_Category", type:"category", req:true},
-  {sec:"Event type", k:"sub", label:"Event sub type", g:"Event_s_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, show:s=>cat(s)!=="" && cat(s)!=="Partner Branding"},
-  {sec:"Basic details", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu"},
-  {sec:"Basic details", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true},
-  {sec:"Basic details", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true},
-  {sec:"Basic details", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
-  {sec:"Basic details", k:"city", label:"City", g:"Event_s_City", m:"City", type:"text", req:true},
-  {sec:"Basic details", k:"state", label:"State", g:"Event_s_State", m:"State", type:"select", options:STATES, req:true},
-  {sec:"Basic details", k:"partner", label:"Partner", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:s=>cat(s)==="Partner Event"||cat(s)==="Partner Branding"||sub(s)==="Co-Sponsored Event"},
-  {sec:"Basic details", k:"share", label:"Teachmint share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:s=>sub(s)==="Co-Sponsored Event"},
-  {sec:"Basic details", k:"agenda", label:"Event agenda", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
-  {sec:"Basic details", k:"photos", label:"Photographs", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true, accept:"image/*"},
-  {sec:"Basic details", k:"other", label:"Other details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
-  {sec:"Other details", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true},
-  {sec:"Other details", k:"floor", label:"Floor plan", g:"Event_s_Floor_Plan", m:"Floor_Plan", type:"file"},
-  {sec:"Other details", k:"stall", label:"Stall plan", g:"Event_s_Stall_Plan", m:"Stall_Plan", type:"file"},
-  {sec:"Other details", k:"spons", label:"Sponsorship cost", g:"Event_s_Sponsorship_Cost", m:"Sponsorship_Cost", type:"money", req:true},
-  {sec:"Other details", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, product standees, branding elements"},
-  {sec:"Other details", k:"proc", label:"Procurement cost", g:"Event_s_Procurement_Cost", m:"Procurement_Cost", type:"money", help:"Brochures, merchandise, paper bags, gifts"}
+  {sec:"secType", k:"cat", label:"Event category", g:"Event_s_Category", m:"Event_Category", type:"category", req:true, full:true},
+  {sec:"secType", k:"sub", label:"Event sub type", g:"Event_s_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, full:true, show:()=>V.cat && V.cat!=="Partner Branding"},
+  {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, full:true, ph:"e.g. Education Excellence Conclave – Jammu"},
+  {sec:"secBasic", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true},
+  {sec:"secBasic", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
+  {sec:"secBasic", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true, full:true},
+  {sec:"secBasic", k:"city", label:"City", g:"Event_s_City", m:"City", type:"text", req:true},
+  {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"select", options:STATES, req:true},
+  {sec:"secBasic", k:"partner", label:"Partner", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.cat==="Partner Branding"||V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"share", label:"Teachmint share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"agenda", label:"Event agenda", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
+  {sec:"secBasic", k:"photos", label:"Photographs", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true, accept:"image/*"},
+  {sec:"secBasic", k:"other", label:"Other details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea", full:true},
+  {sec:"secOther", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true},
+  {sec:"secOther", k:"spons", label:"Sponsorship cost", g:"Event_s_Sponsorship_Cost", m:"Sponsorship_Cost", type:"money", req:true},
+  {sec:"secOther", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, product standees, branding elements"},
+  {sec:"secOther", k:"proc", label:"Procurement cost", g:"Event_s_Procurement_Cost", m:"Procurement_Cost", type:"money", help:"Brochures, merchandise, paper bags, gifts"},
+  {sec:"secOther", k:"floor", label:"Floor plan", g:"Event_s_Floor_Plan", m:"Floor_Plan", type:"file"},
+  {sec:"secOther", k:"stall", label:"Stall plan", g:"Event_s_Stall_Plan", m:"Stall_Plan", type:"file"}
 ];
-const FX = f => f; const byK = k => FIELDS.find(f=>f.k===k);
-const api = (side,k) => byK(k)[side==="GTM"?"g":"m"];
-const cmpFields = () => FIELDS.filter(f=>f.type!=="file");
+const byK = k => FIELDS.find(f=>f.k===k);
 
 /* ============ STATE ============ */
-const S = { live:false, role:"MKT", user:{id:null,name:""}, recordId:null, rec:{}, saved:{}, files:{},
-  pin:{GTM:"idle",MKT:"idle"}, owner:null, zh:null, districtName:"", ownerDirty:false, busy:false };
-const cat = side => S.rec[api(side,"cat")] || "";
-const sub = side => S.rec[api(side,"sub")] || "";
+const S = {live:false, role:"MKT", user:{id:null,name:""}, recordId:null, rec:{}, files:{}, owner:null, zh:null, districtName:"", districtId:null, pin:"idle", ownerDirty:false, prefilled:false, busy:false, view:"list"};
+let V = {};   // the one set of values shown in the form
+const side = () => S.role==="MKT" ? "m" : "g";
+const other = () => S.role==="MKT" ? "g" : "m";
 
-/* ============ DATA LAYER ============ */
+/* ============ DATA (Zoho SDK, or preview data) ============ */
 const MOCK = {
-  pins:{
-    "180001":{district:{id:"d1",name:"Jammu"},state:"Jammu & Kashmir(UT)",zone:"North 1",owner:{id:"u1",name:"District owner, Jammu"}},
-    "560001":{district:{id:"d2",name:"Bengaluru Urban"},state:"Karnataka",zone:"South",owner:{id:"u2",name:"District owner, Bengaluru"}},
-    "110001":{district:{id:"d3",name:"New Delhi"},state:"Delhi",zone:"North 1",owner:{id:"u3",name:"District owner, New Delhi"}}
-  },
-  zh:{"North 1":{id:"zh1",name:"ZH, North 1"},"East":{id:"zh1",name:"ZH, North 1"},"North 2":{id:"zh2",name:"ZH, North 2"},"South":{id:"zh3",name:"ZH, South"},"West":{id:"zh4",name:"ZH, West"}},
-  partners:[{id:"p1",Account_Name:"Brightpath Learning Solutions"},{id:"p2",Account_Name:"Kashmir Edu Systems"},{id:"p3",Account_Name:"Northline Technologies"}],
-  store:null, n:0
+  pins:{"180001":{district:{id:"d1",name:"Jammu"},state:"Jammu & Kashmir(UT)",zone:"North 1",owner:{id:"u1",name:"District owner, Jammu"}},
+        "560001":{district:{id:"d2",name:"Bengaluru Urban"},state:"Karnataka",zone:"South",owner:{id:"u2",name:"District owner, Bengaluru"}}},
+  partners:[{id:"p1",Account_Name:"Brightpath Learning Solutions"},{id:"p2",Account_Name:"Kashmir Edu Systems"}],
+  rows:[], n:0
 };
-const AUTH = {
-  key:"evf_token",
-  get(){ try{ const t = JSON.parse(localStorage.getItem(this.key)||"null"); return t && t.exp > Date.now()+60000 ? t : null; }catch(_){ return null; } },
-  set(t){ try{ localStorage.setItem(this.key, JSON.stringify(t)); }catch(_){} S.token = t; },
-  login(){ // Zoho's own sign-in page; returns here with a short-lived token
-    let n = 0; try{ n = Number(sessionStorage.getItem("evf_tries")||0); sessionStorage.setItem("evf_tries", String(n+1)); }catch(_){}
-    if(n>=2){ try{ sessionStorage.removeItem("evf_tries"); }catch(_){} showAuthProblem("Zoho login didn’t return a token. Check that the Redirect URI in the API Console is exactly "+location.origin+location.pathname); return; }
-    try{ sessionStorage.setItem("evf_stash", JSON.stringify({rec:S.rec, at:Date.now()})); }catch(_){}
-    const back = location.origin + location.pathname;
-    const q = new URLSearchParams({response_type:"token", client_id:CFG.CLIENT_ID, scope:CFG.SCOPES, redirect_uri:back, state:new URLSearchParams(location.search).get("id")||""});
-    location.href = CFG.ACCOUNTS_URL + "/oauth/v2/auth?" + q.toString();
-  },
-  fromHash(){ // after Zoho login the token comes back in the URL (#... or ?...)
-    const src = location.hash.includes("access_token") ? location.hash.slice(1) : location.search.includes("access_token") ? location.search.slice(1) : "";
-    const qp = new URLSearchParams(location.search);
-    if(!src){
-      if(qp.get("error")){ history.replaceState(null,"",location.pathname); S.authError = qp.get("error"); }
-      return null;
-    }
-    const h = new URLSearchParams(src);
-    const t = {access:h.get("access_token"), api:h.get("api_domain")||"https://www.zohoapis.in", exp:Date.now()+Number(h.get("expires_in")||3600)*1000};
-    const id = h.get("state");
-    history.replaceState(null, "", location.pathname + (id ? "?id="+encodeURIComponent(id) : ""));
-    try{ sessionStorage.removeItem("evf_tries"); }catch(_){}
-    this.set(t); return t;
-  }
-};
-async function crm(path, opts={}){
-  const t = S.token || AUTH.get(); if(!t){ AUTH.login(); throw new Error("Signing in…"); }
-  const r = await fetch(t.api + "/crm/v6" + path, Object.assign({}, opts, {headers:Object.assign({Authorization:"Zoho-oauthtoken "+t.access}, opts.body && !(opts.body instanceof FormData) ? {"Content-Type":"application/json"} : {})}));
-  if(r.status===401){ try{ localStorage.removeItem(AUTH.key); }catch(_){} AUTH.login(); throw new Error("Session expired, signing in again…"); }
-  if(r.status===204) return {};
-  const j = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error((j.message||j.code||("HTTP "+r.status)) + (j.details&&j.details.api_name ? " ("+j.details.api_name+")" : ""));
-  return j;
-}
 const API = {
-  async currentUser(){
-    if(!S.live) return {role:S.role,id:"me",name:"Preview user"};
-    const u = ((await crm("/users?type=CurrentUser")).users||[])[0]||{};
+  async me(){
+    if(!S.live) return {role:S.role, id:"me", name:"Preview user"};
+    const r = await ZOHO.CRM.CONFIG.getCurrentUser(); const u = (r&&r.users&&r.users[0])||{};
     const hay = (((u.role||{}).name||"")+" "+((u.profile||{}).name||"")).toLowerCase();
-    return {role: CFG.MARKETING_KEYWORDS.some(w=>hay.includes(w))?"MKT":"GTM", id:u.id, name:u.full_name||""};
+    return {role:CFG.MARKETING_KEYWORDS.some(w=>hay.includes(w))?"MKT":"GTM", id:u.id, name:u.full_name||""};
   },
-  async load(id){ if(!S.live) return MOCK.store && MOCK.store.id===id ? structuredClone(MOCK.store) : {}; return ((await crm("/"+CFG.MODULE+"/"+encodeURIComponent(id))).data||[])[0]||{}; },
-  async list({filter,q,page}){
-    const F = "Event_Number,Name,Event_Name,Event_s_Name,Event_Date,Event_s_Date,Status,Event_Tag,Owner,ZH,Raised_by,Created_Time";
-    const crit = [];
-    if(filter==="mine") crit.push("(Raised_by:equals:"+S.user.id+")");
-    if(filter==="draft") crit.push("(Status:equals:"+CFG.STATUS.DRAFT+")");
-    if(filter==="zh") crit.push("(Event_Tag:equals:"+CFG.TAG.PENDING_GTM+")");
-    if(filter==="rejected") crit.push("(Status:equals:"+CFG.STATUS.REJECTED+")");
-    if(filter==="zhok") crit.push("(Event_Tag:equals:"+CFG.TAG.GTM_OK+")");
-    if(filter==="av") crit.push("(Event_Tag:equals:"+CFG.TAG.PENDING_AV.replace(/[(),]/g,"\\$&")+")");
-    const t = (q||"").trim().replace(/[(),]/g,"\\$&");
-    if(t){ const parts = ["(Name:starts_with:"+t+")","(Event_Name:starts_with:"+t+")","(Event_s_Name:starts_with:"+t+")"]; if(/^\d{1,4}$/.test(t)) parts.push("(Event_Number:equals:ME - "+t.padStart(4,"0")+")"); crit.push("("+parts.join("or")+")"); }
-    if(!S.live){
-      await wait(200);
-      let rows = MOCK.store ? [structuredClone(MOCK.store)] : [];
-      rows = rows.filter(r=>{
-        if(filter==="draft" && r.Status!==CFG.STATUS.DRAFT) return false;
-        if(filter==="zh" && r.Event_Tag!==CFG.TAG.PENDING_GTM) return false;
-        if(filter==="rejected" && r.Status!==CFG.STATUS.REJECTED) return false;
-        if(filter==="zhok" && r.Event_Tag!==CFG.TAG.GTM_OK) return false;
-        if(filter==="av" && r.Event_Tag!==CFG.TAG.PENDING_AV) return false;
-        if(t && !((r.Event_Name||r.Event_s_Name||r.Name||"")+" "+(r.Event_Number||"")).toLowerCase().includes(t.toLowerCase())) return false;
-        return true; });
-      return {rows, more:false};
-    }
-    const qs = "fields="+F+"&per_page=20&page="+page;
-    const j = crit.length
-      ? await crm("/"+CFG.MODULE+"/search?criteria="+encodeURIComponent(crit.length>1?"("+crit.join("and")+")":crit[0])+"&"+qs)
-      : await crm("/"+CFG.MODULE+"?"+qs+"&sort_by=Created_Time&sort_order=desc");
-    return {rows:j.data||[], more:!!(j.info&&j.info.more_records)};
+  async list(f){
+    if(!S.live){ await wait(150); return {rows:MOCK.rows.filter(r=>matches(r,f)).map(r=>structuredClone(r)), more:false}; }
+    const crit = criteria(f);
+    const r = crit
+      ? await ZOHO.CRM.API.searchRecord({Entity:CFG.MODULE, Type:"criteria", Query:crit, page:f.page, per_page:20})
+      : await ZOHO.CRM.API.getAllRecords({Entity:CFG.MODULE, sort_order:"desc", page:f.page, per_page:20});
+    return {rows:(r&&r.data)||[], more:!!(r&&r.info&&r.info.more_records)};
+  },
+  async load(id){
+    if(!S.live) return structuredClone(MOCK.rows.find(r=>r.id===id)||{});
+    const r = await ZOHO.CRM.API.getRecord({Entity:CFG.MODULE, RecordID:id}); return (r&&r.data&&r.data[0])||{};
   },
   async pincode(pin){
-    if(!S.live){ await wait(400); const p = MOCK.pins[pin]; return p ? Object.assign({},p,{zh:MOCK.zh[p.zone]||null}) : null; }
-    const p = ((await crm("/"+CFG.PINCODE_MODULE+"/search?criteria="+encodeURIComponent("(Name:equals:"+pin+")"))).data||[])[0];
-    if(!p||!p.District) return null;
-    const dist = ((await crm("/"+CFG.DISTRICT_MODULE+"/"+p.District.id)).data||[])[0];
-    if(!dist||!dist.Owner) return null;
-    const zid = CFG.ZH_BY_ZONE[dist.Zone||""], zh = zid ? {id:zid, name:(dist.Zone||"")+" ZH"} : null;
-    return {district:{id:dist.id,name:dist.Name}, state:dist.State||"", zone:dist.Zone||"", owner:{id:dist.Owner.id,name:dist.Owner.name}, zh};
+    if(!S.live){ await wait(300); return MOCK.pins[pin]||null; }
+    const r = await ZOHO.CRM.API.searchRecord({Entity:CFG.PINCODE_MODULE, Type:"criteria", Query:"(Name:equals:"+pin+")"});
+    const p = r&&r.data&&r.data[0]; if(!p||!p.District) return null;
+    const d = await ZOHO.CRM.API.getRecord({Entity:CFG.DISTRICT_MODULE, RecordID:p.District.id});
+    const dist = d&&d.data&&d.data[0]; if(!dist||!dist.Owner) return null;
+    return {district:{id:dist.id,name:dist.Name}, state:dist.State||"", zone:dist.Zone||"", owner:{id:dist.Owner.id,name:dist.Owner.name}};
   },
   async partners(q){
-    if(!S.live){ await wait(200); return MOCK.partners.filter(p=>p.Account_Name.toLowerCase().includes(q.toLowerCase())); }
-    return (await crm("/"+CFG.PARTNER_MODULE+"/search?word="+encodeURIComponent(q))).data||[];
-  },
-  async upload(file){
-    const fd = new FormData(); fd.append("file", file, file.name);
-    const row = ((await crm("/files", {method:"POST", body:fd})).data||[])[0];
-    if(!row||!row.details) throw new Error("File upload failed: "+file.name); return row.details.id;
+    if(!S.live){ await wait(150); return MOCK.partners.filter(p=>p.Account_Name.toLowerCase().includes(q.toLowerCase())); }
+    const r = await ZOHO.CRM.API.searchRecord({Entity:CFG.PARTNER_MODULE, Type:"word", Query:q}); return (r&&r.data)||[];
   },
   async save(data){
     if(!S.live){
-      await wait(350);
-      for(const [a,files] of Object.entries(S.files)) data[a] = (MOCK.store&&MOCK.store[a]||[]).concat(files.map(f=>({File_Name__s:f.name})));
-      if(data.Owner && S.owner) data.Owner = Object.assign({}, S.owner);
-      if(!MOCK.store){ MOCK.n++; data[C.number] = "ME - "+String(MOCK.n).padStart(4,"0"); }
-      MOCK.store = Object.assign(MOCK.store||{}, structuredClone(data), {id:"demo-1"});
-      return "demo-1";
+      await wait(300);
+      for(const [a,fs] of Object.entries(S.files)) data[a] = fs.map(f=>({File_Name__s:f.name}));
+      if(data.Owner && S.owner) data.Owner = Object.assign({},S.owner);
+      if(data[C.zh] && S.zh) data[C.zh] = Object.assign({},S.zh);
+      if(data[C.district]) data[C.district] = {id:S.districtId, name:S.districtName};
+      if(data[C.raisedBy]) data[C.raisedBy] = {id:"me", name:S.user.name};
+      let row = MOCK.rows.find(r=>r.id===S.recordId);
+      if(!row){ MOCK.n++; row = {id:"demo-"+MOCK.n, [C.number]:"ME - "+String(MOCK.n).padStart(4,"0"), [C.raisedBy]:{id:"me",name:S.user.name}}; MOCK.rows.unshift(row); }
+      Object.assign(row, structuredClone(data)); return row.id;
     }
-    for(const [a,files] of Object.entries(S.files)){ const ids = []; for(const f of files) ids.push({file_id: await API.upload(f)}); if(ids.length) data[a] = ids; }
-    const body = JSON.stringify({data:[S.recordId ? Object.assign({id:S.recordId},data) : data], trigger:["workflow"]});
-    const row = ((await crm("/"+CFG.MODULE, {method:S.recordId?"PUT":"POST", body})).data||[])[0];
+    for(const [a,fs] of Object.entries(S.files)){
+      const ids = [];
+      for(const f of fs){
+        const u = await ZOHO.CRM.API.uploadFile({CONTENT_TYPE:"multipart", PARTS:[{headers:{"Content-Disposition":"file;"},content:"__FILE__"}], FILE:{fileParam:"content", file:f}});
+        const row = u&&u.data&&u.data[0]; if(!row||!row.details) throw new Error("File upload failed: "+f.name); ids.push({file_id:row.details.id});
+      }
+      if(ids.length) data[a] = ids;
+    }
+    const r = S.recordId
+      ? await ZOHO.CRM.API.updateRecord({Entity:CFG.MODULE, APIData:Object.assign({id:S.recordId},data), Trigger:["workflow"]})
+      : await ZOHO.CRM.API.insertRecord({Entity:CFG.MODULE, APIData:data, Trigger:["workflow"]});
+    const row = r&&r.data&&r.data[0];
     if(!row||row.code!=="SUCCESS") throw new Error((row&&(row.message+(row.details&&row.details.api_name?" ("+row.details.api_name+")":"")))||"CRM did not accept the record");
     return S.recordId || row.details.id;
   }
@@ -418,326 +325,243 @@ const wait = ms => new Promise(r=>setTimeout(r,ms));
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const num = v => { const n = parseFloat(String(v==null?"":v).replace(/,/g,"")); return isNaN(n)?0:n; };
-const has = v => Array.isArray(v) ? v.length>0 : (v && typeof v==="object") ? !!v.id : (v!==undefined && v!==null && String(v).trim()!=="");
+const has = v => Array.isArray(v) ? v.length>0 : (v&&typeof v==="object") ? !!v.id : (v!==undefined&&v!==null&&String(v).trim()!=="");
 const inr = n => "₹"+Math.round(n).toLocaleString("en-IN");
-const norm = (f,v) => f.type==="lookup" ? (v&&v.id)||"" : f.type==="money"||f.type==="percent" ? num(v) : String(v==null?"":v).trim();
-const show = (f,side) => !f.show || f.show(side);
+const shown = f => !f.show || f.show();
+const fileNames = v => Array.isArray(v) ? v.map(x=>x.File_Name__s||x.name||"file").join(", ") : "";
 function ordinalDate(iso){ if(!iso) return ""; const d = new Date(iso+"T00:00:00"); if(isNaN(d)) return iso; const n=d.getDate(), s=(n%10===1&&n!==11)?"st":(n%10===2&&n!==12)?"nd":(n%10===3&&n!==13)?"rd":"th"; return n+s+" "+d.toLocaleString("en-GB",{month:"long"})+" "+d.getFullYear(); }
 function lakhs(n){ return n>=1e7 ? "₹"+(+(n/1e7).toFixed(2))+" Cr" : n>=1e5 ? "₹"+(+(n/1e5).toFixed(2))+" lakh" : inr(n); }
-function calc(side){
-  const g = k => num(S.rec[api(side,k)]);
-  const co = sub(side)==="Co-Sponsored Event";
-  const share = co ? (g("share")>0 ? Math.min(100,g("share")) : 100) : 100;
-  const spons = g("spons"), ours = spons*share/100, total = ours + g("prod") + g("proc");
-  let commit = "";
-  if(total){ if(cat(side)==="Partner Event") commit = lakhs(total*CFG.PARTNER_MULTIPLIER)+" billing"; else if(cat(side)==="End Customer Event") commit = Math.ceil(total/CFG.CAC)+" IFP"; }
-  return {spons,ours,share,co,prod:g("prod"),proc:g("proc"),total,commit};
+function calc(){
+  const co = V.sub==="Co-Sponsored Event", share = co ? (num(V.share)>0 ? Math.min(100,num(V.share)) : 100) : 100;
+  const total = num(V.spons)*share/100 + num(V.prod) + num(V.proc);
+  let commit = "–";
+  if(total && V.cat==="Partner Event") commit = lakhs(total*CFG.PARTNER_MULTIPLIER)+" billing";
+  else if(total && V.cat==="End Customer Event") commit = Math.ceil(total/CFG.CAC)+" IFP";
+  return {total, commit, founder: total>CFG.FOUNDER_LIMIT};
 }
-function fileNames(v){ return Array.isArray(v) ? v.map(x=>x.File_Name__s||x.file_Name||x.name||"file").join(", ") : ""; }
 
-/* ============ PERMISSIONS ============ */
+/* ============ WHO CAN DO WHAT ============ */
 function perms(){
-  const st = S.rec[C.status]||"", tag = S.rec[C.tag]||"", isNew = !S.recordId;
-  const p = {gtm:false, mkt:false, actions:[], note:""};
-  if(S.role!=="MKT"){
-    if(tag===CFG.TAG.PENDING_GTM && S.role==="ZH"){ p.gtm = true; p.actions = ["gtmReview"]; p.note = "Review Marketing’s figures. Keep them to approve, or change any and reject."; }
-    else if(tag===CFG.TAG.PENDING_GTM) p.note = "Waiting for the ZH to review.";
-    else if(isNew || st===CFG.STATUS.DRAFT){ p.gtm = true; p.actions = ["gtmSave"]; p.note = isNew ? "Fill your proposal and save. Marketing negotiates next." : "Marketing hasn’t submitted yet. You can still update your proposal."; }
-    else p.note = roNote(st,tag);
+  const st = S.rec[C.status]||"", tag = S.rec[C.tag]||"", isNew = !S.recordId, p = {edit:false, actions:[], note:""};
+  if(S.role==="MKT"){
+    if(isNew || st===CFG.STATUS.DRAFT || st===CFG.STATUS.REJECTED){ p.edit = true; p.actions = ["save","submit"]; p.note = st===CFG.STATUS.REJECTED ? "Rejected by the ZH. Update and resubmit." : "Save a draft anytime. Submit sends the details to the ZH by email."; }
+    else if(tag===CFG.TAG.PENDING_ZH){ p.actions = ["zhReject","zhApprove"]; p.note = "Waiting for the ZH’s email reply. Record their decision here."; }
+    else if(tag===CFG.TAG.ZH_OK){ p.actions = ["sendAV"]; p.note = "ZH approved. Send it to AV."+(calc().founder?" Above ₹50,000, so Divyansh approves after AV.":""); }
+    else p.note = tag===CFG.TAG.PENDING_AV ? "With AV for approval." : "Read-only.";
   } else {
-    if(isNew || st===CFG.STATUS.DRAFT || st===CFG.STATUS.REJECTED){ p.mkt = true; p.actions = ["mktSave","mktSubmit"]; p.note = st===CFG.STATUS.REJECTED ? "ZH changed some details. Check the remarks, renegotiate and resubmit." : "Save a draft anytime. Submit when your figures are final."; }
-    else if(tag===CFG.TAG.GTM_OK){ p.actions = ["sendAV"]; }
-    else p.note = roNote(st,tag);
+    if(isNew || st===CFG.STATUS.DRAFT){ p.edit = true; p.actions = ["save"]; p.note = isNew ? "Fill the event details and save. Marketing takes it forward." : "You can update your proposal until Marketing submits."; }
+    else p.note = tag===CFG.TAG.PENDING_ZH ? "Sent to the ZH for approval." : tag===CFG.TAG.ZH_OK ? "Approved by the ZH." : tag===CFG.TAG.PENDING_AV ? "With AV for approval." : st===CFG.STATUS.REJECTED ? "Rejected by the ZH. Marketing is revising it." : "Read-only.";
   }
   return p;
 }
-function roNote(st,tag){
-  if(tag===CFG.TAG.PENDING_GTM) return "Waiting for the ZH to review.";
-  if(tag===CFG.TAG.PENDING_AV) return "With AV for approval. No changes allowed.";
-  if(tag===CFG.TAG.GTM_OK) return "ZH approved. Marketing will send it to AV.";
-  if(st===CFG.STATUS.REJECTED) return "Rejected by the ZH. Waiting for Marketing to resubmit.";
-  if(st===CFG.STATUS.DRAFT) return "Draft. Marketing hasn’t submitted yet.";
-  return "This request is read-only for you.";
-}
 
-/* ============ RENDER ============ */
-function render(){ const p = perms(); renderHead(); renderInfo(); renderLedger(p); renderSheet(); renderBar(p); }
-function renderHead(){
-  const r = S.rec, nm = r[api("MKT","name")] || r[api("GTM","name")];
-  $("title").textContent = nm || "New event request";
-  const who = {GTM:"GTM", MKT:"Marketing", ZH:"ZH (reviewer)"}[S.role];
-  const c = [`<span class="chip ${S.role==="MKT"?"you-mkt":"you-gtm"}">You’re here as <b>${who}</b></span>`];
-  if(r[C.status]) c.push(`<span class="chip">Status <b>${esc(r[C.status])}</b></span>`);
-  if(r[C.tag]) c.push(`<span class="chip">Tag <b>${esc(r[C.tag])}</b></span>`);
-  $("chips").innerHTML = c.join("");
+/* ============ FORM RENDER ============ */
+function render(){
+  const p = perms(), r = S.rec;
+  $("title").textContent = V.name || "New event request";
+  $("subtitle").textContent = (S.role==="MKT" ? "You’re filling the Marketing details." : "You’re filling the GTM proposal.") + (S.prefilled ? " Values were prefilled from the "+(S.role==="MKT"?"GTM":"Marketing")+" side; check and change them." : "");
+  const ch = [`<span class="chip ${S.role==="MKT"?"you-mkt":"you-gtm"}">You’re here as <b>${S.role==="MKT"?"Marketing":"GTM"}</b></span>`];
+  if(r[C.status]) ch.push(`<span class="chip">Status <b>${esc(r[C.status])}</b></span>`);
+  if(r[C.tag]) ch.push(`<span class="chip">Tag <b>${esc(r[C.tag])}</b></span>`);
+  $("chips").innerHTML = ch.join("");
+  $("notes").innerHTML = r[C.status]===CFG.STATUS.REJECTED && has(r[C.remarks]) ? `<p class="note warn"><b>ZH remarks:</b> ${esc(r[C.remarks])}</p>` : "";
+  const info = [["Event number", r[C.number]||"Assigned on save"],["Event owner", S.owner?S.owner.name:"From the pin code"],["Zonal head", S.zh?S.zh.name:"From the district’s zone"],["District", S.districtName||"From the pin code"],["Raised by", (r[C.raisedBy]&&r[C.raisedBy].name)||(S.recordId?"–":S.user.name||"You")]];
+  $("info").innerHTML = info.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
+  for(const sec of ["secType","secBasic","secOther"]) $(sec).innerHTML = FIELDS.filter(f=>f.sec===sec && shown(f)).map(f=>field(f,p.edit)).join("");
+  const c = calc();
+  $("summary").innerHTML = `<div><span>Total event cost</span><b>${c.total?inr(c.total):"–"}</b></div><div><span>Business commitment</span><b>${esc(c.commit)}</b></div><div><span>Divyansh approval</span><b>${c.total?(c.founder?"Needed":"Not needed"):"–"}</b></div>`;
+  const rej = p.actions.includes("zhReject");
+  $("remarksPanel").classList.toggle("hidden", !rej);
+  renderBar(p);
 }
-function renderInfo(){
-  const r = S.rec, tot = calc("MKT").total || calc("GTM").total;
-  const items = [
-    ["Event number", r[C.number] || "Assigned on save"],
-    ["Event owner", S.owner ? S.owner.name : "From the pin code"],
-    ["Zonal head", S.zh ? S.zh.name : "From the district’s zone"],
-    ["District", S.districtName || "From the pin code"],
-    ["Raised by", (r[C.raisedBy]&&r[C.raisedBy].name) || (S.recordId ? "–" : S.user.name || "You")],
-    ["Founder approval", tot ? (calc("MKT").total>CFG.FOUNDER_LIMIT ? "Needed (above ₹50,000)" : "Not needed") : "–"]
-  ];
-  $("info").innerHTML = items.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
-}
-function cell(side,f,edit){
-  const a = api(side,f.k), v = S.rec[a], id = "x_"+a, lab = `aria-label="${esc(f.label)}, ${side==="GTM"?"GTM":"Marketing"}"`;
-  if(!show(f,side)) return `<span class="sub">–</span>`;
-  if(f.type==="category"){
-    if(!edit) return `<div class="static">${esc(v||"–")}</div>`;
-    return `<div class="opt" role="group" ${lab}>${CATS.map(c=>`<button type="button" data-set="${a}" data-val="${esc(c)}" aria-pressed="${v===c}">${esc(c)}</button>`).join("")}</div>`;
-  }
-  if(f.type==="subtype"){
-    if(cat(side)==="Partner Event") return `<div class="static">Partner Enablement Event</div><p class="cellnote">Set automatically</p>`;
-    if(!edit) return `<div class="static">${esc(v||"–")}</div>`;
-    return `<div class="opt" role="group" ${lab}>${EC_SUBS.map(c=>`<button type="button" data-set="${a}" data-val="${esc(c)}" aria-pressed="${v===c}">${esc(c)}</button>`).join("")}</div>`;
-  }
-  if(f.type==="file"){
-    const saved = fileNames(v), pend = (S.files[a]||[]).map(x=>x.name).join(", ");
-    if(!edit) return `<div class="filecell">${saved?esc(saved):'<span class="sub">No file</span>'}</div>`;
-    return `<div class="filecell"><input type="file" id="${id}" data-file="${a}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""} ${lab}>${saved?`<p class="cellnote">Saved: ${esc(saved)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}</div>`;
-  }
-  if(f.type==="lookup"){
-    if(!edit) return `<div class="static">${esc((v&&v.name)||"–")}</div>`;
-    return `<div class="typeahead"><input class="in" id="pq_${a}" data-pq="${a}" autocomplete="off" placeholder="Search partners" value="${esc((v&&v.name)||S.rec["_q_"+a]||"")}" ${lab}><ul class="ta-list hidden" id="pl_${a}"></ul></div>`;
+function field(f,edit){
+  const v = V[f.k], id = "f_"+f.k, req = f.req ? ' <i aria-hidden="true">*</i>' : "", cls = f.full ? "full" : "";
+  const label = `<label class="f" for="${id}">${esc(f.label)}${req}</label>`;
+  let ctrl;
+  if(f.type==="category"||f.type==="subtype"){
+    if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div><p class="cellnote">Set automatically</p></div>`;
+    const opts = f.type==="category" ? CATS : EC_SUBS;
+    ctrl = edit ? `<div class="opt" role="group" aria-label="${esc(f.label)}" id="${id}">${opts.map(o=>`<button type="button" data-set="${f.k}" data-val="${esc(o)}" aria-pressed="${v===o}">${esc(o)}</button>`).join("")}</div>` : `<div class="static">${esc(v||"–")}</div>`;
+    return `<div class="${cls}"><span class="f">${esc(f.label)}${req}</span>${ctrl}</div>`;
   }
   if(!edit){
-    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":"";
-    return `<div class="static">${has(t)?esc(t):"–"}</div>`;
+    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup") t = v&&v.name; if(f.type==="file") t = fileNames(v);
+    return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">${has(t)?esc(t):"–"}</div></div>`;
   }
-  if(f.type==="textarea") return `<textarea class="in" id="${id}" data-api="${a}" ${lab}>${esc(v)}</textarea>`;
-  if(f.type==="select") return `<select class="in" id="${id}" data-api="${a}" ${lab}><option value="">Select</option>${f.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
-  const typ = f.type==="date"?"date":"text", im = (f.type==="money"||f.type==="pin")?'inputmode="numeric"':f.type==="percent"?'inputmode="decimal"':"";
-  const inp = `<input class="in" id="${id}" data-api="${a}" type="${typ}" value="${esc(v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""} ${lab}>`;
-  if(f.type==="money") return `<div class="money">${inp}</div>`;
-  if(f.type==="pin"){
-    const ps = S.pin[side], h = ps==="loading" ? `<p class="cellnote">Finding the event owner…</p>` : ps==="missing" ? `<p class="hint err">Pin code not mapped to a district in CRM.</p>` : ps==="found" ? `<p class="hint ok">Owner found</p>` : "";
-    return inp+h;
+  if(f.type==="file"){ const sv = fileNames(v), pend = (S.files[f.k]||[]).map(x=>x.name).join(", "); ctrl = `<input class="in" type="file" id="${id}" data-file="${f.k}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""}>${sv?`<p class="cellnote">Saved: ${esc(sv)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}`; }
+  else if(f.type==="lookup") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-pq="1" autocomplete="off" placeholder="Search partners" value="${esc((v&&v.name)||V._pq||"")}"><ul class="ta-list hidden" id="pl"></ul></div>`;
+  else if(f.type==="textarea") ctrl = `<textarea class="in" id="${id}" data-k="${f.k}">${esc(v)}</textarea>`;
+  else if(f.type==="select") ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${f.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
+  else {
+    const typ = f.type==="date"?"date":"text", im = (f.type==="money"||f.type==="pin")?'inputmode="numeric"':f.type==="percent"?'inputmode="decimal"':"";
+    const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""}>`;
+    ctrl = f.type==="money" ? `<div class="money">${inp}</div>` : inp;
+    if(f.type==="pin") ctrl += S.pin==="loading" ? `<p class="cellnote">Finding the event owner…</p>` : S.pin==="missing" ? `<p class="hint err">Pin code not mapped to a district in CRM.</p>` : S.pin==="found" ? `<p class="hint ok">Owner found</p>` : "";
   }
-  return inp;
+  return `<div class="${cls}">${label}${ctrl}${f.help?`<p class="cellnote">${esc(f.help)}</p>`:""}</div>`;
 }
-function diff(f){
-  if(f.type==="file") return "";
-  const g = S.rec[api("GTM",f.k)], m = S.rec[api("MKT",f.k)];
-  if(!has(g)&&!has(m)) return `<span class="diff same">–</span>`;
-  if(!has(g)) return `<span class="diff same">No GTM value</span>`;
-  if(!has(m)) return `<span class="diff same">No Marketing value</span>`;
-  if(f.type==="money"){ const d = num(m)-num(g); if(!d) return `<span class="diff same">Same</span>`; const pct = num(g)?" ("+(d>0?"+":"")+Math.round(d/num(g)*100)+"%)":""; return `<span class="diff ${d>0?"up":"down"}">${d>0?"+":"−"}${inr(Math.abs(d))}${pct}</span>`; }
-  return norm(f,g)===norm(f,m) ? `<span class="diff same">Same</span>` : `<span class="diff up">Differs</span>`;
-}
-function renderLedger(p){
-  let h = `<thead><tr><th scope="col">Field</th><th scope="col" class="gtm">GTM proposed</th><th scope="col" class="mkt">Marketing (goes for approval)</th><th scope="col">Difference</th></tr></thead><tbody>`;
-  let sec = "";
-  for(const f of FIELDS){
-    if(!show(f,"GTM") && !show(f,"MKT")) continue;
-    if(f.sec!==sec){ sec = f.sec; h += `<tr class="sub"><th colspan="4" scope="rowgroup">${esc(sec)}</th></tr>`; }
-    h += `<tr><th scope="row">${esc(f.label)}${f.req?' <span style="color:var(--up)" aria-hidden="true">*</span>':""}${f.help?`<small>${esc(f.help)}</small>`:""}</th><td class="gtm">${cell("GTM",f,p.gtm)}</td><td class="mkt">${cell("MKT",f,p.mkt)}</td><td>${diff(f)}</td></tr>`;
-  }
-  const g = calc("GTM"), m = calc("MKT"), dt = (g.total&&m.total)? (()=>{const d=m.total-g.total; return d?`<span class="diff ${d>0?"up":"down"}">${d>0?"+":"−"}${inr(Math.abs(d))}</span>`:`<span class="diff same">Same</span>`;})() : "";
-  h += `<tr class="total"><th scope="row">Total event cost<small>${m.co||g.co?"Teachmint’s share + production + procurement":"GST and transport at actuals"}</small></th><td class="gtm">${g.total?inr(g.total):"–"}</td><td class="mkt">${m.total?inr(m.total):"–"}</td><td>${dt}</td></tr>`;
-  h += `<tr class="commit"><th scope="row">Business commitment<small>End customer: total ÷ ₹2,000. Partner: ₹1 lakh = ₹1 Cr</small></th><td class="gtm">${g.commit||"–"}</td><td class="mkt">${m.commit||"–"}</td><td></td></tr></tbody>`;
-  $("ledger").innerHTML = h;
-  $("legend").textContent = p.gtm ? "You edit the GTM column." : p.mkt ? "You edit the Marketing column." : "Read-only.";
-  const reviewing = p.actions.includes("gtmReview"), showR = (reviewing && changedKeys().length>0) || (!reviewing && S.rec[C.status]===CFG.STATUS.REJECTED && has(S.rec[C.remarks]));
-  $("remarksBox").classList.toggle("hidden",!showR);
-  $("remarks").disabled = !reviewing;
-  if(document.activeElement!==$("remarks")) $("remarks").value = S.rec[C.remarks]||"";
-}
-function renderSheet(){
-  const r = S.rec, side = calc("MKT").total ? "MKT" : "GTM", c = calc(side);
-  const pick = k => has(r[api("MKT",k)]) ? r[api("MKT",k)] : r[api("GTM",k)];
-  const venue = [String(pick("address")||"").split(/\n|,/)[0], pick("city")].filter(has).join(", ");
-  const gn = k => { if(side!=="MKT") return ""; const g = r[api("GTM",k)], m = r[api("MKT",k)]; return has(g)&&num(g)!==num(m)?`<small>GTM proposed ${inr(num(g))}</small>`:""; };
-  const rows = [[c.co?`Sponsorship cost<small>Teachmint ${c.share}% of ${inr(c.spons)}</small>`:"Sponsorship cost", c.co?c.ours:c.spons, "spons"],["Production cost",c.prod,"prod"],["Procurement expense",c.proc,"proc"]];
-  let h = `<table class="sheet"><thead><tr><th>Event</th><th>Venue</th><th>Date</th><th>Expected audience</th><th>Item</th><th>Cost</th><th>Business commitment</th></tr></thead><tbody>`;
-  rows.forEach((row,i)=>{
-    h += "<tr>";
-    if(i===0) h += `<td class="ev" rowspan="3">${esc(pick("name")||"Event name")}</td><td class="ctr" rowspan="3">${esc(venue||"Venue")}</td><td class="ctr" rowspan="3">${esc(ordinalDate(pick("date"))||"Date")}</td><td class="ctr" rowspan="3">${esc(pick("attendee")||"–")}</td>`;
-    h += `<td>${row[0]}</td><td class="num">${row[1]?Math.round(row[1]).toLocaleString("en-IN"):"–"}${gn(row[2])}</td>`;
-    if(i===0) h += `<td class="commit" rowspan="4">${esc(c.commit||"–")}</td>`;
-    h += "</tr>";
-  });
-  h += `</tbody><tfoot><tr><td colspan="4">*GST &amp; transportation charges at actuals</td><td></td><td class="num">${c.total?Math.round(c.total).toLocaleString("en-IN"):"–"}</td></tr></tfoot></table>`;
-  if(side==="GTM" && c.total) h += `<p class="hint">Showing GTM’s figures until Marketing adds theirs.</p>`;
-  $("sheet").innerHTML = h;
-}
-function changedKeys(){ return cmpFields().filter(f=>show(f,"MKT")||show(f,"GTM")).filter(f=>norm(f,S.rec[f.g])!==norm(f,S.rec[f.m])).map(f=>f.k); }
 function renderBar(p){
-  const b = [];
-  if(p.actions.includes("gtmSave")) b.push(`<button class="btn primary" data-act="gtmSave">Save proposal</button>`);
-  if(p.actions.includes("mktSave")) b.push(`<button class="btn" data-act="mktSave">Save draft</button>`);
-  if(p.actions.includes("mktSubmit")) b.push(`<button class="btn primary" data-act="mktSubmit">${S.rec[C.status]===CFG.STATUS.REJECTED?"Resubmit to ZH":"Submit to ZH"}</button>`);
-  if(p.actions.includes("gtmReview")){ const n = changedKeys().length; if(n) b.push(`<button class="btn" data-act="gtmAccept">Accept Marketing’s values</button>`); b.push(n?`<button class="btn reject" data-act="gtmReject">Reject with ${n} change${n>1?"s":""}</button>`:`<button class="btn approve" data-act="gtmApprove">Approve</button>`); }
-  if(p.actions.includes("sendAV")){ b.push(`<button class="btn primary" data-act="sendAV">Send to AV</button>`); p.note = "ZH approved. Send it to AV."+(calc("MKT").total>CFG.FOUNDER_LIMIT?" Above ₹50,000, so Divyansh approves after AV.":""); }
-  $("btns").innerHTML = b.join("");
-  $("btns").querySelectorAll("button").forEach(x=>x.disabled = S.busy);
+  const map = {save:`<button class="btn" data-act="save">Save draft</button>`,
+    submit:`<button class="btn primary" data-act="submit">${S.rec[C.status]===CFG.STATUS.REJECTED?"Resubmit to ZH":"Submit to ZH"}</button>`,
+    zhReject:`<button class="btn reject" data-act="zhReject">ZH rejected</button>`, zhApprove:`<button class="btn approve" data-act="zhApprove">ZH approved</button>`,
+    sendAV:`<button class="btn primary" data-act="sendAV">Send to AV</button>`};
+  if(S.role!=="MKT" && p.actions.includes("save")) map.save = `<button class="btn primary" data-act="save">Save</button>`;
+  $("btns").innerHTML = p.actions.map(a=>map[a]).join("");
+  $("btns").querySelectorAll("button").forEach(b=>b.disabled = S.busy);
   if(!$("msg").classList.contains("err")) $("msg").textContent = p.note;
 }
 
-/* ============ VALIDATION & ACTIONS ============ */
-function missing(side){
+/* ============ SAVE ============ */
+function missing(){
   const out = [];
-  for(const f of FIELDS){ if(!f.req || !show(f,side)) continue; if(f.type==="subtype" && cat(side)==="Partner Event") continue; if(!has(S.rec[api(side,f.k)])) out.push(f.label.toLowerCase()); }
-  if(has(S.rec[api(side,"pin")]) && S.pin[side]==="missing") out.push("a mapped pin code");
+  for(const f of FIELDS){ if(!f.req || !shown(f)) continue; if(f.k==="sub" && V.cat==="Partner Event") continue; if(!has(V[f.k])) out.push(f.label.toLowerCase()); }
+  if(has(V.pin) && S.pin==="missing") out.push("a mapped pin code");
   return out;
 }
 function fail(list){ $("msg").textContent = "Add "+list.join(", ")+" to continue."; $("msg").classList.add("err"); }
-function sidePayload(side, onlyKeys){
-  const o = {};
+function payload(){
+  const o = {}, s = side();
   for(const f of FIELDS){
     if(f.type==="file") continue;
-    if(onlyKeys && !onlyKeys.includes(f.k)) continue;
-    const a = api(side,f.k); let v = S.rec[a];
-    if(f.type==="subtype" && cat(side)==="Partner Event") v = "Partner Enablement Event";
+    let v = V[f.k];
+    if(f.k==="sub" && V.cat==="Partner Event") v = "Partner Enablement Event";
     if(f.type==="lookup") v = v&&v.id ? {id:v.id} : null;
     else if(f.type==="money"||f.type==="percent") v = has(v) ? num(v) : null;
     else if(!has(v)) v = null;
-    o[a] = v;
+    o[f[s]] = v;
   }
-  return o;
-}
-function control(o){
-  o.Name = S.rec[api("MKT","name")] || S.rec[api("GTM","name")] || "Event request";
+  o.Name = V.name || "Event request";
   if(S.ownerDirty || !S.recordId){
     if(S.owner) o.Owner = {id:S.owner.id};
-    if(S.rec[C.district]) o[C.district] = {id:S.rec[C.district]};
+    if(S.districtId) o[C.district] = {id:S.districtId};
     if(S.zh) o[C.zh] = {id:S.zh.id};
   }
-  if(!S.recordId && S.user.id && S.live) o[C.raisedBy] = {id:S.user.id};
-  if(!S.recordId && !S.live) o[C.raisedBy] = {id:"me",name:S.user.name};
+  if(!S.recordId && S.user.id) o[C.raisedBy] = {id:S.user.id};
+  const files = {}; for(const f of FIELDS) if(f.type==="file" && S.files[f.k] && S.files[f.k].length) files[f[s]] = S.files[f.k];
+  S.filesBySide = files;
   return o;
 }
 async function commit(data, okText){
   S.busy = true; render();
   try{
-    S.recordId = await API.save(data);
-    if(!S.live){ S.rec = structuredClone(MOCK.store); }
-    S.saved = structuredClone(S.rec); S.files = {}; S.ownerDirty = false;
+    const keep = S.files; S.files = S.filesBySide || {};
+    S.recordId = await API.save(data); S.files = {}; S.filesBySide = null; S.ownerDirty = false;
+    const fresh = await API.load(S.recordId); if(fresh && fresh.id) loadRecord(fresh);
     toast(okText);
-    if(!S.live) history.replaceState(null,"",location.pathname+"?id="+S.recordId+"&demo");
-    if(S.live){ history.replaceState(null,"",location.pathname+"?id="+S.recordId); try{ const fresh = await API.load(S.recordId); loadRecord(fresh); }catch(_){} }
   }catch(err){ $("msg").textContent = "Couldn’t save: "+(err.message||err); $("msg").classList.add("err"); }
   S.busy = false; render();
 }
 const ACT = {
-  async gtmSave(){ const e = missing("GTM"); if(e.length) return fail(e);
-    const o = control(sidePayload("GTM")); if(!S.recordId) o[C.status] = CFG.STATUS.DRAFT;
-    attachFiles("GTM"); await commit(o, "Proposal saved. Marketing can now negotiate."); },
-  async mktSave(){ if(!has(S.rec[api("MKT","name")]) && !has(S.rec[api("GTM","name")])) return fail(["event name"]);
-    const o = control(sidePayload("MKT")); if(!S.recordId) o[C.status] = CFG.STATUS.DRAFT;
-    attachFiles("MKT"); await commit(o, "Draft saved."); },
-  async mktSubmit(){ const e = missing("MKT"); if(e.length) return fail(e);
-    const was = S.rec[C.status]===CFG.STATUS.REJECTED || S.rec[C.status]===CFG.STATUS.RESUBMITTED;
-    const o = control(sidePayload("MKT")); o[C.status] = was ? CFG.STATUS.RESUBMITTED : CFG.STATUS.SUBMITTED; o[C.tag] = CFG.TAG.PENDING_GTM;
-    attachFiles("MKT"); await commit(o, was ? "Resubmitted to the ZH." : "Submitted to the ZH."); },
-  async gtmApprove(){
-    const o = {}; for(const f of cmpFields()){ let v = S.rec[f.m]; if(f.type==="lookup") v = v&&v.id?{id:v.id}:null; else if(!has(v)) v = null; else if(f.type==="money"||f.type==="percent") v = num(v); o[f.g] = v; S.rec[f.g] = S.rec[f.m]; }
-    o[C.tag] = CFG.TAG.GTM_OK; o[C.remarks] = null;
-    await commit(o, "Approved. Marketing will be notified."); },
-  async gtmReject(){
-    const rm = $("remarks").value.trim(); if(!rm) return fail(["rejection remarks"]);
-    const changed = cmpFields().filter(f=>norm(f,S.rec[f.g])!==norm(f,S.saved[f.g])).map(f=>f.k);
-    const o = sidePayload("GTM", changed); o[C.tag] = null; o[C.status] = CFG.STATUS.REJECTED; // no tag on rejection; Marketing resubmits o[C.remarks] = rm;
-    await commit(o, "Sent back to Marketing with your changes."); },
-  gtmAccept(){ for(const f of cmpFields()) S.rec[f.g] = S.rec[f.m]; render(); },
-  async sendAV(){ await commit({[C.tag]:CFG.TAG.PENDING_AV}, "Sent to AV for approval."); }
+  async save(){ if(S.role==="MKT"){ if(!has(V.name)) return fail(["event name"]); } else { const e = missing(); if(e.length) return fail(e); }
+    const o = payload(); if(!S.recordId) o[C.status] = CFG.STATUS.DRAFT; await commit(o, S.role==="MKT"?"Draft saved.":"Saved. Marketing can take it forward."); },
+  async submit(){ const e = missing(); if(e.length) return fail(e);
+    const re = S.rec[C.status]===CFG.STATUS.REJECTED || S.rec[C.status]===CFG.STATUS.RESUBMITTED;
+    const o = payload(); o[C.status] = re ? CFG.STATUS.RESUBMITTED : CFG.STATUS.SUBMITTED; o[C.tag] = CFG.TAG.PENDING_ZH;
+    await commit(o, re?"Resubmitted. The ZH gets the email.":"Submitted. The ZH gets the email."); },
+  async zhApprove(){ await commit({[C.tag]:CFG.TAG.ZH_OK, [C.remarks]:null}, "Marked as approved by the ZH."); },
+  async zhReject(){ const rm = $("remarks").value.trim(); if(!rm){ $("remarks").focus(); return fail(["the ZH’s remarks"]); }
+    await commit({[C.tag]:null, [C.status]:CFG.STATUS.REJECTED, [C.remarks]:rm}, "Marked as rejected. You can now update and resubmit."); },
+  async sendAV(){ await commit({[C.tag]:CFG.TAG.PENDING_AV}, "Sent to AV."); }
 };
-function attachFiles(side){ const keep = {}; for(const f of FIELDS) if(f.type==="file"){ const a = api(side,f.k); if(S.files[a]&&S.files[a].length) keep[a] = S.files[a]; } S.files = keep; }
+
+/* ============ LOAD A RECORD INTO THE ONE-SET FORM ============ */
+function loadRecord(rec){
+  S.recordId = rec.id; S.rec = rec; V = {}; S.prefilled = false;
+  const s = side(), o = other();
+  for(const f of FIELDS){
+    let v = rec[f[s]];
+    if(!has(v) && has(rec[f[o]]) && f.type!=="file" && perms().edit){ v = rec[f[o]]; S.prefilled = true; }   // first time: start from the other side’s values
+    V[f.k] = v==null ? "" : v;
+  }
+  if(rec.Owner) S.owner = {id:rec.Owner.id, name:rec.Owner.name};
+  if(rec[C.zh]) S.zh = {id:rec[C.zh].id, name:rec[C.zh].name};
+  if(rec[C.district]){ S.districtName = rec[C.district].name; S.districtId = rec[C.district].id; }
+  S.pin = has(V.pin) && S.owner ? "found" : "idle";
+  render();
+}
 
 /* ============ EVENTS ============ */
 document.addEventListener("click", e=>{
   const set = e.target.closest("[data-set]");
-  if(set){ const a = set.dataset.set; S.rec[a] = set.dataset.val;
-    const side = FIELDS.some(f=>f.g===a) ? "GTM" : "MKT";
-    if(a===api(side,"cat")){ if(set.dataset.val==="Partner Event") S.rec[api(side,"sub")] = "Partner Enablement Event"; else if(!EC_SUBS.includes(S.rec[api(side,"sub")])) S.rec[api(side,"sub")] = ""; if(set.dataset.val==="Partner Branding") S.rec[api(side,"sub")] = ""; }
-    clearErr(); render(); return; }
+  if(set){ V[set.dataset.set] = set.dataset.val; if(set.dataset.set==="cat"){ if(V.cat==="Partner Event") V.sub = "Partner Enablement Event"; else if(V.cat==="Partner Branding" || !EC_SUBS.includes(V.sub)) V.sub = ""; } clearErr(); render(); return; }
   const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
-  const pk = e.target.closest("[data-pick]"); if(pk){ S.rec[pk.dataset.pick] = {id:pk.dataset.id,name:pk.dataset.name}; render(); return; }
+  const pk = e.target.closest("[data-pick]"); if(pk){ V.partner = {id:pk.dataset.pick, name:pk.dataset.name}; render(); return; }
+  const o = e.target.closest("[data-open]"); if(o){ openRecord(o.dataset.open); return; }
+  const fb = e.target.closest("[data-filter]"); if(fb){ L.filter = fb.dataset.filter; L.page = 1; loadList(); return; }
+  if(e.target.closest("#newBtn")){ newRecord(); return; }
+  if(e.target.closest("#backBtn")){ showList(); return; }
+  if(e.target.closest("#prevPg")){ if(L.page>1){ L.page--; loadList(); } return; }
+  if(e.target.closest("#nextPg")){ if(L.more){ L.page++; loadList(); } return; }
   const role = e.target.closest("[data-role]"); if(role){ setRole(role.dataset.role); return; }
-  document.querySelectorAll(".ta-list").forEach(u=>u.classList.add("hidden"));
+  const pl = $("pl"); if(pl) pl.classList.add("hidden");
 });
 document.addEventListener("input", e=>{
-  const a = e.target.dataset && e.target.dataset.api;
-  if(a){ let v = e.target.value; const f = FIELDS.find(x=>x.g===a||x.m===a); const side = f && f.g===a ? "GTM" : "MKT";
-    if(f && f.type==="pin"){ v = v.replace(/\D/g,"").slice(0,6); e.target.value = v; }
-    S.rec[a] = v; clearErr();
-    if(f && f.type==="pin") onPin(side, v);
-    soft(); }
-  if(e.target.dataset && e.target.dataset.pq) onPartner(e.target.dataset.pq, e.target.value);
-  if(e.target.id==="remarks") S.rec[C.remarks] = e.target.value;
+  const k = e.target.dataset && e.target.dataset.k;
+  if(k){ let v = e.target.value; if(k==="pin"){ v = v.replace(/\D/g,"").slice(0,6); e.target.value = v; } V[k] = v; clearErr(); if(k==="pin") onPin(v); soft(); return; }
+  if(e.target.dataset && e.target.dataset.pq) onPartner(e.target.value);
+  if(e.target.id==="q"){ clearTimeout(qT); qT = setTimeout(()=>{ L.q = e.target.value; L.page = 1; loadList(); },350); }
 });
 document.addEventListener("change", e=>{
-  const fa = e.target.dataset && e.target.dataset.file; if(fa){ S.files[fa] = Array.from(e.target.files||[]); }
-  if(e.target.tagName==="SELECT" && e.target.dataset.api){ S.rec[e.target.dataset.api] = e.target.value; soft(); }
+  const fk = e.target.dataset && e.target.dataset.file; if(fk) S.files[fk] = Array.from(e.target.files||[]);
+  if(e.target.tagName==="SELECT" && e.target.dataset.k){ V[e.target.dataset.k] = e.target.value; soft(); }
 });
 function soft(){ const el = document.activeElement, id = el&&el.id, pos = el&&el.selectionStart; render(); if(id && $(id)){ $(id).focus(); try{ if(pos!=null) $(id).setSelectionRange(pos,pos); }catch(_){} } }
 function clearErr(){ $("msg").classList.remove("err"); }
-const pinSeq = {GTM:0,MKT:0};
-async function onPin(side,pin){
-  if(pin.length!==6){ S.pin[side] = "idle"; return; }
-  const seq = ++pinSeq[side]; S.pin[side] = "loading"; soft();
+let pinSeq = 0;
+async function onPin(pin){
+  if(pin.length!==6){ S.pin = "idle"; return; }
+  const seq = ++pinSeq; S.pin = "loading"; soft();
   try{
-    const res = await API.pincode(pin); if(seq!==pinSeq[side]) return;
-    if(!res) S.pin[side] = "missing";
+    const r = await API.pincode(pin); if(seq!==pinSeq) return;
+    if(!r) S.pin = "missing";
     else{
-      S.pin[side] = "found";
-      if(res.state) S.rec[api(side,"state")] = res.state;
-      if(!has(S.rec[api(side,"city")])) S.rec[api(side,"city")] = res.district.name;
-      // Owner follows Marketing's pin; GTM's pin is used only until Marketing enters one
-      if(side==="MKT" || !has(S.rec[api("MKT","pin")])){ S.owner = res.owner; S.zh = res.zh; S.districtName = res.district.name; S.rec[C.district] = res.district.id; S.ownerDirty = true; }
+      S.pin = "found"; if(r.state) V.state = r.state; if(!has(V.city)) V.city = r.district.name;
+      // Marketing’s pin decides the owner; a GTM pin is used until Marketing enters one
+      if(S.role==="MKT" || !has(S.rec.Pin_code)){ S.owner = r.owner; S.districtName = r.district.name; S.districtId = r.district.id; const z = CFG.ZH_BY_ZONE[r.zone]; S.zh = z ? Object.assign({},z) : null; S.ownerDirty = true; }
     }
-  }catch(_){ S.pin[side] = "missing"; }
+  }catch(_){ S.pin = "missing"; }
   soft();
 }
 let taT;
-function onPartner(a,q){
-  S.rec["_q_"+a] = q; S.rec[a] = null; clearTimeout(taT);
-  const ul = $("pl_"+a); if(q.trim().length<2){ ul && ul.classList.add("hidden"); return; }
-  taT = setTimeout(async ()=>{
-    const list = await API.partners(q.trim()), u = $("pl_"+a); if(!u) return;
-    u.innerHTML = list.length ? list.slice(0,8).map(p=>`<li><button type="button" data-pick="${a}" data-id="${esc(p.id)}" data-name="${esc(p.Account_Name)}">${esc(p.Account_Name)}</button></li>`).join("") : `<li class="sub" style="padding:7px 8px">No partner matches “${esc(q)}”</li>`;
-    u.classList.remove("hidden");
-  },250);
+function onPartner(q){
+  V._pq = q; V.partner = null; clearTimeout(taT);
+  if(q.trim().length<2){ const u = $("pl"); u && u.classList.add("hidden"); return; }
+  taT = setTimeout(async ()=>{ const list = await API.partners(q.trim()), u = $("pl"); if(!u) return;
+    u.innerHTML = list.length ? list.slice(0,8).map(p=>`<li><button type="button" data-pick="${esc(p.id)}" data-name="${esc(p.Account_Name)}">${esc(p.Account_Name)}</button></li>`).join("") : `<li class="sub" style="padding:7px 8px">No partner matches “${esc(q)}”</li>`;
+    u.classList.remove("hidden"); },250);
 }
 let toastT; function toast(t){ const el = $("toast"); el.textContent = t; el.classList.remove("hidden"); clearTimeout(toastT); toastT = setTimeout(()=>el.classList.add("hidden"),2600); }
 
-/* ============ PREFILL ============ */
-function prefill(){
-  const tag = S.rec[C.tag], st = S.rec[C.status];
-  // GTM reviewing: empty GTM cells start with Marketing's value, so "agree" is the default
-  if(S.role==="ZH" && tag===CFG.TAG.PENDING_GTM){ for(const f of cmpFields()) if(!has(S.rec[f.g]) && has(S.rec[f.m])){ S.rec[f.g] = S.rec[f.m]; S.saved[f.g] = S.rec[f.m]; } }
-  // Marketing editing: empty Marketing cells start with GTM's proposal
-  if(S.role==="MKT" && (!st || st===CFG.STATUS.DRAFT)){ for(const f of cmpFields()) if(!has(S.rec[f.m]) && has(S.rec[f.g])) S.rec[f.m] = S.rec[f.g]; }
-}
-
-/* ============ PREVIEW MODE ============ */
-function setRole(r){
-  S.role = r; S.baseRole = r; S.user = {id:"me", name:{GTM:"Preview GTM user",MKT:"Preview Marketing user",ZH:"Preview ZH"}[r]};
-  document.querySelectorAll("[data-role]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.role===r)));
-  if(S.recordId && MOCK.store){ S.rec = structuredClone(MOCK.store); S.saved = structuredClone(MOCK.store); }
-  prefill(); clearErr(); render(); if(S.view==="list") loadList();
-}
-function loadSample(){
-  history.pushState(null,"",location.pathname+"?new&demo"); showView("form");
-  S.recordId = null; MOCK.store = null; S.files = {};
-  S.rec = {Event_s_Category:"End Customer Event", Event_s_Sub_Type:"Sponsored Event", Event_s_Name:"Education Excellence Conclave – Jammu", Event_s_Date:"2026-10-10", Event_s_Address:"Vivanta Jammu, Kunjwani Bypass", Event_s_Pin_code:"180001", Event_s_City:"Jammu", Event_s_State:"Jammu & Kashmir(UT)", Event_s_Expected_Attendee:"200 + KDMs", Event_s_Sponsorship_Cost:"35000", Event_s_Production_Cost:"15000", Event_s_Procurement_Cost:"5000"};
-  const p = MOCK.pins["180001"]; S.owner = p.owner; S.zh = MOCK.zh[p.zone]; S.districtName = p.district.name; S.rec[C.district] = p.district.id; S.pin = {GTM:"found",MKT:"idle"}; S.ownerDirty = true;
-  S.saved = {}; setRole("GTM");
-  $("msg").textContent = "Sample loaded as GTM’s proposal. Save it, switch to Marketing to submit, then ZH to review."; 
-}
-function resetDemo(){ history.pushState(null,"",location.pathname+"?demo"); showView("list"); L.rows = []; renderList(); S.recordId = null; MOCK.store = null; S.rec = {}; S.saved = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.pin = {GTM:"idle",MKT:"idle"}; setRole("MKT"); }
-
-/* ============ LIST & NAVIGATION ============ */
-const FILTERS = [["all","All"],["mine","Raised by me"],["draft","Drafts"],["zh","Pending ZH review"],["rejected","Rejected"],["zhok","ZH approved"],["av","With AV"]];
+/* ============ HOME LIST ============ */
+const FILTERS = [["all","All"],["mine","Raised by me"],["draft","Drafts"],["zh","With ZH"],["rejected","Rejected"],["zhok","ZH approved"],["av","With AV"]];
 const L = {filter:"all", q:"", page:1, more:false, rows:[], loading:false};
-let listSeq = 0;
+let listSeq = 0, qT;
+function criteria(f){
+  const c = [], esc2 = t => t.replace(/[(),]/g,"\\$&");
+  if(f.filter==="mine") c.push("(Raised_by:equals:"+S.user.id+")");
+  if(f.filter==="draft") c.push("(Status:equals:"+CFG.STATUS.DRAFT+")");
+  if(f.filter==="zh") c.push("(Event_Tag:equals:"+esc2(CFG.TAG.PENDING_ZH)+")");
+  if(f.filter==="rejected") c.push("(Status:equals:"+CFG.STATUS.REJECTED+")");
+  if(f.filter==="zhok") c.push("(Event_Tag:equals:"+esc2(CFG.TAG.ZH_OK)+")");
+  if(f.filter==="av") c.push("(Event_Tag:equals:"+esc2(CFG.TAG.PENDING_AV)+")");
+  const t = esc2((f.q||"").trim());
+  if(t){ const parts = ["(Name:starts_with:"+t+")"]; if(/^\d{1,4}$/.test(t)) parts.push("(Event_Number:equals:ME - "+t.padStart(4,"0")+")"); c.push(parts.length>1?"("+parts.join("or")+")":parts[0]); }
+  return c.length ? (c.length>1 ? "("+c.join("and")+")" : c[0]) : "";
+}
+function matches(r,f){
+  if(f.filter==="mine" && !(r[C.raisedBy]&&r[C.raisedBy].id===S.user.id)) return false;
+  if(f.filter==="draft" && r.Status!==CFG.STATUS.DRAFT) return false;
+  if(f.filter==="zh" && r.Event_Tag!==CFG.TAG.PENDING_ZH) return false;
+  if(f.filter==="rejected" && r.Status!==CFG.STATUS.REJECTED) return false;
+  if(f.filter==="zhok" && r.Event_Tag!==CFG.TAG.ZH_OK) return false;
+  if(f.filter==="av" && r.Event_Tag!==CFG.TAG.PENDING_AV) return false;
+  if(f.q && !((r.Name||"")+" "+(r.Event_Number||"")).toLowerCase().includes(f.q.toLowerCase())) return false;
+  return true;
+}
 async function loadList(){
   const seq = ++listSeq; L.loading = true; renderList();
-  try{ const r = await API.list(L); if(seq!==listSeq) return; L.rows = r.rows; L.more = r.more; }
-  catch(err){ if(seq===listSeq){ L.rows = []; L.more = false; L.error = err.message||String(err); } }
+  try{ const r = await API.list(L); if(seq!==listSeq) return; L.rows = r.rows; L.more = r.more; L.error = ""; }
+  catch(err){ if(seq===listSeq){ L.rows = []; L.more = false; L.error = (err&&err.message)||"Unknown error"; } }
   L.loading = false; renderList();
 }
 function renderList(){
@@ -745,88 +569,43 @@ function renderList(){
   const head = `<thead><tr><th scope="col">Event no.</th><th scope="col">Event</th><th scope="col">Date</th><th scope="col">Owner</th><th scope="col">Status</th><th scope="col">Tag</th></tr></thead>`;
   let body;
   if(L.loading) body = `<tr><td colspan="6" class="empty">Loading requests…</td></tr>`;
-  else if(L.error){ body = `<tr><td colspan="6" class="empty">Couldn’t load requests: ${esc(L.error)}</td></tr>`; L.error = ""; }
-  else if(!L.rows.length) body = `<tr><td colspan="6" class="empty">${L.filter==="all"&&!L.q ? "No event requests yet. Click “+ New event” to raise one." : "No requests match this filter."}</td></tr>`;
-  else body = L.rows.map(r=>{
-    const nm = r.Event_Name || r.Event_s_Name || r.Name || "Untitled";
-    const dt = ordinalDate(r.Event_Date || r.Event_s_Date) || "–";
-    return `<tr><td>${esc(r.Event_Number||"–")}</td><td><button type="button" class="open" data-open="${esc(r.id)}">${esc(nm)}</button></td><td>${esc(dt)}</td><td>${esc((r.Owner&&r.Owner.name)||"–")}</td><td>${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td>${esc(r.Event_Tag||"–")}</td></tr>`;
-  }).join("");
-  $("list").innerHTML = head + "<tbody>" + body + "</tbody>";
+  else if(L.error) body = `<tr><td colspan="6" class="empty">Couldn’t load requests: ${esc(L.error)}</td></tr>`;
+  else if(!L.rows.length) body = `<tr><td colspan="6" class="empty">${L.filter==="all"&&!L.q?"No event requests yet. Click “+ New event” to raise one.":"No requests match this filter."}</td></tr>`;
+  else body = L.rows.map(r=>`<tr><td>${esc(r.Event_Number||"–")}</td><td><button type="button" class="open" data-open="${esc(r.id)}">${esc(r.Event_Name||r.Event_s_Name||r.Name||"Untitled")}</button></td><td>${esc(ordinalDate(r.Event_Date||r.Event_s_Date)||"–")}</td><td>${esc((r.Owner&&r.Owner.name)||"–")}</td><td>${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td>${esc(r.Event_Tag||"–")}</td></tr>`).join("");
+  $("list").innerHTML = head+"<tbody>"+body+"</tbody>";
   $("pageInfo").textContent = L.rows.length ? "Page "+L.page : "";
-  $("prevPg").disabled = L.page<=1 || L.loading; $("nextPg").disabled = !L.more || L.loading;
+  $("prevPg").disabled = L.page<=1||L.loading; $("nextPg").disabled = !L.more||L.loading;
 }
-function showView(v){
-  S.view = v;
-  $("listView").classList.toggle("hidden", v!=="list");
-  $("formView").classList.toggle("hidden", v!=="form");
-  $("bar").classList.toggle("hidden", v!=="form");
-  window.scrollTo(0,0);
-}
-function blankForm(){
-  S.recordId = null; S.rec = {}; S.saved = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.pin = {GTM:"idle",MKT:"idle"}; S.ownerDirty = false;
-  S.role = S.baseRole || S.role; clearErr();
-}
-function goList(push){
-  if(push) history.pushState(null,"",location.pathname+(S.live?"":"?demo"));
-  showView("list"); loadList();
-}
-function goNew(push){
-  if(push) history.pushState(null,"",location.pathname+"?new"+(S.live?"":"&demo"));
-  blankForm(); showView("form"); prefill(); render();
-}
-async function goRecord(id, push){
-  if(push) history.pushState(null,"",location.pathname+"?id="+encodeURIComponent(id)+(S.live?"":"&demo"));
-  blankForm(); showView("form"); $("msg").textContent = "Loading the request…"; $("btns").innerHTML = "";
-  try{ const rec = await API.load(id); if(!rec.id) throw new Error("Record not found or you don’t have access."); loadRecord(rec); }
+function show(v){ S.view = v; $("listView").classList.toggle("hidden",v!=="list"); $("formView").classList.toggle("hidden",v!=="form"); $("bar").classList.toggle("hidden",v!=="form"); window.scrollTo(0,0); }
+function blank(){ S.recordId = null; S.rec = {}; V = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.districtId = null; S.pin = "idle"; S.ownerDirty = false; S.prefilled = false; clearErr(); }
+function showList(){ show("list"); loadList(); }
+function newRecord(){ blank(); show("form"); render(); }
+async function openRecord(id){
+  blank(); show("form"); $("msg").textContent = "Loading the request…"; $("btns").innerHTML = "";
+  try{ const rec = await API.load(id); if(!rec.id) throw new Error("Record not found or no access."); loadRecord(rec); }
   catch(err){ $("msg").textContent = "Couldn’t open: "+(err.message||err); $("msg").classList.add("err"); }
 }
-function route(){
-  const qp = new URLSearchParams(location.search);
-  if(qp.get("id")) return goRecord(qp.get("id"), false);
-  if(qp.has("new")) return goNew(false);
-  goList(false);
+
+/* ============ PREVIEW ============ */
+function setRole(r){
+  S.role = r; S.user = {id:"me", name:r==="MKT"?"Preview Marketing user":"Preview GTM user"};
+  document.querySelectorAll("[data-role]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.role===r)));
+  if(S.view==="form" && S.recordId) openRecord(S.recordId); else if(S.view==="form") render(); else loadList();
 }
-window.addEventListener("popstate", route);
-document.addEventListener("click", e=>{
-  const o = e.target.closest("[data-open]"); if(o){ goRecord(o.dataset.open, true); return; }
-  const fb = e.target.closest("[data-filter]"); if(fb){ L.filter = fb.dataset.filter; L.page = 1; loadList(); return; }
-  if(e.target.closest("#newBtn")){ goNew(true); return; }
-  if(e.target.closest("#backBtn")){ goList(true); return; }
-  if(e.target.closest("#prevPg")){ if(L.page>1){ L.page--; loadList(); } return; }
-  if(e.target.closest("#nextPg")){ if(L.more){ L.page++; loadList(); } return; }
-});
-let qT; document.addEventListener("input", e=>{ if(e.target.id==="q"){ clearTimeout(qT); qT = setTimeout(()=>{ L.q = e.target.value; L.page = 1; loadList(); },350); } });
 
 /* ============ BOOT ============ */
-function loadRecord(rec){
-  S.recordId = rec.id; S.rec = rec; S.saved = structuredClone(rec);
-  if(rec.Owner) S.owner = {id:rec.Owner.id,name:rec.Owner.name};
-  if(rec[C.zh]) S.zh = {id:rec[C.zh].id,name:rec[C.zh].name};
-  if(rec[C.district]){ S.districtName = rec[C.district].name; S.rec[C.district] = rec[C.district].id; S.saved[C.district] = rec[C.district].id; }
-  // The record's ZH reviews; everyone else who isn't Marketing works on the GTM side
-  if(S.live && S.role!=="MKT") S.role = (rec[C.zh] && rec[C.zh].id===S.user.id) ? "ZH" : "GTM";
-  prefill(); render();
+async function boot(entityId){
+  const u = await API.me(); S.role = u.role; S.user = {id:u.id, name:u.name};
+  if(entityId) openRecord(entityId); else showList();
 }
-async function boot(){
-  const u = await API.currentUser(); S.role = u.role; S.baseRole = u.role; S.user = {id:u.id, name:u.name};
-  try{ const st = JSON.parse(sessionStorage.getItem("evf_stash")||"null"); sessionStorage.removeItem("evf_stash");
-    if(st && Date.now()-st.at < 600000 && st.rec && Object.keys(st.rec).length && !new URLSearchParams(location.search).get("id")){ history.replaceState(null,"",location.pathname+"?new"); route(); S.rec = st.rec; render(); return; } }catch(_){}
-  route();
-}
-function showAuthProblem(t){ const m = document.getElementById("msg"); if(m){ m.textContent = t; m.classList.add("err"); } document.getElementById("listView").classList.add("hidden"); }
-const DEMO = CFG.CLIENT_ID.startsWith("PASTE") || new URLSearchParams(location.search).has("demo");
-if(!DEMO){
+if(window.ZOHO && ZOHO.embeddedApp){
   S.live = true;
-  S.token = AUTH.fromHash() || AUTH.get();
-  if(S.authError) showAuthProblem("Zoho login was cancelled or refused ("+S.authError+"). Click the button again to retry.");
-  else if(!S.token) AUTH.login();
-  else boot().catch(err=>{ $("msg").textContent = "Couldn’t load: "+(err.message||err); $("msg").classList.add("err"); render(); });
+  ZOHO.embeddedApp.on("PageLoad", d=>{ const id = d && (Array.isArray(d.EntityId)?d.EntityId[0]:d.EntityId); boot(id); });
+  ZOHO.embeddedApp.init();
 } else {
   $("demoBar").classList.remove("hidden");
-  $("loadSample").addEventListener("click",loadSample);
-  $("resetDemo").addEventListener("click",resetDemo);
-  boot();
+  $("resetDemo").addEventListener("click",()=>{ MOCK.rows = []; MOCK.n = 0; showList(); });
+  boot(null);
 }
 </script>
 </body>
