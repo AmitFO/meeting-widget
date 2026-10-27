@@ -219,7 +219,7 @@ textarea.in{min-height:58px}
 label.f,.f{display:block;font-size:12.5px;font-weight:500;margin-bottom:3px;color:var(--muted)}
 .static{min-height:0;font-size:14px;padding:2px 0}
 .money .in{padding-left:22px}
-.fgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 14px;grid-auto-flow:row dense}
+.fgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 14px}
 .s1{grid-column:span 1}.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}
 h2.sec{font-size:14px;font-weight:600;margin:4px 0 8px}
 h2.sec + .fgrid{margin-bottom:14px}
@@ -253,6 +253,28 @@ h2.sec + .fgrid{margin-bottom:14px}
 }
 .maprow{display:flex;gap:8px;align-items:center}.maprow .in{flex:1;min-width:0}.maprow .btn{white-space:nowrap;padding:6px 12px;text-decoration:none;display:inline-flex;align-items:center;min-height:34px}
 @media (max-width:420px){.maprow{flex-wrap:wrap}.maprow .btn{flex:1;justify-content:center}}
+.fhead{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:18px}
+.fh-mid{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:22px 0 0;font-size:13px;align-self:start}
+.fh-mid dt{color:var(--muted)}.fh-mid dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.fh-right{max-width:none}
+:root{--cost:#1E7A47;--target:#A9473D}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--cost:#6CC793;--target:#E0938A}}
+:root[data-theme="dark"]{--cost:#6CC793;--target:#E0938A}
+.summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+.summary .big{padding:14px 16px}.summary .big span{font-size:13px}
+.summary .big b{display:block;font-size:24px;font-weight:700;margin-top:2px}
+.cost{color:var(--cost)!important}.target{color:var(--target)!important}
+.foot{font-size:11.5px;color:var(--muted);margin-top:6px}
+.sheet-wrap{overflow-x:auto}
+table.sheet{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
+.sheet th,.sheet td{border:1px solid var(--ink);padding:6px 8px;vertical-align:middle}
+.sheet thead th{font-weight:600;text-align:center}
+.sheet td.ev{font-weight:600}.sheet td.num{text-align:right}.sheet td.ctr{text-align:center}
+.sheet td.commit{font-size:18px;font-weight:700;text-align:center}
+.sheet small{display:block;color:var(--muted);font-size:11px}
+.sheet tfoot td{font-weight:600}
+@media (max-width:620px){.fhead{grid-template-columns:1fr}.fh-mid{margin-top:0}}
+@media (max-width:420px){.summary{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -293,6 +315,7 @@ h2.sec + .fgrid{margin-bottom:14px}
         <h1 id="title">New event request</h1>
         <p class="sub" id="subtitle"></p>
       </div>
+      <dl class="fh-mid" id="mid"></dl>
       <div class="fh-right"><div class="chips" id="chips"></div><dl class="meta" id="meta"></dl></div>
     </div>
     <div id="notes"></div>
@@ -310,6 +333,9 @@ h2.sec + .fgrid{margin-bottom:14px}
     <section class="panel tabpanel hidden" id="tab-cost" role="tabpanel">
       <div class="fgrid" id="secOther"></div>
       <div class="summary" id="summary"></div>
+      <p class="foot">* GST &amp; transportation charges are extra, at actuals.</p>
+      <h2 class="sec" style="margin-top:16px">Sample draft</h2>
+      <div class="sheet-wrap" id="sheet"></div>
     </section>
     <section class="panel tabpanel hidden" id="tab-time" role="tabpanel"><div id="timeline"></div></section>
   </div>
@@ -341,28 +367,26 @@ const FIELDS = [
   {sec:"secType", k:"cat", label:"Event category", g:"Event_s_Category", m:"Event_Category", type:"category", req:true},
   {sec:"secType", k:"sub", label:"Event sub type", g:"Event_s_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, show:()=>V.cat && V.cat!=="Partner Branding"},
   {sec:"secType", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true, show:NOT_BRANDING},
-  {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu", show:NOT_BRANDING},
   {sec:"secBasic", k:"partner", label:"Partner name", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.cat==="Partner Branding"||V.sub==="Co-Sponsored Event"},
   {sec:"secBasic", k:"share", label:"Share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu", show:NOT_BRANDING},
+  {sec:"secBasic", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, show:NOT_BRANDING},
   {sec:"secBasic", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true},
   {sec:"secBasic", k:"district", label:"District", type:"district", req:true},
   {sec:"secBasic", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
   {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"auto", req:true},
   {sec:"secBasic", k:"map", label:"Google Maps location", type:"map"},
-  {sec:"secBasic", k:"agenda", label:"Event agenda", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
-  {sec:"secBasic", k:"photos", label:"Photographs", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true, accept:"image/*"},
-  {sec:"secBasic", k:"other", label:"Other details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
-  {sec:"secOther", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, show:NOT_BRANDING},
+  {sec:"secBasic", k:"agenda", label:"Event proposal", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
+  {sec:"secBasic", k:"photos", label:"Other attachments", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true},
+  {sec:"secBasic", k:"other", label:"Additional event details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
   {sec:"secOther", k:"spons", label:"Sponsorship cost", g:"Event_s_Sponsorship_Cost", m:"Sponsorship_Cost", type:"money", req:true, show:NOT_BRANDING},
-  {sec:"secOther", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, standees, branding elements", show:NOT_BRANDING},
+  {sec:"secOther", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, standees, branding", show:NOT_BRANDING},
   {sec:"secOther", k:"proc", label:"Procurement cost", g:"Event_s_Procurement_Cost", m:"Procurement_Cost", type:"money", help:"Brochures, merchandise, bags, gifts", show:NOT_BRANDING},
-  {sec:"secOther", k:"floor", label:"Floor plan", g:"Event_s_Floor_Plan", m:"Floor_Plan", type:"file", show:NOT_BRANDING},
-  {sec:"secOther", k:"stall", label:"Stall plan", g:"Event_s_Stall_Plan", m:"Stall_Plan", type:"file", show:NOT_BRANDING}
 ];
 const CITY = {g:"Event_s_City", m:"City"};   // filled with the district name
 const byK = k => FIELDS.find(f=>f.k===k);
 // width of each field on a 4-column grid
-const W = {map:6, cat:2, sub:2, date:2, name:6, address:6, district:2, pin:2, state:2, partner:5, share:1, agenda:3, photos:3, other:6, attendee:3, spons:3, prod:3, proc:3, floor:3, stall:3};
+const W = {map:6, cat:2, sub:2, date:2, name:4, address:6, district:2, pin:2, state:2, partner:5, share:1, agenda:3, photos:3, other:6, attendee:2, spons:2, prod:2, proc:2};
 const TAB_OF = sec => sec==="secOther" ? "cost" : "event";
 
 /* ============ STATE ============ */
@@ -497,7 +521,7 @@ function perms(){
 /* ============ FORM RENDER ============ */
 function render(){
   const p = perms(), r = S.rec;
-  $("title").textContent = V.cat==="Partner Branding" ? (S.rec.Name && S.rec.Name.startsWith("Partner Branding") ? S.rec.Name : "Partner branding") : (V.name || "New event request");
+  $("title").textContent = V.cat==="Partner Branding" ? "Partner branding" : (S.recordId ? "Event request" : "New event request");
   $("subtitle").textContent = (S.role==="MKT" ? "Marketing details" : "GTM proposal") + (S.prefilled ? " · prefilled from the "+(S.role==="MKT"?"GTM":"Marketing")+" side, please check" : "");
   const ch = [`<span class="chip ${S.role==="MKT"?"you-mkt":"you-gtm"}">${S.role==="MKT"?"Marketing":"GTM"}</span>`];
   if(r[C.number]) ch.push(`<span class="chip"><b>${esc(r[C.number])}</b></span>`);
@@ -505,9 +529,9 @@ function render(){
   if(r[C.tag]) ch.push(`<span class="chip">${esc(r[C.tag])}</span>`);
   $("chips").innerHTML = ch.join("");
   const meta = [];
-  if(S.owner) meta.push(["Owner", S.owner.name]);
   if(S.zh) meta.push(["ZH", S.zh.name]);
   if(S.recordId && r.Modified_By) meta.push(["Last edit", (r.Modified_By.name||"")+(r.Modified_Time?", "+shortTime(r.Modified_Time):"")]);
+  $("mid").innerHTML = `<dt>Event name</dt><dd>${esc(V.cat==="Partner Branding" ? ((V.partner&&V.partner.name)||"–") : (V.name||"–"))}</dd><dt>GTM name</dt><dd>${esc(S.owner?S.owner.name:"From the district")}</dd>`;
   $("meta").innerHTML = meta.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("notes").innerHTML = r[C.status]===CFG.STATUS.REJECTED && has(r[C.remarks]) ? `<p class="note warn"><b>ZH remarks:</b> ${esc(r[C.remarks])}</p>` : "";
   const tabs = [["event","Event"]].concat(V.cat==="Partner Branding" ? [] : [["cost","Cost"]]).concat(S.recordId ? [["time","Timeline"]] : []);
@@ -516,10 +540,26 @@ function render(){
   for(const k of ["event","cost","time"]) $("tab-"+k).classList.toggle("hidden", S.tab!==k);
   for(const sec of ["secType","secBasic","secOther"]) $(sec).innerHTML = FIELDS.filter(f=>f.sec===sec && shown(f)).map(f=>field(f,p.edit)).join("");
   const c = calc();
-  $("summary").innerHTML = `<div><span>Total event cost</span><b>${c.total?inr(c.total):"–"}</b></div><div><span>Business commitment</span><b>${esc(c.commit)}</b></div><div><span>Divyansh approval</span><b>${c.total?(c.founder?"Needed":"Not needed"):"–"}</b></div>`;
+  $("summary").innerHTML = `<div class="big"><span>Total event cost*</span><b class="cost">${c.total?inr(c.total):"–"}</b></div><div class="big"><span>Business commitment</span><b class="target">${esc(c.commit)}</b></div>`;
+  renderSheet(c);
   if(S.tab==="time") renderTimeline();
   $("remarksPanel").classList.toggle("hidden", !p.actions.includes("zhReject"));
   renderBar(p);
+}
+function renderSheet(c){
+  const venue = [String(V.address||"").split(/\n|,/)[0], V.district&&V.district.name].filter(has).join(", ");
+  const co = V.sub==="Co-Sponsored Event", share = co ? (num(V.share)>0?num(V.share):100) : 100;
+  const rows = [[co?`Sponsorship cost<small>Teachmint ${share}%</small>`:"Sponsorship cost", num(V.spons)*share/100],["Production cost", num(V.prod)],["Procurement expense", num(V.proc)]];
+  let h = `<table class="sheet"><thead><tr><th>Event</th><th>Venue</th><th>Date</th><th>Expected audience</th><th>Item</th><th>Cost</th><th>Business commitment</th></tr></thead><tbody>`;
+  rows.forEach((r,i)=>{
+    h += "<tr>";
+    if(i===0) h += `<td class="ev" rowspan="3">${esc(V.name||"Event name")}</td><td class="ctr" rowspan="3">${esc(venue||"Venue")}</td><td class="ctr" rowspan="3">${esc(ordinalDate(V.date)||"Date")}</td><td class="ctr" rowspan="3">${esc(V.attendee||"–")}</td>`;
+    h += `<td>${r[0]}</td><td class="num">${r[1]?Math.round(r[1]).toLocaleString("en-IN"):"–"}</td>`;
+    if(i===0) h += `<td class="commit target" rowspan="4">${esc(c.commit)}</td>`;
+    h += "</tr>";
+  });
+  h += `</tbody><tfoot><tr><td colspan="4">*GST &amp; Transportation charges at actuals</td><td></td><td class="num cost">${c.total?Math.round(c.total).toLocaleString("en-IN"):"–"}</td></tr></tfoot></table>`;
+  $("sheet").innerHTML = h;
 }
 function shortTime(t){ const d = new Date(t); return isNaN(d) ? String(t) : d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}); }
 function fmtVal(v){ if(v==null||v==="") return "–"; if(typeof v==="object") return v.name||v.display_value||v.File_Name__s||JSON.stringify(v); return String(v); }
