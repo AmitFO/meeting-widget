@@ -154,6 +154,18 @@ table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
 .ledger tr.sub th{padding-top:18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);font-weight:600}
 .cellnote{font-size:12px;color:var(--muted);margin-top:4px}
 @media (max-width:720px){.info{grid-template-columns:1fr 1fr}}
+.listhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:18px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.filters .in{max-width:300px}
+table.list{width:100%;border-collapse:collapse;min-width:720px}
+.list th,.list td{padding:10px 12px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:middle;font-size:14px}
+.list thead th{font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
+.list tbody tr:hover{background:var(--field-off)}
+.list .open{border:0;background:none;padding:0;color:var(--mkt);font:inherit;font-weight:600;cursor:pointer;text-align:left}
+.list .open:hover{text-decoration:underline}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:13.5px;color:var(--muted)}
+.empty{padding:28px 12px;text-align:center;color:var(--muted)}
+.back{margin-bottom:10px;display:inline-block}
 </style>
 </head>
 <body>
@@ -171,6 +183,24 @@ table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
     <button type="button" class="linkbtn" id="resetDemo">Start over</button>
   </div>
 
+  <section id="listView" class="hidden" aria-labelledby="listH">
+    <div class="listhead">
+      <div><h1 id="listH">Event requests</h1><p class="sub">Open a request to view or edit it, or start a new one.</p></div>
+      <button type="button" class="btn primary" id="newBtn">+ New event</button>
+    </div>
+    <div class="panel">
+      <div class="filters">
+        <label class="hidden" for="q">Search</label>
+        <input class="in" id="q" type="search" placeholder="Search event name or number" autocomplete="off">
+        <div class="opt" role="group" aria-label="Filter" id="filterBtns"></div>
+      </div>
+      <div class="ledger-wrap"><table class="list" id="list"></table></div>
+      <div class="pager"><span id="pageInfo"></span><span><button type="button" class="btn" id="prevPg">Previous</button> <button type="button" class="btn" id="nextPg">Next</button></span></div>
+    </div>
+  </section>
+
+  <div id="formView">
+  <button type="button" class="linkbtn back" id="backBtn">← All requests</button>
   <div class="head">
     <div>
       <h1 id="title">New event request</h1>
@@ -200,9 +230,10 @@ table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
     <div class="panel-head"><div><h2 id="sheetH">Sample draft</h2><p class="sub">Updates as figures change. Approvers see Marketing’s figures.</p></div></div>
     <div class="sheet-wrap" id="sheet"></div>
   </section>
+  </div>
 </div>
 
-<div class="bar" role="region" aria-label="Actions">
+<div class="bar" id="bar" role="region" aria-label="Actions">
   <div class="bar-in">
     <p class="msg" id="msg" aria-live="polite"></p>
     <div class="btns" id="btns"></div>
@@ -275,8 +306,8 @@ const MOCK = {
 };
 const AUTH = {
   key:"evf_token",
-  get(){ try{ const t = JSON.parse(sessionStorage.getItem(this.key)||"null"); return t && t.exp > Date.now()+60000 ? t : null; }catch(_){ return null; } },
-  set(t){ try{ sessionStorage.setItem(this.key, JSON.stringify(t)); }catch(_){} S.token = t; },
+  get(){ try{ const t = JSON.parse(localStorage.getItem(this.key)||"null"); return t && t.exp > Date.now()+60000 ? t : null; }catch(_){ return null; } },
+  set(t){ try{ localStorage.setItem(this.key, JSON.stringify(t)); }catch(_){} S.token = t; },
   login(){ // Zoho's own sign-in page; returns here with a short-lived token
     try{ sessionStorage.setItem("evf_stash", JSON.stringify({rec:S.rec, at:Date.now()})); }catch(_){}
     const back = location.origin + location.pathname;
@@ -295,7 +326,7 @@ const AUTH = {
 async function crm(path, opts={}){
   const t = S.token || AUTH.get(); if(!t){ AUTH.login(); throw new Error("Signing in…"); }
   const r = await fetch(t.api + "/crm/v6" + path, Object.assign({}, opts, {headers:Object.assign({Authorization:"Zoho-oauthtoken "+t.access}, opts.body && !(opts.body instanceof FormData) ? {"Content-Type":"application/json"} : {})}));
-  if(r.status===401){ AUTH.login(); throw new Error("Session expired, signing in again…"); }
+  if(r.status===401){ try{ localStorage.removeItem(AUTH.key); }catch(_){} AUTH.login(); throw new Error("Session expired, signing in again…"); }
   if(r.status===204) return {};
   const j = await r.json().catch(()=>({}));
   if(!r.ok) throw new Error((j.message||j.code||("HTTP "+r.status)) + (j.details&&j.details.api_name ? " ("+j.details.api_name+")" : ""));
@@ -308,7 +339,37 @@ const API = {
     const hay = (((u.role||{}).name||"")+" "+((u.profile||{}).name||"")).toLowerCase();
     return {role: CFG.MARKETING_KEYWORDS.some(w=>hay.includes(w))?"MKT":"GTM", id:u.id, name:u.full_name||""};
   },
-  async load(id){ return ((await crm("/"+CFG.MODULE+"/"+encodeURIComponent(id))).data||[])[0]||{}; },
+  async load(id){ if(!S.live) return MOCK.store && MOCK.store.id===id ? structuredClone(MOCK.store) : {}; return ((await crm("/"+CFG.MODULE+"/"+encodeURIComponent(id))).data||[])[0]||{}; },
+  async list({filter,q,page}){
+    const F = "Event_Number,Name,Event_Name,Event_s_Name,Event_Date,Event_s_Date,Status,Event_Tag,Owner,ZH,Raised_by,Created_Time";
+    const crit = [];
+    if(filter==="mine") crit.push("(Raised_by:equals:"+S.user.id+")");
+    if(filter==="draft") crit.push("(Status:equals:"+CFG.STATUS.DRAFT+")");
+    if(filter==="zh") crit.push("(Event_Tag:equals:"+CFG.TAG.PENDING_GTM+")");
+    if(filter==="rejected") crit.push("(Status:equals:"+CFG.STATUS.REJECTED+")");
+    if(filter==="zhok") crit.push("(Event_Tag:equals:"+CFG.TAG.GTM_OK+")");
+    if(filter==="av") crit.push("(Event_Tag:equals:"+CFG.TAG.PENDING_AV.replace(/[(),]/g,"\\$&")+")");
+    const t = (q||"").trim().replace(/[(),]/g,"\\$&");
+    if(t){ const parts = ["(Name:starts_with:"+t+")","(Event_Name:starts_with:"+t+")","(Event_s_Name:starts_with:"+t+")"]; if(/^\d{1,4}$/.test(t)) parts.push("(Event_Number:equals:ME - "+t.padStart(4,"0")+")"); crit.push("("+parts.join("or")+")"); }
+    if(!S.live){
+      await wait(200);
+      let rows = MOCK.store ? [structuredClone(MOCK.store)] : [];
+      rows = rows.filter(r=>{
+        if(filter==="draft" && r.Status!==CFG.STATUS.DRAFT) return false;
+        if(filter==="zh" && r.Event_Tag!==CFG.TAG.PENDING_GTM) return false;
+        if(filter==="rejected" && r.Status!==CFG.STATUS.REJECTED) return false;
+        if(filter==="zhok" && r.Event_Tag!==CFG.TAG.GTM_OK) return false;
+        if(filter==="av" && r.Event_Tag!==CFG.TAG.PENDING_AV) return false;
+        if(t && !((r.Event_Name||r.Event_s_Name||r.Name||"")+" "+(r.Event_Number||"")).toLowerCase().includes(t.toLowerCase())) return false;
+        return true; });
+      return {rows, more:false};
+    }
+    const qs = "fields="+F+"&per_page=20&page="+page;
+    const j = crit.length
+      ? await crm("/"+CFG.MODULE+"/search?criteria="+encodeURIComponent(crit.length>1?"("+crit.join("and")+")":crit[0])+"&"+qs)
+      : await crm("/"+CFG.MODULE+"?"+qs+"&sort_by=Created_Time&sort_order=desc");
+    return {rows:j.data||[], more:!!(j.info&&j.info.more_records)};
+  },
   async pincode(pin){
     if(!S.live){ await wait(400); const p = MOCK.pins[pin]; return p ? Object.assign({},p,{zh:MOCK.zh[p.zone]||null}) : null; }
     const p = ((await crm("/"+CFG.PINCODE_MODULE+"/search?criteria="+encodeURIComponent("(Name:equals:"+pin+")"))).data||[])[0];
@@ -331,6 +392,7 @@ const API = {
     if(!S.live){
       await wait(350);
       for(const [a,files] of Object.entries(S.files)) data[a] = (MOCK.store&&MOCK.store[a]||[]).concat(files.map(f=>({File_Name__s:f.name})));
+      if(data.Owner && S.owner) data.Owner = Object.assign({}, S.owner);
       if(!MOCK.store){ MOCK.n++; data[C.number] = "ME - "+String(MOCK.n).padStart(4,"0"); }
       MOCK.store = Object.assign(MOCK.store||{}, structuredClone(data), {id:"demo-1"});
       return "demo-1";
@@ -547,7 +609,8 @@ async function commit(data, okText){
     if(!S.live){ S.rec = structuredClone(MOCK.store); }
     S.saved = structuredClone(S.rec); S.files = {}; S.ownerDirty = false;
     toast(okText);
-    if(S.live){ history.replaceState(null,"","?id="+S.recordId); try{ const fresh = await API.load(S.recordId); loadRecord(fresh); }catch(_){} }
+    if(!S.live) history.replaceState(null,"",location.pathname+"?id="+S.recordId+"&demo");
+    if(S.live){ history.replaceState(null,"",location.pathname+"?id="+S.recordId); try{ const fresh = await API.load(S.recordId); loadRecord(fresh); }catch(_){} }
   }catch(err){ $("msg").textContent = "Couldn’t save: "+(err.message||err); $("msg").classList.add("err"); }
   S.busy = false; render();
 }
@@ -644,19 +707,88 @@ function prefill(){
 
 /* ============ PREVIEW MODE ============ */
 function setRole(r){
-  S.role = r; S.user = {id:"me", name:{GTM:"Preview GTM user",MKT:"Preview Marketing user",ZH:"Preview ZH"}[r]};
+  S.role = r; S.baseRole = r; S.user = {id:"me", name:{GTM:"Preview GTM user",MKT:"Preview Marketing user",ZH:"Preview ZH"}[r]};
   document.querySelectorAll("[data-role]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.role===r)));
   if(S.recordId && MOCK.store){ S.rec = structuredClone(MOCK.store); S.saved = structuredClone(MOCK.store); }
-  prefill(); clearErr(); render();
+  prefill(); clearErr(); render(); if(S.view==="list") loadList();
 }
 function loadSample(){
+  history.pushState(null,"",location.pathname+"?new&demo"); showView("form");
   S.recordId = null; MOCK.store = null; S.files = {};
   S.rec = {Event_s_Category:"End Customer Event", Event_s_Sub_Type:"Sponsored Event", Event_s_Name:"Education Excellence Conclave – Jammu", Event_s_Date:"2026-10-10", Event_s_Address:"Vivanta Jammu, Kunjwani Bypass", Event_s_Pin_code:"180001", Event_s_City:"Jammu", Event_s_State:"Jammu & Kashmir(UT)", Event_s_Expected_Attendee:"200 + KDMs", Event_s_Sponsorship_Cost:"35000", Event_s_Production_Cost:"15000", Event_s_Procurement_Cost:"5000"};
   const p = MOCK.pins["180001"]; S.owner = p.owner; S.zh = MOCK.zh[p.zone]; S.districtName = p.district.name; S.rec[C.district] = p.district.id; S.pin = {GTM:"found",MKT:"idle"}; S.ownerDirty = true;
   S.saved = {}; setRole("GTM");
   $("msg").textContent = "Sample loaded as GTM’s proposal. Save it, switch to Marketing to submit, then ZH to review."; 
 }
-function resetDemo(){ S.recordId = null; MOCK.store = null; S.rec = {}; S.saved = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.pin = {GTM:"idle",MKT:"idle"}; setRole("MKT"); }
+function resetDemo(){ history.pushState(null,"",location.pathname+"?demo"); showView("list"); L.rows = []; renderList(); S.recordId = null; MOCK.store = null; S.rec = {}; S.saved = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.pin = {GTM:"idle",MKT:"idle"}; setRole("MKT"); }
+
+/* ============ LIST & NAVIGATION ============ */
+const FILTERS = [["all","All"],["mine","Raised by me"],["draft","Drafts"],["zh","Pending ZH review"],["rejected","Rejected"],["zhok","ZH approved"],["av","With AV"]];
+const L = {filter:"all", q:"", page:1, more:false, rows:[], loading:false};
+let listSeq = 0;
+async function loadList(){
+  const seq = ++listSeq; L.loading = true; renderList();
+  try{ const r = await API.list(L); if(seq!==listSeq) return; L.rows = r.rows; L.more = r.more; }
+  catch(err){ if(seq===listSeq){ L.rows = []; L.more = false; L.error = err.message||String(err); } }
+  L.loading = false; renderList();
+}
+function renderList(){
+  $("filterBtns").innerHTML = FILTERS.map(([k,l])=>`<button type="button" data-filter="${k}" aria-pressed="${L.filter===k}">${esc(l)}</button>`).join("");
+  const head = `<thead><tr><th scope="col">Event no.</th><th scope="col">Event</th><th scope="col">Date</th><th scope="col">Owner</th><th scope="col">Status</th><th scope="col">Tag</th></tr></thead>`;
+  let body;
+  if(L.loading) body = `<tr><td colspan="6" class="empty">Loading requests…</td></tr>`;
+  else if(L.error){ body = `<tr><td colspan="6" class="empty">Couldn’t load requests: ${esc(L.error)}</td></tr>`; L.error = ""; }
+  else if(!L.rows.length) body = `<tr><td colspan="6" class="empty">${L.filter==="all"&&!L.q ? "No event requests yet. Click “+ New event” to raise one." : "No requests match this filter."}</td></tr>`;
+  else body = L.rows.map(r=>{
+    const nm = r.Event_Name || r.Event_s_Name || r.Name || "Untitled";
+    const dt = ordinalDate(r.Event_Date || r.Event_s_Date) || "–";
+    return `<tr><td>${esc(r.Event_Number||"–")}</td><td><button type="button" class="open" data-open="${esc(r.id)}">${esc(nm)}</button></td><td>${esc(dt)}</td><td>${esc((r.Owner&&r.Owner.name)||"–")}</td><td>${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td>${esc(r.Event_Tag||"–")}</td></tr>`;
+  }).join("");
+  $("list").innerHTML = head + "<tbody>" + body + "</tbody>";
+  $("pageInfo").textContent = L.rows.length ? "Page "+L.page : "";
+  $("prevPg").disabled = L.page<=1 || L.loading; $("nextPg").disabled = !L.more || L.loading;
+}
+function showView(v){
+  S.view = v;
+  $("listView").classList.toggle("hidden", v!=="list");
+  $("formView").classList.toggle("hidden", v!=="form");
+  $("bar").classList.toggle("hidden", v!=="form");
+  window.scrollTo(0,0);
+}
+function blankForm(){
+  S.recordId = null; S.rec = {}; S.saved = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.pin = {GTM:"idle",MKT:"idle"}; S.ownerDirty = false;
+  S.role = S.baseRole || S.role; clearErr();
+}
+function goList(push){
+  if(push) history.pushState(null,"",location.pathname+(S.live?"":"?demo"));
+  showView("list"); loadList();
+}
+function goNew(push){
+  if(push) history.pushState(null,"",location.pathname+"?new"+(S.live?"":"&demo"));
+  blankForm(); showView("form"); prefill(); render();
+}
+async function goRecord(id, push){
+  if(push) history.pushState(null,"",location.pathname+"?id="+encodeURIComponent(id)+(S.live?"":"&demo"));
+  blankForm(); showView("form"); $("msg").textContent = "Loading the request…"; $("btns").innerHTML = "";
+  try{ const rec = await API.load(id); if(!rec.id) throw new Error("Record not found or you don’t have access."); loadRecord(rec); }
+  catch(err){ $("msg").textContent = "Couldn’t open: "+(err.message||err); $("msg").classList.add("err"); }
+}
+function route(){
+  const qp = new URLSearchParams(location.search);
+  if(qp.get("id")) return goRecord(qp.get("id"), false);
+  if(qp.has("new")) return goNew(false);
+  goList(false);
+}
+window.addEventListener("popstate", route);
+document.addEventListener("click", e=>{
+  const o = e.target.closest("[data-open]"); if(o){ goRecord(o.dataset.open, true); return; }
+  const fb = e.target.closest("[data-filter]"); if(fb){ L.filter = fb.dataset.filter; L.page = 1; loadList(); return; }
+  if(e.target.closest("#newBtn")){ goNew(true); return; }
+  if(e.target.closest("#backBtn")){ goList(true); return; }
+  if(e.target.closest("#prevPg")){ if(L.page>1){ L.page--; loadList(); } return; }
+  if(e.target.closest("#nextPg")){ if(L.more){ L.page++; loadList(); } return; }
+});
+let qT; document.addEventListener("input", e=>{ if(e.target.id==="q"){ clearTimeout(qT); qT = setTimeout(()=>{ L.q = e.target.value; L.page = 1; loadList(); },350); } });
 
 /* ============ BOOT ============ */
 function loadRecord(rec){
@@ -665,18 +797,14 @@ function loadRecord(rec){
   if(rec[C.zh]) S.zh = {id:rec[C.zh].id,name:rec[C.zh].name};
   if(rec[C.district]){ S.districtName = rec[C.district].name; S.rec[C.district] = rec[C.district].id; S.saved[C.district] = rec[C.district].id; }
   // The record's ZH reviews; everyone else who isn't Marketing works on the GTM side
-  if(S.role!=="MKT") S.role = (rec[C.zh] && rec[C.zh].id===S.user.id) ? "ZH" : "GTM";
+  if(S.live && S.role!=="MKT") S.role = (rec[C.zh] && rec[C.zh].id===S.user.id) ? "ZH" : "GTM";
   prefill(); render();
 }
 async function boot(){
-  const id = new URLSearchParams(location.search).get("id");
-  const u = await API.currentUser(); S.role = u.role; S.user = {id:u.id, name:u.name};
-  if(id && S.live){ const rec = await API.load(id); if(!rec.id) throw new Error("Record not found or no access: "+id); loadRecord(rec); }
-  else {
-    try{ const st = JSON.parse(sessionStorage.getItem("evf_stash")||"null"); if(st && Date.now()-st.at < 600000 && !id) S.rec = st.rec||{}; }catch(_){}
-    prefill(); render();
-  }
-  try{ sessionStorage.removeItem("evf_stash"); }catch(_){}
+  const u = await API.currentUser(); S.role = u.role; S.baseRole = u.role; S.user = {id:u.id, name:u.name};
+  try{ const st = JSON.parse(sessionStorage.getItem("evf_stash")||"null"); sessionStorage.removeItem("evf_stash");
+    if(st && Date.now()-st.at < 600000 && st.rec && Object.keys(st.rec).length && !new URLSearchParams(location.search).get("id")){ history.replaceState(null,"",location.pathname+"?new"); route(); S.rec = st.rec; render(); return; } }catch(_){}
+  route();
 }
 const DEMO = CFG.CLIENT_ID.startsWith("PASTE") || new URLSearchParams(location.search).has("demo");
 if(!DEMO){
