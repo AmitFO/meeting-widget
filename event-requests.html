@@ -251,6 +251,8 @@ h2.sec + .fgrid{margin-bottom:14px}
   .in,select.in,textarea.in{font-size:16px;min-height:42px}
   .bar-in{flex-wrap:wrap}.bar .btns{width:100%}.bar .btn{flex:1;padding:11px}
 }
+.maprow{display:flex;gap:8px;align-items:center}.maprow .in{flex:1;min-width:0}.maprow .btn{white-space:nowrap;padding:6px 12px;text-decoration:none;display:inline-flex;align-items:center;min-height:34px}
+@media (max-width:420px){.maprow{flex-wrap:wrap}.maprow .btn{flex:1;justify-content:center}}
 </style>
 </head>
 <body>
@@ -321,7 +323,8 @@ h2.sec + .fgrid{margin-bottom:14px}
 <script>
 /* ============ CONFIG ============ */
 const CFG = {
-  MODULE:"Marketing_Events", PINCODE_MODULE:"Pincodes", DISTRICT_MODULE:"District", PARTNER_MODULE:"Accounts",
+  MODULE:"Marketing_Events", MAP_FIELD:"Google_Map_Location",   // URL field on Marketing Events
+  PINCODE_MODULE:"Pincodes", DISTRICT_MODULE:"District", PARTNER_MODULE:"Accounts",
   CAC:2000, FOUNDER_LIMIT:50000, PARTNER_MULTIPLIER:100,
   MARKETING_KEYWORDS:["marketing"],   // role or profile name contains this → Marketing; everyone else → GTM
   ZH_BY_ZONE:{"North 1":{id:"681278000000676466",name:"Vivek Mishra"},"East":{id:"681278000000676466",name:"Vivek Mishra"},"North 2":{id:"681278000000676433",name:"Suraj Agrahari"},"South":{id:"681278000000813134",name:"Swapnil Omprakash Mandhana"},"West":{id:"681278000000676418",name:"Hariom Shivhare"}},
@@ -339,12 +342,13 @@ const FIELDS = [
   {sec:"secType", k:"sub", label:"Event sub type", g:"Event_s_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, show:()=>V.cat && V.cat!=="Partner Branding"},
   {sec:"secType", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true, show:NOT_BRANDING},
   {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu", show:NOT_BRANDING},
+  {sec:"secBasic", k:"partner", label:"Partner name", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.cat==="Partner Branding"||V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"share", label:"Share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
   {sec:"secBasic", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true},
   {sec:"secBasic", k:"district", label:"District", type:"district", req:true},
   {sec:"secBasic", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
   {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"auto", req:true},
-  {sec:"secBasic", k:"partner", label:"Partner name", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.sub==="Co-Sponsored Event"},
-  {sec:"secBasic", k:"share", label:"Share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"map", label:"Google Maps location", type:"map"},
   {sec:"secBasic", k:"agenda", label:"Event agenda", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
   {sec:"secBasic", k:"photos", label:"Photographs", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true, accept:"image/*"},
   {sec:"secBasic", k:"other", label:"Other details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
@@ -358,7 +362,7 @@ const FIELDS = [
 const CITY = {g:"Event_s_City", m:"City"};   // filled with the district name
 const byK = k => FIELDS.find(f=>f.k===k);
 // width of each field on a 4-column grid
-const W = {cat:2, sub:2, date:2, name:6, address:6, district:2, pin:2, state:2, partner:5, share:1, agenda:3, photos:3, other:6, attendee:3, spons:3, prod:3, proc:3, floor:3, stall:3};
+const W = {map:6, cat:2, sub:2, date:2, name:6, address:6, district:2, pin:2, state:2, partner:5, share:1, agenda:3, photos:3, other:6, attendee:3, spons:3, prod:3, proc:3, floor:3, stall:3};
 const TAB_OF = sec => sec==="secOther" ? "cost" : "event";
 
 /* ============ STATE ============ */
@@ -431,6 +435,7 @@ const API = {
       if(data[C.raisedBy]) data[C.raisedBy] = {id:"me", name:S.user.name};
       let row = MOCK.rows.find(r=>r.id===S.recordId);
       if(!row){ MOCK.n++; row = {id:"demo-"+MOCK.n, [C.number]:"ME - "+String(MOCK.n).padStart(4,"0"), [C.raisedBy]:{id:"me",name:S.user.name}}; MOCK.rows.unshift(row); }
+      ["g","m"].forEach(sd=>{ const api = byK("partner")[sd]; if(data[api] && V.partner) data[api] = {id:V.partner.id, name:V.partner.name}; });
       const before = structuredClone(row), now = new Date().toISOString(), isNew = !before.Name;
       Object.assign(row, structuredClone(data), {Modified_By:{name:S.user.name}, Modified_Time:now}); if(isNew){ row.Created_By = {name:S.user.name}; row.Created_Time = now; }
       const fh = isNew ? [] : Object.keys(data).filter(k=>JSON.stringify(before[k]??null)!==JSON.stringify(row[k]??null) && !["Owner","ZH","District","Name"].includes(k)).map(k=>({field_label:(FIELDS.find(f=>f.g===k||f.m===k)||{label:k}).label||k, _value:{old:before[k], new:row[k]}}));
@@ -543,13 +548,14 @@ function field(f,edit){
   const label = `<label class="f" for="${id}">${esc(f.label)}${req}</label>`;
   if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
   if(!edit){
-    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup"||f.type==="district") t = v&&v.name; if(f.type==="file") t = fileNames(v);
+    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup"||f.type==="district") t = v&&v.name; if(f.type==="map" && has(v)) return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static"><a href="${esc(v)}" target="_blank" rel="noopener">Open in Google Maps</a></div></div>`; if(f.type==="file") t = fileNames(v);
     return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">${has(t)?esc(t):"–"}</div></div>`;
   }
   let ctrl;
   if(f.type==="category"||f.type==="subtype"){ const opts = f.type==="category" ? CATS : EC_SUBS; ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${opts.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
   else if(f.type==="file"){ const sv = fileNames(v), pend = (S.files[f.k]||[]).map(x=>x.name).join(", "); ctrl = `<input class="in" type="file" id="${id}" data-file="${f.k}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""}>${sv?`<p class="cellnote">Saved: ${esc(sv)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}`; }
   else if(f.type==="district") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-dq="1" autocomplete="off" placeholder="${DIST===null?"Loading districts…":"Type to search"}" value="${esc((V.district&&V.district.name)||V._dq||"")}"><ul class="ta-list hidden" id="dl"></ul></div>`;
+  else if(f.type==="map") ctrl = `<div class="maprow"><input class="in" id="${id}" data-k="map" type="url" value="${esc(v)}" placeholder="Paste a Google Maps link"><button type="button" class="btn" id="locBtn">Use my location</button>${has(v)?`<a class="btn" href="${esc(v)}" target="_blank" rel="noopener">Open map</a>`:""}</div>${has(v)&&!/google\.|goo\.gl|maps\.app/i.test(v)?'<p class="hint err">This doesn’t look like a Google Maps link</p>':""}<p class="cellnote">In Google Maps: open the place → Share → Copy link</p>`;
   else if(f.type==="auto") ctrl = `<input class="in" id="${id}" value="${esc(v)}" readonly tabindex="-1" placeholder="From district">`;
   else if(f.type==="lookup") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-pq="1" autocomplete="off" placeholder="Search partners" value="${esc((v&&v.name)||V._pq||"")}"><ul class="ta-list hidden" id="pl"></ul></div>`;
   else if(f.type==="textarea") ctrl = `<textarea class="in" id="${id}" data-k="${f.k}" rows="2">${esc(v)}</textarea>`;
@@ -584,7 +590,7 @@ function fail(list){ if(S.firstMissing){ const t = TAB_OF(S.firstMissing.sec); i
 function payload(){
   const o = {}, s = side();
   for(const f of FIELDS){
-    if(f.type==="file" || f.type==="district") continue;
+    if(f.type==="file" || f.type==="district" || f.type==="map") continue;
     if(!shown(f) && f.k!=="sub"){ continue; }
     let v = V[f.k];
     if(f.k==="sub" && V.cat==="Partner Event") v = "Partner Enablement Event";
@@ -594,6 +600,7 @@ function payload(){
     o[f[s]] = v;
   }
   o[CITY[s]] = V.district ? V.district.name : null;
+  o[CFG.MAP_FIELD] = has(V.map) ? String(V.map).trim() : null;
   if(V.district) o[C.district] = {id:V.district.id};
   if(V.cat==="Partner Branding") o[byK("sub")[s]] = null;
   o.Name = V.cat==="Partner Branding" ? "Partner Branding – "+((V.district&&V.district.name)||"") : (V.name || "Event request");
@@ -617,7 +624,7 @@ async function commit(data, okText){
   S.busy = false; render();
 }
 const ACT = {
-  async save(){ if(S.role==="MKT"){ if(!has(V.name)) return fail(["event name"]); } else { const e = missing(); if(e.length) return fail(e); }
+  async save(){ if(S.role==="MKT"){ if(!has(V.cat)) return fail(["event category"]); if(V.cat!=="Partner Branding" && !has(V.name)) return fail(["event name"]); } else { const e = missing(); if(e.length) return fail(e); }
     const o = payload(); if(!S.recordId) o[C.status] = CFG.STATUS.DRAFT; await commit(o, S.role==="MKT"?"Draft saved.":"Saved. Marketing can take it forward."); },
   async submit(){ const e = missing(); if(e.length) return fail(e);
     const re = S.rec[C.status]===CFG.STATUS.REJECTED || S.rec[C.status]===CFG.STATUS.RESUBMITTED;
@@ -638,6 +645,7 @@ function loadRecord(rec){
     if(!has(v) && has(rec[f[o]]) && f.type!=="file" && perms().edit){ v = rec[f[o]]; S.prefilled = true; }   // first time: start from the other side’s values
     V[f.k] = v==null ? "" : v;
   }
+  V.map = rec[CFG.MAP_FIELD] || "";
   if(rec.Owner) S.owner = {id:rec.Owner.id, name:rec.Owner.name};
   if(rec[C.zh]) S.zh = {id:rec[C.zh].id, name:rec[C.zh].name};
   if(rec[C.district]){ S.districtName = rec[C.district].name; S.districtId = rec[C.district].id; V.district = {id:rec[C.district].id, name:rec[C.district].name}; }
@@ -652,6 +660,7 @@ document.addEventListener("click", e=>{
   const tb = e.target.closest("[data-tab]"); if(tb){ S.tab = tb.dataset.tab; render(); return; }
   if(e.target.closest("#tlToggle")){ S.tlAll = !S.tlAll; renderTimeline(); return; }
   const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
+  if(e.target.closest("#locBtn")){ useMyLocation(); return; }
   const dk = e.target.closest("[data-dpick]"); if(dk){ pickDistrict(dk.dataset.dpick); return; }
   if(e.target.closest("#f_district")){ showDistricts(e.target.value||""); return; }
   const pk = e.target.closest("[data-pick]"); if(pk){ V.partner = {id:pk.dataset.pick, name:pk.dataset.name}; render(); return; }
@@ -683,6 +692,14 @@ document.addEventListener("change", e=>{
 });
 function soft(){ const el = document.activeElement, id = el&&el.id, pos = el&&el.selectionStart; render(); if(id && $(id)){ $(id).focus(); try{ if(pos!=null) $(id).setSelectionRange(pos,pos); }catch(_){} } }
 function clearErr(){ $("msg").classList.remove("err"); }
+function useMyLocation(){
+  if(!navigator.geolocation){ $("msg").textContent = "Location isn’t available here. Paste the Google Maps link instead."; $("msg").classList.add("err"); return; }
+  $("msg").textContent = "Getting your location…";
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const {latitude:a, longitude:b} = pos.coords;
+    V.map = "https://www.google.com/maps?q="+a.toFixed(6)+","+b.toFixed(6); clearErr(); render();
+  }, ()=>{ $("msg").textContent = "Couldn’t get your location (permission blocked). Paste the Google Maps link instead."; $("msg").classList.add("err"); }, {enableHighAccuracy:true, timeout:10000});
+}
 /* District picker: owner, ZH and state come from the chosen district */
 let DIST = null;
 async function ensureDistricts(){ if(DIST) return; try{ DIST = await API.districts(); }catch(_){ DIST = []; } if(S.view==="form") soft(); }
