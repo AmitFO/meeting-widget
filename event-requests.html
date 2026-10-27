@@ -275,6 +275,13 @@ table.sheet{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
 .sheet tfoot td{font-weight:600}
 @media (max-width:620px){.fhead{grid-template-columns:1fr}.fh-mid{margin-top:0}}
 @media (max-width:420px){.summary{grid-template-columns:1fr}}
+.fh-left h1{font-size:13.5px;font-weight:600;margin:2px 0 0}
+.fh-left .sub{font-size:12px}
+.fh-mid{display:block;margin:16px 0 0}
+.ev-name{font-size:19px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.ev-owner{font-size:13px;color:var(--muted);margin-top:3px}
+.today{font-size:13px;font-weight:600}
+.fh-right .meta{margin-top:10px}
 </style>
 </head>
 <body>
@@ -315,7 +322,7 @@ table.sheet{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
         <h1 id="title">New event request</h1>
         <p class="sub" id="subtitle"></p>
       </div>
-      <dl class="fh-mid" id="mid"></dl>
+      <div class="fh-mid" id="mid"></div>
       <div class="fh-right"><div class="chips" id="chips"></div><dl class="meta" id="meta"></dl></div>
     </div>
     <div id="notes"></div>
@@ -375,7 +382,7 @@ const FIELDS = [
   {sec:"secBasic", k:"district", label:"District", type:"district", req:true},
   {sec:"secBasic", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
   {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"auto", req:true},
-  {sec:"secBasic", k:"map", label:"Google Maps location", type:"map"},
+  {sec:"secBasic", k:"map", label:"Google Maps location", type:"map", show:()=>V.cat==="Partner Branding"},
   {sec:"secBasic", k:"agenda", label:"Event proposal", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
   {sec:"secBasic", k:"photos", label:"Other attachments", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true},
   {sec:"secBasic", k:"other", label:"Additional event details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
@@ -521,9 +528,9 @@ function perms(){
 /* ============ FORM RENDER ============ */
 function render(){
   const p = perms(), r = S.rec;
-  $("title").textContent = V.cat==="Partner Branding" ? "Partner branding" : (S.recordId ? "Event request" : "New event request");
-  $("subtitle").textContent = (S.role==="MKT" ? "Marketing details" : "GTM proposal") + (S.prefilled ? " · prefilled from the "+(S.role==="MKT"?"GTM":"Marketing")+" side, please check" : "");
-  const ch = [`<span class="chip ${S.role==="MKT"?"you-mkt":"you-gtm"}">${S.role==="MKT"?"Marketing":"GTM"}</span>`];
+  $("title").textContent = V.cat==="Partner Branding" ? "Partner branding" : (S.recordId ? "Event request" : "New request");
+  $("subtitle").textContent = (S.role==="MKT" ? "Marketing details" : "GTM proposal") + (S.prefilled ? " · prefilled, please check" : "");
+  const ch = [`<span class="today">${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>`];
   if(r[C.number]) ch.push(`<span class="chip"><b>${esc(r[C.number])}</b></span>`);
   if(r[C.status]) ch.push(`<span class="chip">${esc(r[C.status])}</span>`);
   if(r[C.tag]) ch.push(`<span class="chip">${esc(r[C.tag])}</span>`);
@@ -531,7 +538,7 @@ function render(){
   const meta = [];
   if(S.zh) meta.push(["ZH", S.zh.name]);
   if(S.recordId && r.Modified_By) meta.push(["Last edit", (r.Modified_By.name||"")+(r.Modified_Time?", "+shortTime(r.Modified_Time):"")]);
-  $("mid").innerHTML = `<dt>Event name</dt><dd>${esc(V.cat==="Partner Branding" ? ((V.partner&&V.partner.name)||"–") : (V.name||"–"))}</dd><dt>GTM name</dt><dd>${esc(S.owner?S.owner.name:"From the district")}</dd>`;
+  $("mid").innerHTML = `<div class="ev-name">${esc(V.cat==="Partner Branding" ? ((V.partner&&V.partner.name)||"Partner name") : (V.name||"Event name"))}</div><div class="ev-owner">Event Owner – ${esc(S.owner?S.owner.name:"from the district")}</div>`;
   $("meta").innerHTML = meta.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("notes").innerHTML = r[C.status]===CFG.STATUS.REJECTED && has(r[C.remarks]) ? `<p class="note warn"><b>ZH remarks:</b> ${esc(r[C.remarks])}</p>` : "";
   const tabs = [["event","Event"]].concat(V.cat==="Partner Branding" ? [] : [["cost","Cost"]]).concat(S.recordId ? [["time","Timeline"]] : []);
@@ -585,11 +592,12 @@ async function loadTimeline(id){
 }
 function field(f,edit){
   const v = V[f.k], id = "f_"+f.k, req = f.req ? ' <i aria-hidden="true">*</i>' : "", cls = "s"+(W[f.k]||2);
-  const label = `<label class="f" for="${id}">${esc(f.label)}${req}</label>`;
+  const lbl = f.k==="agenda" && V.cat==="Partner Branding" ? "Site recce" : f.label;
+  const label = `<label class="f" for="${id}">${esc(lbl)}${req}</label>`;
   if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
   if(!edit){
     let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup"||f.type==="district") t = v&&v.name; if(f.type==="map" && has(v)) return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static"><a href="${esc(v)}" target="_blank" rel="noopener">Open in Google Maps</a></div></div>`; if(f.type==="file") t = fileNames(v);
-    return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">${has(t)?esc(t):"–"}</div></div>`;
+    return `<div class="${cls}"><span class="f">${esc(f.k==="agenda" && V.cat==="Partner Branding" ? "Site recce" : f.label)}</span><div class="static">${has(t)?esc(t):"–"}</div></div>`;
   }
   let ctrl;
   if(f.type==="category"||f.type==="subtype"){ const opts = f.type==="category" ? CATS : EC_SUBS; ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${opts.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
