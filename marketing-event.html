@@ -150,6 +150,66 @@ table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
 .note.warn{color:var(--up);background:var(--up-soft)}
 .side-gtm{border-color:var(--gtm)!important;color:var(--gtm)!important}
 @media (max-width:720px){.form-grid,.summary{grid-template-columns:1fr}.listhead .btn{width:100%}.bar .btns{width:100%}.bar .btn{flex:1}}
+/* ---------- list, options, info ---------- */
+.info{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 16px}
+.info div span{display:block;font-size:12.5px;color:var(--muted)}
+.info div b{font-weight:500}
+.opt{display:flex;flex-wrap:wrap;gap:6px}
+.opt button{border:1px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink);padding:6px 12px;cursor:pointer;font-size:13.5px}
+.opt button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.cellnote{font-size:12px;color:var(--muted);margin-top:4px}
+.listhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:18px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.filters .in{max-width:300px}
+table.list{width:100%;border-collapse:collapse;min-width:720px}
+.list th,.list td{padding:10px 12px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:middle;font-size:14px}
+.list thead th{font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
+.list tbody tr:hover{background:var(--field-off)}
+.list .open{border:0;background:none;padding:0;color:var(--mkt);font:inherit;font-weight:600;cursor:pointer;text-align:left}
+.list .open:hover{text-decoration:underline}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:13.5px;color:var(--muted)}
+.empty{padding:28px 12px;text-align:center;color:var(--muted)}
+.back{margin-bottom:10px;display:inline-block}
+.listhead + .panel{margin-top:0}
+/* ---------- phones ---------- */
+@media (max-width:720px){
+  .wrap{padding:14px 12px 140px}
+  h1{font-size:20px}
+  .panel{padding:14px;border-radius:8px}
+  .head,.listhead{flex-direction:column;align-items:stretch;gap:10px}
+  .listhead .btn{width:100%;padding:12px}
+  .chips{gap:4px}
+  .info{grid-template-columns:1fr 1fr;gap:10px}
+  .listhead{margin-bottom:12px}
+  .form-grid,.summary{grid-template-columns:1fr}
+  .in,select.in,textarea.in{font-size:16px;min-height:44px}          /* stops iPhone zoom on focus */
+  .opt{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .opt button{flex:0 0 auto;padding:9px 12px;min-height:40px}
+  .form-grid .opt{flex-wrap:wrap;overflow:visible}
+  .form-grid .opt button{flex:1 1 auto}
+  .filters{flex-direction:column;align-items:stretch}
+  .filters .in{max-width:none}
+  .filters .opt{max-width:100%;min-width:0;width:100%}
+  .wrap,.panel{min-width:0;max-width:100%}
+  /* list becomes cards */
+  table.list{min-width:0}
+  .list thead{display:none}
+  .list tbody tr{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .list tbody td{display:block;padding:0;border:0;font-size:13.5px}
+  .list td[data-l="event"]{grid-column:1 / -1;order:-2;font-size:15px}
+  .list td[data-l="no"]{order:-1;color:var(--muted)}
+  .list td[data-l="status"]{text-align:right}
+  .list td[data-l="date"],.list td[data-l="owner"],.list td[data-l="tag"]{color:var(--muted)}
+  .list td.empty{grid-column:1 / -1}
+  .pager{flex-direction:column;align-items:stretch}
+  .pager span:last-child{display:flex;gap:8px}.pager .btn{flex:1}
+  .bar{padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
+  .bar-in{flex-direction:column;align-items:stretch;gap:8px}
+  .bar .msg{font-size:13px}
+  .bar .btns{display:flex;gap:8px}.bar .btn{flex:1;padding:12px 10px}
+  .toast{bottom:120px;max-width:90vw;text-align:center}
+  .ta-list{max-height:180px}
+}
 </style>
 </head>
 <body>
@@ -571,7 +631,7 @@ function renderList(){
   if(L.loading) body = `<tr><td colspan="6" class="empty">Loading requests…</td></tr>`;
   else if(L.error) body = `<tr><td colspan="6" class="empty">Couldn’t load requests: ${esc(L.error)}</td></tr>`;
   else if(!L.rows.length) body = `<tr><td colspan="6" class="empty">${L.filter==="all"&&!L.q?"No event requests yet. Click “+ New event” to raise one.":"No requests match this filter."}</td></tr>`;
-  else body = L.rows.map(r=>`<tr><td>${esc(r.Event_Number||"–")}</td><td><button type="button" class="open" data-open="${esc(r.id)}">${esc(r.Event_Name||r.Event_s_Name||r.Name||"Untitled")}</button></td><td>${esc(ordinalDate(r.Event_Date||r.Event_s_Date)||"–")}</td><td>${esc((r.Owner&&r.Owner.name)||"–")}</td><td>${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td>${esc(r.Event_Tag||"–")}</td></tr>`).join("");
+  else body = L.rows.map(r=>`<tr><td data-l="no">${esc(r.Event_Number||"–")}</td><td data-l="event"><button type="button" class="open" data-open="${esc(r.id)}">${esc(r.Event_Name||r.Event_s_Name||r.Name||"Untitled")}</button></td><td data-l="date">${esc(ordinalDate(r.Event_Date||r.Event_s_Date)||"–")}</td><td data-l="owner">${esc((r.Owner&&r.Owner.name)||"–")}</td><td data-l="status">${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td data-l="tag">${esc(r.Event_Tag||"")}</td></tr>`).join("");
   $("list").innerHTML = head+"<tbody>"+body+"</tbody>";
   $("pageInfo").textContent = L.rows.length ? "Page "+L.page : "";
   $("prevPg").disabled = L.page<=1||L.loading; $("nextPg").disabled = !L.more||L.loading;
