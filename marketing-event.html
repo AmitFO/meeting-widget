@@ -309,17 +309,25 @@ const AUTH = {
   get(){ try{ const t = JSON.parse(localStorage.getItem(this.key)||"null"); return t && t.exp > Date.now()+60000 ? t : null; }catch(_){ return null; } },
   set(t){ try{ localStorage.setItem(this.key, JSON.stringify(t)); }catch(_){} S.token = t; },
   login(){ // Zoho's own sign-in page; returns here with a short-lived token
+    let n = 0; try{ n = Number(sessionStorage.getItem("evf_tries")||0); sessionStorage.setItem("evf_tries", String(n+1)); }catch(_){}
+    if(n>=2){ try{ sessionStorage.removeItem("evf_tries"); }catch(_){} showAuthProblem("Zoho login didn’t return a token. Check that the Redirect URI in the API Console is exactly "+location.origin+location.pathname); return; }
     try{ sessionStorage.setItem("evf_stash", JSON.stringify({rec:S.rec, at:Date.now()})); }catch(_){}
     const back = location.origin + location.pathname;
     const q = new URLSearchParams({response_type:"token", client_id:CFG.CLIENT_ID, scope:CFG.SCOPES, redirect_uri:back, state:new URLSearchParams(location.search).get("id")||""});
     location.href = CFG.ACCOUNTS_URL + "/oauth/v2/auth?" + q.toString();
   },
-  fromHash(){ // after Zoho login: #access_token=...&expires_in=3600&api_domain=...&state=<record id>
-    if(!location.hash.includes("access_token")) return null;
-    const h = new URLSearchParams(location.hash.slice(1));
+  fromHash(){ // after Zoho login the token comes back in the URL (#... or ?...)
+    const src = location.hash.includes("access_token") ? location.hash.slice(1) : location.search.includes("access_token") ? location.search.slice(1) : "";
+    const qp = new URLSearchParams(location.search);
+    if(!src){
+      if(qp.get("error")){ history.replaceState(null,"",location.pathname); S.authError = qp.get("error"); }
+      return null;
+    }
+    const h = new URLSearchParams(src);
     const t = {access:h.get("access_token"), api:h.get("api_domain")||"https://www.zohoapis.in", exp:Date.now()+Number(h.get("expires_in")||3600)*1000};
     const id = h.get("state");
     history.replaceState(null, "", location.pathname + (id ? "?id="+encodeURIComponent(id) : ""));
+    try{ sessionStorage.removeItem("evf_tries"); }catch(_){}
     this.set(t); return t;
   }
 };
@@ -806,11 +814,13 @@ async function boot(){
     if(st && Date.now()-st.at < 600000 && st.rec && Object.keys(st.rec).length && !new URLSearchParams(location.search).get("id")){ history.replaceState(null,"",location.pathname+"?new"); route(); S.rec = st.rec; render(); return; } }catch(_){}
   route();
 }
+function showAuthProblem(t){ const m = document.getElementById("msg"); if(m){ m.textContent = t; m.classList.add("err"); } document.getElementById("listView").classList.add("hidden"); }
 const DEMO = CFG.CLIENT_ID.startsWith("PASTE") || new URLSearchParams(location.search).has("demo");
 if(!DEMO){
   S.live = true;
   S.token = AUTH.fromHash() || AUTH.get();
-  if(!S.token) AUTH.login();
+  if(S.authError) showAuthProblem("Zoho login was cancelled or refused ("+S.authError+"). Click the button again to retry.");
+  else if(!S.token) AUTH.login();
   else boot().catch(err=>{ $("msg").textContent = "Couldn’t load: "+(err.message||err); $("msg").classList.add("err"); render(); });
 } else {
   $("demoBar").classList.remove("hidden");
