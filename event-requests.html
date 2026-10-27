@@ -134,7 +134,7 @@ table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
 .hidden{display:none!important}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:6px;font-size:14px;z-index:20}
 
-@media (max-width:720px){
+@media (max-width:560px){
   .cats{grid-template-columns:1fr}
   .grid{grid-template-columns:1fr 1fr}
   .c2,.c3,.c4,.c6{grid-column:span 2}
@@ -149,7 +149,7 @@ table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
 .note{font-size:13px;color:var(--muted);background:var(--field-off);border-radius:6px;padding:8px 12px;margin-bottom:14px}
 .note.warn{color:var(--up);background:var(--up-soft)}
 .side-gtm{border-color:var(--gtm)!important;color:var(--gtm)!important}
-@media (max-width:720px){.form-grid,.summary{grid-template-columns:1fr}.listhead .btn{width:100%}.bar .btns{width:100%}.bar .btn{flex:1}}
+@media (max-width:560px){.form-grid,.summary{grid-template-columns:1fr}.listhead .btn{width:100%}.bar .btns{width:100%}.bar .btn{flex:1}}
 /* ---------- list, options, info ---------- */
 .info{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 16px}
 .info div span{display:block;font-size:12.5px;color:var(--muted)}
@@ -172,7 +172,7 @@ table.list{width:100%;border-collapse:collapse;min-width:720px}
 .back{margin-bottom:10px;display:inline-block}
 .listhead + .panel{margin-top:0}
 /* ---------- phones ---------- */
-@media (max-width:720px){
+@media (max-width:560px){
   .wrap{padding:14px 12px 140px}
   h1{font-size:20px}
   .panel{padding:14px;border-radius:8px}
@@ -210,6 +210,47 @@ table.list{width:100%;border-collapse:collapse;min-width:720px}
   .toast{bottom:120px;max-width:90vw;text-align:center}
   .ta-list{max-height:180px}
 }
+/* ---------- compact form, header, tabs, timeline ---------- */
+.wrap{padding:16px 16px 110px}
+.panel{padding:14px 16px;margin-bottom:12px}
+.in{min-height:34px;padding:6px 10px;font-size:14px;border-radius:6px}
+select.in{padding-right:28px}
+textarea.in{min-height:58px}
+label.f,.f{display:block;font-size:12.5px;font-weight:500;margin-bottom:3px;color:var(--muted)}
+.static{min-height:0;font-size:14px;padding:2px 0}
+.money .in{padding-left:22px}
+.fgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;grid-auto-flow:row dense}
+.s1{grid-column:span 1}.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}
+h2.sec{font-size:14px;font-weight:600;margin:4px 0 8px}
+h2.sec + .fgrid{margin-bottom:14px}
+.fhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}
+.fh-left{min-width:0}.fh-left h1{font-size:19px;margin-top:2px}
+.fh-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:55%}
+.chips{justify-content:flex-end}
+.meta{display:grid;grid-template-columns:auto auto;gap:2px 10px;margin:0;font-size:12.5px}
+.meta dt{color:var(--muted);text-align:right}.meta dd{margin:0;font-weight:500}
+.back{margin:0 0 4px;font-size:13px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 12px}
+.tab{border:0;background:none;color:var(--muted);padding:8px 14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.summary div{padding:10px 12px}.summary b{font-size:16px}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{position:relative;padding:0 0 14px 18px;border-left:2px solid var(--line);margin-left:5px}
+.tl li::before{content:"";position:absolute;left:-6px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--mkt)}
+.tl li:last-child{padding-bottom:0}
+.tl .who{font-size:13.5px;font-weight:500}.tl .when{font-size:12.5px;color:var(--muted)}
+.tl .chg{font-size:13px;margin-top:4px;color:var(--ink)}.tl .chg span{color:var(--muted)}
+.bar-in{flex-wrap:nowrap}.bar .btn{padding:8px 16px}
+@media (max-width:620px){
+  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.s3,.s4{grid-column:span 2}
+  .fhead{flex-direction:column}.fh-right{align-items:flex-start;max-width:none}.chips{justify-content:flex-start}.meta dt{text-align:left}
+}
+@media (max-width:420px){
+  .fgrid,.summary{grid-template-columns:1fr}.s1,.s2,.s3,.s4{grid-column:span 1}
+  .in,select.in,textarea.in{font-size:16px;min-height:42px}
+  .bar-in{flex-wrap:wrap}.bar .btns{width:100%}.bar .btn{flex:1;padding:11px}
+}
 </style>
 </head>
 <body>
@@ -226,9 +267,9 @@ table.list{width:100%;border-collapse:collapse;min-width:720px}
   </div>
 
   <!-- HOME: list of requests -->
-  <section id="listView" aria-labelledby="listH">
+  <section id="listView" aria-label="Event requests">
     <div class="listhead">
-      <div><h1 id="listH">Event requests</h1><p class="sub">Open a request to view or edit it, or raise a new one.</p></div>
+      <div><p class="sub">Open a request to view or edit it, or raise a new one.</p></div>
       <button type="button" class="btn primary" id="newBtn">+ New event</button>
     </div>
     <div class="panel">
@@ -244,23 +285,31 @@ table.list{width:100%;border-collapse:collapse;min-width:720px}
 
   <!-- FORM: one set of values, saved to the GTM or Marketing fields by login -->
   <div id="formView" class="hidden">
-    <button type="button" class="linkbtn back" id="backBtn">← All requests</button>
-    <div class="head">
-      <div><h1 id="title">New event request</h1><p class="sub" id="subtitle"></p></div>
-      <div class="chips" id="chips"></div>
+    <div class="fhead">
+      <div class="fh-left">
+        <button type="button" class="linkbtn back" id="backBtn">← All requests</button>
+        <h1 id="title">New event request</h1>
+        <p class="sub" id="subtitle"></p>
+      </div>
+      <div class="fh-right"><div class="chips" id="chips"></div><dl class="meta" id="meta"></dl></div>
     </div>
     <div id="notes"></div>
-    <section class="panel" aria-labelledby="infoH"><h2 id="infoH" style="margin-bottom:12px">Request</h2><div class="info" id="info"></div></section>
-    <section class="panel" aria-labelledby="typeH"><h2 id="typeH" style="margin-bottom:12px">Event type</h2><div class="form-grid" id="secType"></div></section>
-    <section class="panel" aria-labelledby="basicH"><h2 id="basicH" style="margin-bottom:12px">Basic details</h2><div class="form-grid" id="secBasic"></div></section>
-    <section class="panel" aria-labelledby="otherH"><h2 id="otherH" style="margin-bottom:12px">Other details</h2><div class="form-grid" id="secOther"></div></section>
-    <section class="panel" aria-labelledby="sumH"><h2 id="sumH" style="margin-bottom:12px">Summary</h2><div class="summary" id="summary"></div></section>
     <section class="panel hidden" id="remarksPanel" aria-labelledby="remH">
-      <h2 id="remH" style="margin-bottom:8px">ZH rejection remarks</h2>
+      <h2 id="remH" style="margin-bottom:4px">ZH rejection remarks</h2>
       <p class="sub" style="margin-bottom:8px">Paste what the ZH wrote in their email reply.</p>
       <label class="hidden" for="remarks">Rejection remarks</label>
       <textarea class="in" id="remarks"></textarea>
     </section>
+    <div class="tabs" role="tablist" aria-label="Request sections" id="tabs"></div>
+    <section class="panel tabpanel" id="tab-event" role="tabpanel">
+      <h2 class="sec">Event type</h2><div class="fgrid" id="secType"></div>
+      <h2 class="sec">Basic details</h2><div class="fgrid" id="secBasic"></div>
+    </section>
+    <section class="panel tabpanel hidden" id="tab-cost" role="tabpanel">
+      <div class="fgrid" id="secOther"></div>
+      <div class="summary" id="summary"></div>
+    </section>
+    <section class="panel tabpanel hidden" id="tab-time" role="tabpanel"><div id="timeline"></div></section>
   </div>
 </div>
 
@@ -290,9 +339,9 @@ const FIELDS = [
   {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, full:true, ph:"e.g. Education Excellence Conclave – Jammu"},
   {sec:"secBasic", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true},
   {sec:"secBasic", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
-  {sec:"secBasic", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true, full:true},
   {sec:"secBasic", k:"city", label:"City", g:"Event_s_City", m:"City", type:"text", req:true},
   {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"select", options:STATES, req:true},
+  {sec:"secBasic", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true, full:true},
   {sec:"secBasic", k:"partner", label:"Partner", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.cat==="Partner Branding"||V.sub==="Co-Sponsored Event"},
   {sec:"secBasic", k:"share", label:"Teachmint share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
   {sec:"secBasic", k:"agenda", label:"Event agenda", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
@@ -306,9 +355,12 @@ const FIELDS = [
   {sec:"secOther", k:"stall", label:"Stall plan", g:"Event_s_Stall_Plan", m:"Stall_Plan", type:"file"}
 ];
 const byK = k => FIELDS.find(f=>f.k===k);
+// width of each field on a 4-column grid
+const W = {cat:2, sub:2, name:4, date:1, pin:1, city:1, state:1, address:4, partner:2, share:1, other:4, agenda:2, photos:2, attendee:1, spons:1, prod:1, proc:1, floor:2, stall:2};
+const TAB_OF = sec => sec==="secOther" ? "cost" : "event";
 
 /* ============ STATE ============ */
-const S = {live:false, role:"MKT", user:{id:null,name:""}, recordId:null, rec:{}, files:{}, owner:null, zh:null, districtName:"", districtId:null, pin:"idle", ownerDirty:false, prefilled:false, busy:false, view:"list"};
+const S = {live:false, role:"MKT", user:{id:null,name:""}, recordId:null, rec:{}, files:{}, owner:null, zh:null, districtName:"", districtId:null, pin:"idle", ownerDirty:false, prefilled:false, busy:false, view:"list", tab:"event", tl:null, tlAll:false};
 let V = {};   // the one set of values shown in the form
 const side = () => S.role==="MKT" ? "m" : "g";
 const other = () => S.role==="MKT" ? "g" : "m";
@@ -318,7 +370,7 @@ const MOCK = {
   pins:{"180001":{district:{id:"d1",name:"Jammu"},state:"Jammu & Kashmir(UT)",zone:"North 1",owner:{id:"u1",name:"District owner, Jammu"}},
         "560001":{district:{id:"d2",name:"Bengaluru Urban"},state:"Karnataka",zone:"South",owner:{id:"u2",name:"District owner, Bengaluru"}}},
   partners:[{id:"p1",Account_Name:"Brightpath Learning Solutions"},{id:"p2",Account_Name:"Kashmir Edu Systems"}],
-  rows:[], n:0
+  rows:[], n:0, hist:{}
 };
 const API = {
   async me(){
@@ -338,6 +390,11 @@ const API = {
   async load(id){
     if(!S.live) return structuredClone(MOCK.rows.find(r=>r.id===id)||{});
     const r = await ZOHO.CRM.API.getRecord({Entity:CFG.MODULE, RecordID:id}); return (r&&r.data&&r.data[0])||{};
+  },
+  async timeline(id){
+    if(!S.live) return structuredClone(MOCK.hist[id]||[]);
+    const r = await ZOHO.CRM.API.getRelatedRecords({Entity:CFG.MODULE, RecordID:id, RelatedList:"__timeline", page:1, per_page:50});
+    return (r && (r.__timeline || r.data)) || [];
   },
   async pincode(pin){
     if(!S.live){ await wait(300); return MOCK.pins[pin]||null; }
@@ -361,7 +418,11 @@ const API = {
       if(data[C.raisedBy]) data[C.raisedBy] = {id:"me", name:S.user.name};
       let row = MOCK.rows.find(r=>r.id===S.recordId);
       if(!row){ MOCK.n++; row = {id:"demo-"+MOCK.n, [C.number]:"ME - "+String(MOCK.n).padStart(4,"0"), [C.raisedBy]:{id:"me",name:S.user.name}}; MOCK.rows.unshift(row); }
-      Object.assign(row, structuredClone(data)); return row.id;
+      const before = structuredClone(row), now = new Date().toISOString(), isNew = !before.Name;
+      Object.assign(row, structuredClone(data), {Modified_By:{name:S.user.name}, Modified_Time:now}); if(isNew){ row.Created_By = {name:S.user.name}; row.Created_Time = now; }
+      const fh = isNew ? [] : Object.keys(data).filter(k=>JSON.stringify(before[k]??null)!==JSON.stringify(row[k]??null) && !["Owner","ZH","District","Name"].includes(k)).map(k=>({field_label:(FIELDS.find(f=>f.g===k||f.m===k)||{label:k}).label||k, _value:{old:before[k], new:row[k]}}));
+      (MOCK.hist[row.id] = MOCK.hist[row.id]||[]).push({done_by:{name:S.user.name}, audited_time:now, action:isNew?"added":"updated", field_history:fh});
+      return row.id;
     }
     for(const [a,fs] of Object.entries(S.files)){
       const ids = [];
@@ -419,44 +480,70 @@ function perms(){
 function render(){
   const p = perms(), r = S.rec;
   $("title").textContent = V.name || "New event request";
-  $("subtitle").textContent = (S.role==="MKT" ? "You’re filling the Marketing details." : "You’re filling the GTM proposal.") + (S.prefilled ? " Values were prefilled from the "+(S.role==="MKT"?"GTM":"Marketing")+" side; check and change them." : "");
-  const ch = [`<span class="chip ${S.role==="MKT"?"you-mkt":"you-gtm"}">You’re here as <b>${S.role==="MKT"?"Marketing":"GTM"}</b></span>`];
-  if(r[C.status]) ch.push(`<span class="chip">Status <b>${esc(r[C.status])}</b></span>`);
-  if(r[C.tag]) ch.push(`<span class="chip">Tag <b>${esc(r[C.tag])}</b></span>`);
+  $("subtitle").textContent = (S.role==="MKT" ? "Marketing details" : "GTM proposal") + (S.prefilled ? " · prefilled from the "+(S.role==="MKT"?"GTM":"Marketing")+" side, please check" : "");
+  const ch = [`<span class="chip ${S.role==="MKT"?"you-mkt":"you-gtm"}">${S.role==="MKT"?"Marketing":"GTM"}</span>`];
+  if(r[C.number]) ch.push(`<span class="chip"><b>${esc(r[C.number])}</b></span>`);
+  if(r[C.status]) ch.push(`<span class="chip">${esc(r[C.status])}</span>`);
+  if(r[C.tag]) ch.push(`<span class="chip">${esc(r[C.tag])}</span>`);
   $("chips").innerHTML = ch.join("");
+  const meta = [];
+  if(S.owner) meta.push(["Owner", S.owner.name]);
+  if(S.zh) meta.push(["ZH", S.zh.name]);
+  if(S.recordId && r.Modified_By) meta.push(["Last edit", (r.Modified_By.name||"")+(r.Modified_Time?", "+shortTime(r.Modified_Time):"")]);
+  $("meta").innerHTML = meta.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("notes").innerHTML = r[C.status]===CFG.STATUS.REJECTED && has(r[C.remarks]) ? `<p class="note warn"><b>ZH remarks:</b> ${esc(r[C.remarks])}</p>` : "";
-  const info = [["Event number", r[C.number]||"Assigned on save"],["Event owner", S.owner?S.owner.name:"From the pin code"],["Zonal head", S.zh?S.zh.name:"From the district’s zone"],["District", S.districtName||"From the pin code"],["Raised by", (r[C.raisedBy]&&r[C.raisedBy].name)||(S.recordId?"–":S.user.name||"You")]];
-  $("info").innerHTML = info.map(([k,v])=>`<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
+  const tabs = [["event","Event"],["cost","Cost"]].concat(S.recordId ? [["time","Timeline"]] : []);
+  if(!tabs.some(t=>t[0]===S.tab)) S.tab = "event";
+  $("tabs").innerHTML = tabs.map(([k,l])=>`<button type="button" class="tab" role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-controls="tab-${k}">${l}</button>`).join("");
+  for(const k of ["event","cost","time"]) $("tab-"+k).classList.toggle("hidden", S.tab!==k);
   for(const sec of ["secType","secBasic","secOther"]) $(sec).innerHTML = FIELDS.filter(f=>f.sec===sec && shown(f)).map(f=>field(f,p.edit)).join("");
   const c = calc();
   $("summary").innerHTML = `<div><span>Total event cost</span><b>${c.total?inr(c.total):"–"}</b></div><div><span>Business commitment</span><b>${esc(c.commit)}</b></div><div><span>Divyansh approval</span><b>${c.total?(c.founder?"Needed":"Not needed"):"–"}</b></div>`;
-  const rej = p.actions.includes("zhReject");
-  $("remarksPanel").classList.toggle("hidden", !rej);
+  if(S.tab==="time") renderTimeline();
+  $("remarksPanel").classList.toggle("hidden", !p.actions.includes("zhReject"));
   renderBar(p);
 }
-function field(f,edit){
-  const v = V[f.k], id = "f_"+f.k, req = f.req ? ' <i aria-hidden="true">*</i>' : "", cls = f.full ? "full" : "";
-  const label = `<label class="f" for="${id}">${esc(f.label)}${req}</label>`;
-  let ctrl;
-  if(f.type==="category"||f.type==="subtype"){
-    if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div><p class="cellnote">Set automatically</p></div>`;
-    const opts = f.type==="category" ? CATS : EC_SUBS;
-    ctrl = edit ? `<div class="opt" role="group" aria-label="${esc(f.label)}" id="${id}">${opts.map(o=>`<button type="button" data-set="${f.k}" data-val="${esc(o)}" aria-pressed="${v===o}">${esc(o)}</button>`).join("")}</div>` : `<div class="static">${esc(v||"–")}</div>`;
-    return `<div class="${cls}"><span class="f">${esc(f.label)}${req}</span>${ctrl}</div>`;
+function shortTime(t){ const d = new Date(t); return isNaN(d) ? String(t) : d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}); }
+function fmtVal(v){ if(v==null||v==="") return "–"; if(typeof v==="object") return v.name||v.display_value||v.File_Name__s||JSON.stringify(v); return String(v); }
+function renderTimeline(){
+  const el = $("timeline");
+  if(S.tl===null){ el.innerHTML = `<p class="sub">Loading history…</p>`; return; }
+  if(!S.tl.length){ el.innerHTML = `<p class="sub">No history yet.</p>`; return; }
+  const items = S.tlAll ? S.tl : S.tl.slice(0,1);
+  el.innerHTML = `<ul class="tl">`+items.map(e=>{
+    const ch = (e.field_history||[]).slice(0,8).map(h=>`<div class="chg">${esc(h.field_label||h.api_name)}: <span>${esc(fmtVal(h._value&&h._value.old))}</span> → ${esc(fmtVal(h._value&&h._value.new))}</div>`).join("");
+    const act = e.action==="added" ? "created the request" : e.action==="updated" ? "updated" : (e.action||"changed");
+    return `<li><div class="who">${esc((e.done_by&&e.done_by.name)||"Someone")} ${esc(act)}</div><div class="when">${esc(shortTime(e.audited_time))}</div>${ch}</li>`;
+  }).join("")+`</ul>`+(S.tl.length>1?`<p style="margin-top:10px"><button type="button" class="linkbtn" id="tlToggle">${S.tlAll?"Show last edit only":"Show full history ("+S.tl.length+")"}</button></p>`:"");
+}
+async function loadTimeline(id){
+  S.tl = null; S.tlAll = false;
+  try{ S.tl = await API.timeline(id); }catch(_){ S.tl = []; }
+  if(!S.tl.length && S.rec.Created_Time){   // fallback when history isn’t available
+    S.tl = [{done_by:S.rec.Modified_By, audited_time:S.rec.Modified_Time, action:"updated"},{done_by:S.rec.Created_By, audited_time:S.rec.Created_Time, action:"added"}].filter(e=>e.audited_time);
   }
+  S.tl.sort((a,b)=>new Date(b.audited_time)-new Date(a.audited_time));
+  if(S.view==="form" && S.recordId===id && S.tab==="time") renderTimeline();
+}
+function field(f,edit){
+  const v = V[f.k], id = "f_"+f.k, req = f.req ? ' <i aria-hidden="true">*</i>' : "", cls = "s"+(W[f.k]||2);
+  const label = `<label class="f" for="${id}">${esc(f.label)}${req}</label>`;
+  if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
   if(!edit){
     let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup") t = v&&v.name; if(f.type==="file") t = fileNames(v);
     return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">${has(t)?esc(t):"–"}</div></div>`;
   }
-  if(f.type==="file"){ const sv = fileNames(v), pend = (S.files[f.k]||[]).map(x=>x.name).join(", "); ctrl = `<input class="in" type="file" id="${id}" data-file="${f.k}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""}>${sv?`<p class="cellnote">Saved: ${esc(sv)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}`; }
+  let ctrl;
+  if(f.type==="category"||f.type==="subtype"){ const opts = f.type==="category" ? CATS : EC_SUBS; ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${opts.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
+  else if(f.type==="file"){ const sv = fileNames(v), pend = (S.files[f.k]||[]).map(x=>x.name).join(", "); ctrl = `<input class="in" type="file" id="${id}" data-file="${f.k}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""}>${sv?`<p class="cellnote">Saved: ${esc(sv)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}`; }
   else if(f.type==="lookup") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-pq="1" autocomplete="off" placeholder="Search partners" value="${esc((v&&v.name)||V._pq||"")}"><ul class="ta-list hidden" id="pl"></ul></div>`;
-  else if(f.type==="textarea") ctrl = `<textarea class="in" id="${id}" data-k="${f.k}">${esc(v)}</textarea>`;
+  else if(f.type==="textarea") ctrl = `<textarea class="in" id="${id}" data-k="${f.k}" rows="2">${esc(v)}</textarea>`;
   else if(f.type==="select") ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${f.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
   else {
     const typ = f.type==="date"?"date":"text", im = (f.type==="money"||f.type==="pin")?'inputmode="numeric"':f.type==="percent"?'inputmode="decimal"':"";
     const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""}>`;
     ctrl = f.type==="money" ? `<div class="money">${inp}</div>` : inp;
-    if(f.type==="pin") ctrl += S.pin==="loading" ? `<p class="cellnote">Finding the event owner…</p>` : S.pin==="missing" ? `<p class="hint err">Pin code not mapped to a district in CRM.</p>` : S.pin==="found" ? `<p class="hint ok">Owner found</p>` : "";
+    if(f.type==="pin") ctrl += S.pin==="loading" ? `<p class="cellnote">Finding the owner…</p>` : S.pin==="missing" ? `<p class="hint err">Not mapped to a district</p>` : S.pin==="found" && S.owner ? `<p class="hint ok">${esc(S.districtName||"Found")}</p>` : "";
   }
   return `<div class="${cls}">${label}${ctrl}${f.help?`<p class="cellnote">${esc(f.help)}</p>`:""}</div>`;
 }
@@ -473,12 +560,12 @@ function renderBar(p){
 
 /* ============ SAVE ============ */
 function missing(){
-  const out = [];
-  for(const f of FIELDS){ if(!f.req || !shown(f)) continue; if(f.k==="sub" && V.cat==="Partner Event") continue; if(!has(V[f.k])) out.push(f.label.toLowerCase()); }
+  const out = []; S.firstMissing = null;
+  for(const f of FIELDS){ if(!f.req || !shown(f)) continue; if(f.k==="sub" && V.cat==="Partner Event") continue; if(!has(V[f.k])){ out.push(f.label.toLowerCase()); if(!S.firstMissing) S.firstMissing = f; } }
   if(has(V.pin) && S.pin==="missing") out.push("a mapped pin code");
   return out;
 }
-function fail(list){ $("msg").textContent = "Add "+list.join(", ")+" to continue."; $("msg").classList.add("err"); }
+function fail(list){ if(S.firstMissing){ const t = TAB_OF(S.firstMissing.sec); if(t!==S.tab){ S.tab = t; render(); } const el = $("f_"+S.firstMissing.k); el && el.focus(); S.firstMissing = null; } $("msg").textContent = "Add "+list.join(", ")+" to continue."; $("msg").classList.add("err"); }
 function payload(){
   const o = {}, s = side();
   for(const f of FIELDS){
@@ -537,13 +624,15 @@ function loadRecord(rec){
   if(rec[C.zh]) S.zh = {id:rec[C.zh].id, name:rec[C.zh].name};
   if(rec[C.district]){ S.districtName = rec[C.district].name; S.districtId = rec[C.district].id; }
   S.pin = has(V.pin) && S.owner ? "found" : "idle";
-  render();
+  render(); loadTimeline(rec.id);
 }
 
 /* ============ EVENTS ============ */
 document.addEventListener("click", e=>{
   const set = e.target.closest("[data-set]");
   if(set){ V[set.dataset.set] = set.dataset.val; if(set.dataset.set==="cat"){ if(V.cat==="Partner Event") V.sub = "Partner Enablement Event"; else if(V.cat==="Partner Branding" || !EC_SUBS.includes(V.sub)) V.sub = ""; } clearErr(); render(); return; }
+  const tb = e.target.closest("[data-tab]"); if(tb){ S.tab = tb.dataset.tab; render(); return; }
+  if(e.target.closest("#tlToggle")){ S.tlAll = !S.tlAll; renderTimeline(); return; }
   const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
   const pk = e.target.closest("[data-pick]"); if(pk){ V.partner = {id:pk.dataset.pick, name:pk.dataset.name}; render(); return; }
   const o = e.target.closest("[data-open]"); if(o){ openRecord(o.dataset.open); return; }
@@ -563,7 +652,11 @@ document.addEventListener("input", e=>{
 });
 document.addEventListener("change", e=>{
   const fk = e.target.dataset && e.target.dataset.file; if(fk) S.files[fk] = Array.from(e.target.files||[]);
-  if(e.target.tagName==="SELECT" && e.target.dataset.k){ V[e.target.dataset.k] = e.target.value; soft(); }
+  if(e.target.tagName==="SELECT" && e.target.dataset.k){
+    const k = e.target.dataset.k; V[k] = e.target.value;
+    if(k==="cat"){ if(V.cat==="Partner Event") V.sub = "Partner Enablement Event"; else if(V.cat==="Partner Branding" || !EC_SUBS.includes(V.sub)) V.sub = ""; }
+    clearErr(); soft();
+  }
 });
 function soft(){ const el = document.activeElement, id = el&&el.id, pos = el&&el.selectionStart; render(); if(id && $(id)){ $(id).focus(); try{ if(pos!=null) $(id).setSelectionRange(pos,pos); }catch(_){} } }
 function clearErr(){ $("msg").classList.remove("err"); }
@@ -637,7 +730,7 @@ function renderList(){
   $("prevPg").disabled = L.page<=1||L.loading; $("nextPg").disabled = !L.more||L.loading;
 }
 function show(v){ S.view = v; $("listView").classList.toggle("hidden",v!=="list"); $("formView").classList.toggle("hidden",v!=="form"); $("bar").classList.toggle("hidden",v!=="form"); window.scrollTo(0,0); }
-function blank(){ S.recordId = null; S.rec = {}; V = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.districtId = null; S.pin = "idle"; S.ownerDirty = false; S.prefilled = false; clearErr(); }
+function blank(){ S.tab = "event"; S.tl = null; S.tlAll = false; S.recordId = null; S.rec = {}; V = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.districtId = null; S.pin = "idle"; S.ownerDirty = false; S.prefilled = false; clearErr(); }
 function showList(){ show("list"); loadList(); }
 function newRecord(){ blank(); show("form"); render(); }
 async function openRecord(id){
