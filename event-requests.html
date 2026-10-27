@@ -219,8 +219,8 @@ textarea.in{min-height:58px}
 label.f,.f{display:block;font-size:12.5px;font-weight:500;margin-bottom:3px;color:var(--muted)}
 .static{min-height:0;font-size:14px;padding:2px 0}
 .money .in{padding-left:22px}
-.fgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;grid-auto-flow:row dense}
-.s1{grid-column:span 1}.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}
+.fgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 14px;grid-auto-flow:row dense}
+.s1{grid-column:span 1}.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}
 h2.sec{font-size:14px;font-weight:600;margin:4px 0 8px}
 h2.sec + .fgrid{margin-bottom:14px}
 .fhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}
@@ -241,13 +241,13 @@ h2.sec + .fgrid{margin-bottom:14px}
 .tl li:last-child{padding-bottom:0}
 .tl .who{font-size:13.5px;font-weight:500}.tl .when{font-size:12.5px;color:var(--muted)}
 .tl .chg{font-size:13px;margin-top:4px;color:var(--ink)}.tl .chg span{color:var(--muted)}
-.bar-in{flex-wrap:nowrap}.bar .btn{padding:8px 16px}
+.bar-in{flex-wrap:nowrap}.bar .btns{flex-wrap:nowrap;flex-shrink:0}.bar .btn{padding:8px 16px;white-space:nowrap}
 @media (max-width:620px){
-  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.s3,.s4{grid-column:span 2}
+  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.s3,.s4,.s5,.s6{grid-column:span 2}.s1,.s2{grid-column:span 1}
   .fhead{flex-direction:column}.fh-right{align-items:flex-start;max-width:none}.chips{justify-content:flex-start}.meta dt{text-align:left}
 }
 @media (max-width:420px){
-  .fgrid,.summary{grid-template-columns:1fr}.s1,.s2,.s3,.s4{grid-column:span 1}
+  .fgrid,.summary{grid-template-columns:1fr}.s1,.s2,.s3,.s4,.s5,.s6{grid-column:span 1}
   .in,select.in,textarea.in{font-size:16px;min-height:42px}
   .bar-in{flex-wrap:wrap}.bar .btns{width:100%}.bar .btn{flex:1;padding:11px}
 }
@@ -333,30 +333,32 @@ const ATTENDEE = ["50 + KDMs","100 + KDMs","150 + KDMs","200 + KDMs","250 + KDMs
 const STATES = ["Andaman & Nicobar (UT)","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh (UT)","Chhattisgarh","Dadra & Nagar Haveli (UT) and Daman & Diu (UT)","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu & Kashmir(UT)","Jharkhand","Karnataka","Kerala","Ladakh (UT)","Lakshadweep (UT)","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Nepal","Odisha","Puducherry (UT)","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
 const CATS = ["End Customer Event","Partner Event","Partner Branding"], EC_SUBS = ["Sponsored Event","Co-Sponsored Event"];
 // k = key in the form, g = GTM field, m = Marketing field
+const NOT_BRANDING = ()=>V.cat!=="Partner Branding";
 const FIELDS = [
-  {sec:"secType", k:"cat", label:"Event category", g:"Event_s_Category", m:"Event_Category", type:"category", req:true, full:true},
-  {sec:"secType", k:"sub", label:"Event sub type", g:"Event_s_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, full:true, show:()=>V.cat && V.cat!=="Partner Branding"},
-  {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, full:true, ph:"e.g. Education Excellence Conclave – Jammu"},
-  {sec:"secBasic", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true},
+  {sec:"secType", k:"cat", label:"Event category", g:"Event_s_Category", m:"Event_Category", type:"category", req:true},
+  {sec:"secType", k:"sub", label:"Event sub type", g:"Event_s_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, show:()=>V.cat && V.cat!=="Partner Branding"},
+  {sec:"secType", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true, show:NOT_BRANDING},
+  {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu", show:NOT_BRANDING},
+  {sec:"secBasic", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true},
+  {sec:"secBasic", k:"district", label:"District", type:"district", req:true},
   {sec:"secBasic", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
-  {sec:"secBasic", k:"city", label:"City", g:"Event_s_City", m:"City", type:"text", req:true},
-  {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"select", options:STATES, req:true},
-  {sec:"secBasic", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true, full:true},
-  {sec:"secBasic", k:"partner", label:"Partner", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.cat==="Partner Branding"||V.sub==="Co-Sponsored Event"},
-  {sec:"secBasic", k:"share", label:"Teachmint share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"auto", req:true},
+  {sec:"secBasic", k:"partner", label:"Partner name", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"share", label:"Share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
   {sec:"secBasic", k:"agenda", label:"Event agenda", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
   {sec:"secBasic", k:"photos", label:"Photographs", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true, accept:"image/*"},
-  {sec:"secBasic", k:"other", label:"Other details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea", full:true},
-  {sec:"secOther", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true},
-  {sec:"secOther", k:"spons", label:"Sponsorship cost", g:"Event_s_Sponsorship_Cost", m:"Sponsorship_Cost", type:"money", req:true},
-  {sec:"secOther", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, product standees, branding elements"},
-  {sec:"secOther", k:"proc", label:"Procurement cost", g:"Event_s_Procurement_Cost", m:"Procurement_Cost", type:"money", help:"Brochures, merchandise, paper bags, gifts"},
-  {sec:"secOther", k:"floor", label:"Floor plan", g:"Event_s_Floor_Plan", m:"Floor_Plan", type:"file"},
-  {sec:"secOther", k:"stall", label:"Stall plan", g:"Event_s_Stall_Plan", m:"Stall_Plan", type:"file"}
+  {sec:"secBasic", k:"other", label:"Other details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
+  {sec:"secOther", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, show:NOT_BRANDING},
+  {sec:"secOther", k:"spons", label:"Sponsorship cost", g:"Event_s_Sponsorship_Cost", m:"Sponsorship_Cost", type:"money", req:true, show:NOT_BRANDING},
+  {sec:"secOther", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, standees, branding elements", show:NOT_BRANDING},
+  {sec:"secOther", k:"proc", label:"Procurement cost", g:"Event_s_Procurement_Cost", m:"Procurement_Cost", type:"money", help:"Brochures, merchandise, bags, gifts", show:NOT_BRANDING},
+  {sec:"secOther", k:"floor", label:"Floor plan", g:"Event_s_Floor_Plan", m:"Floor_Plan", type:"file", show:NOT_BRANDING},
+  {sec:"secOther", k:"stall", label:"Stall plan", g:"Event_s_Stall_Plan", m:"Stall_Plan", type:"file", show:NOT_BRANDING}
 ];
+const CITY = {g:"Event_s_City", m:"City"};   // filled with the district name
 const byK = k => FIELDS.find(f=>f.k===k);
 // width of each field on a 4-column grid
-const W = {cat:2, sub:2, name:4, date:1, pin:1, city:1, state:1, address:4, partner:2, share:1, other:4, agenda:2, photos:2, attendee:1, spons:1, prod:1, proc:1, floor:2, stall:2};
+const W = {cat:2, sub:2, date:2, name:6, address:6, district:2, pin:2, state:2, partner:5, share:1, agenda:3, photos:3, other:6, attendee:3, spons:3, prod:3, proc:3, floor:3, stall:3};
 const TAB_OF = sec => sec==="secOther" ? "cost" : "event";
 
 /* ============ STATE ============ */
@@ -370,7 +372,8 @@ const MOCK = {
   pins:{"180001":{district:{id:"d1",name:"Jammu"},state:"Jammu & Kashmir(UT)",zone:"North 1",owner:{id:"u1",name:"District owner, Jammu"}},
         "560001":{district:{id:"d2",name:"Bengaluru Urban"},state:"Karnataka",zone:"South",owner:{id:"u2",name:"District owner, Bengaluru"}}},
   partners:[{id:"p1",Account_Name:"Brightpath Learning Solutions"},{id:"p2",Account_Name:"Kashmir Edu Systems"}],
-  rows:[], n:0, hist:{}
+  rows:[], n:0, hist:{},
+  districts:[{id:"d1",name:"Jammu",state:"Jammu & Kashmir(UT)",zone:"North 1",owner:{id:"u1",name:"District owner, Jammu"}},{id:"d2",name:"Bengaluru Urban",state:"Karnataka",zone:"South",owner:{id:"u2",name:"District owner, Bengaluru"}},{id:"d3",name:"Kanpur Nagar",state:"Uttar Pradesh",zone:"North 2",owner:{id:"u3",name:"District owner, Kanpur"}},{id:"d4",name:"Pune",state:"Maharashtra",zone:"West",owner:{id:"u4",name:"District owner, Pune"}}]
 };
 const API = {
   async me(){
@@ -395,6 +398,16 @@ const API = {
     if(!S.live) return structuredClone(MOCK.hist[id]||[]);
     const r = await ZOHO.CRM.API.getRelatedRecords({Entity:CFG.MODULE, RecordID:id, RelatedList:"__timeline", page:1, per_page:50});
     return (r && (r.__timeline || r.data)) || [];
+  },
+  async districts(){
+    if(!S.live) return MOCK.districts;
+    const out = [];
+    for(let page=1; page<=10; page++){
+      const r = await ZOHO.CRM.API.getAllRecords({Entity:CFG.DISTRICT_MODULE, sort_order:"asc", page, per_page:200});
+      (r&&r.data||[]).forEach(d=>out.push({id:d.id, name:d.Name, state:d.State||"", zone:d.Zone||"", owner:d.Owner?{id:d.Owner.id,name:d.Owner.name}:null}));
+      if(!(r&&r.info&&r.info.more_records)) break;
+    }
+    return out.sort((a,b)=>a.name.localeCompare(b.name));
   },
   async pincode(pin){
     if(!S.live){ await wait(300); return MOCK.pins[pin]||null; }
@@ -479,7 +492,7 @@ function perms(){
 /* ============ FORM RENDER ============ */
 function render(){
   const p = perms(), r = S.rec;
-  $("title").textContent = V.name || "New event request";
+  $("title").textContent = V.cat==="Partner Branding" ? (S.rec.Name && S.rec.Name.startsWith("Partner Branding") ? S.rec.Name : "Partner branding") : (V.name || "New event request");
   $("subtitle").textContent = (S.role==="MKT" ? "Marketing details" : "GTM proposal") + (S.prefilled ? " · prefilled from the "+(S.role==="MKT"?"GTM":"Marketing")+" side, please check" : "");
   const ch = [`<span class="chip ${S.role==="MKT"?"you-mkt":"you-gtm"}">${S.role==="MKT"?"Marketing":"GTM"}</span>`];
   if(r[C.number]) ch.push(`<span class="chip"><b>${esc(r[C.number])}</b></span>`);
@@ -492,7 +505,7 @@ function render(){
   if(S.recordId && r.Modified_By) meta.push(["Last edit", (r.Modified_By.name||"")+(r.Modified_Time?", "+shortTime(r.Modified_Time):"")]);
   $("meta").innerHTML = meta.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("notes").innerHTML = r[C.status]===CFG.STATUS.REJECTED && has(r[C.remarks]) ? `<p class="note warn"><b>ZH remarks:</b> ${esc(r[C.remarks])}</p>` : "";
-  const tabs = [["event","Event"],["cost","Cost"]].concat(S.recordId ? [["time","Timeline"]] : []);
+  const tabs = [["event","Event"]].concat(V.cat==="Partner Branding" ? [] : [["cost","Cost"]]).concat(S.recordId ? [["time","Timeline"]] : []);
   if(!tabs.some(t=>t[0]===S.tab)) S.tab = "event";
   $("tabs").innerHTML = tabs.map(([k,l])=>`<button type="button" class="tab" role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-controls="tab-${k}">${l}</button>`).join("");
   for(const k of ["event","cost","time"]) $("tab-"+k).classList.toggle("hidden", S.tab!==k);
@@ -530,20 +543,22 @@ function field(f,edit){
   const label = `<label class="f" for="${id}">${esc(f.label)}${req}</label>`;
   if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
   if(!edit){
-    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup") t = v&&v.name; if(f.type==="file") t = fileNames(v);
+    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup"||f.type==="district") t = v&&v.name; if(f.type==="file") t = fileNames(v);
     return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">${has(t)?esc(t):"–"}</div></div>`;
   }
   let ctrl;
   if(f.type==="category"||f.type==="subtype"){ const opts = f.type==="category" ? CATS : EC_SUBS; ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${opts.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
   else if(f.type==="file"){ const sv = fileNames(v), pend = (S.files[f.k]||[]).map(x=>x.name).join(", "); ctrl = `<input class="in" type="file" id="${id}" data-file="${f.k}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""}>${sv?`<p class="cellnote">Saved: ${esc(sv)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}`; }
+  else if(f.type==="district") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-dq="1" autocomplete="off" placeholder="${DIST===null?"Loading districts…":"Type to search"}" value="${esc((V.district&&V.district.name)||V._dq||"")}"><ul class="ta-list hidden" id="dl"></ul></div>`;
+  else if(f.type==="auto") ctrl = `<input class="in" id="${id}" value="${esc(v)}" readonly tabindex="-1" placeholder="From district">`;
   else if(f.type==="lookup") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-pq="1" autocomplete="off" placeholder="Search partners" value="${esc((v&&v.name)||V._pq||"")}"><ul class="ta-list hidden" id="pl"></ul></div>`;
   else if(f.type==="textarea") ctrl = `<textarea class="in" id="${id}" data-k="${f.k}" rows="2">${esc(v)}</textarea>`;
   else if(f.type==="select") ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${f.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
   else {
     const typ = f.type==="date"?"date":"text", im = (f.type==="money"||f.type==="pin")?'inputmode="numeric"':f.type==="percent"?'inputmode="decimal"':"";
-    const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""}>`;
+    const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.type==="percent"?'maxlength="2" placeholder="00"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""}>`;
     ctrl = f.type==="money" ? `<div class="money">${inp}</div>` : inp;
-    if(f.type==="pin") ctrl += S.pin==="loading" ? `<p class="cellnote">Finding the owner…</p>` : S.pin==="missing" ? `<p class="hint err">Not mapped to a district</p>` : S.pin==="found" && S.owner ? `<p class="hint ok">${esc(S.districtName||"Found")}</p>` : "";
+    if(f.type==="pin" && has(v) && String(v).length!==6) ctrl += `<p class="hint err">6 digits</p>`;
   }
   return `<div class="${cls}">${label}${ctrl}${f.help?`<p class="cellnote">${esc(f.help)}</p>`:""}</div>`;
 }
@@ -562,14 +577,15 @@ function renderBar(p){
 function missing(){
   const out = []; S.firstMissing = null;
   for(const f of FIELDS){ if(!f.req || !shown(f)) continue; if(f.k==="sub" && V.cat==="Partner Event") continue; if(!has(V[f.k])){ out.push(f.label.toLowerCase()); if(!S.firstMissing) S.firstMissing = f; } }
-  if(has(V.pin) && S.pin==="missing") out.push("a mapped pin code");
+  if(has(V.pin) && String(V.pin).length!==6 && shown(byK("pin"))) out.push("a 6-digit pin code");
   return out;
 }
 function fail(list){ if(S.firstMissing){ const t = TAB_OF(S.firstMissing.sec); if(t!==S.tab){ S.tab = t; render(); } const el = $("f_"+S.firstMissing.k); el && el.focus(); S.firstMissing = null; } $("msg").textContent = "Add "+list.join(", ")+" to continue."; $("msg").classList.add("err"); }
 function payload(){
   const o = {}, s = side();
   for(const f of FIELDS){
-    if(f.type==="file") continue;
+    if(f.type==="file" || f.type==="district") continue;
+    if(!shown(f) && f.k!=="sub"){ continue; }
     let v = V[f.k];
     if(f.k==="sub" && V.cat==="Partner Event") v = "Partner Enablement Event";
     if(f.type==="lookup") v = v&&v.id ? {id:v.id} : null;
@@ -577,10 +593,12 @@ function payload(){
     else if(!has(v)) v = null;
     o[f[s]] = v;
   }
-  o.Name = V.name || "Event request";
+  o[CITY[s]] = V.district ? V.district.name : null;
+  if(V.district) o[C.district] = {id:V.district.id};
+  if(V.cat==="Partner Branding") o[byK("sub")[s]] = null;
+  o.Name = V.cat==="Partner Branding" ? "Partner Branding – "+((V.district&&V.district.name)||"") : (V.name || "Event request");
   if(S.ownerDirty || !S.recordId){
     if(S.owner) o.Owner = {id:S.owner.id};
-    if(S.districtId) o[C.district] = {id:S.districtId};
     if(S.zh) o[C.zh] = {id:S.zh.id};
   }
   if(!S.recordId && S.user.id) o[C.raisedBy] = {id:S.user.id};
@@ -622,7 +640,7 @@ function loadRecord(rec){
   }
   if(rec.Owner) S.owner = {id:rec.Owner.id, name:rec.Owner.name};
   if(rec[C.zh]) S.zh = {id:rec[C.zh].id, name:rec[C.zh].name};
-  if(rec[C.district]){ S.districtName = rec[C.district].name; S.districtId = rec[C.district].id; }
+  if(rec[C.district]){ S.districtName = rec[C.district].name; S.districtId = rec[C.district].id; V.district = {id:rec[C.district].id, name:rec[C.district].name}; }
   S.pin = has(V.pin) && S.owner ? "found" : "idle";
   render(); loadTimeline(rec.id);
 }
@@ -634,6 +652,8 @@ document.addEventListener("click", e=>{
   const tb = e.target.closest("[data-tab]"); if(tb){ S.tab = tb.dataset.tab; render(); return; }
   if(e.target.closest("#tlToggle")){ S.tlAll = !S.tlAll; renderTimeline(); return; }
   const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
+  const dk = e.target.closest("[data-dpick]"); if(dk){ pickDistrict(dk.dataset.dpick); return; }
+  if(e.target.closest("#f_district")){ showDistricts(e.target.value||""); return; }
   const pk = e.target.closest("[data-pick]"); if(pk){ V.partner = {id:pk.dataset.pick, name:pk.dataset.name}; render(); return; }
   const o = e.target.closest("[data-open]"); if(o){ openRecord(o.dataset.open); return; }
   const fb = e.target.closest("[data-filter]"); if(fb){ L.filter = fb.dataset.filter; L.page = 1; loadList(); return; }
@@ -643,11 +663,14 @@ document.addEventListener("click", e=>{
   if(e.target.closest("#nextPg")){ if(L.more){ L.page++; loadList(); } return; }
   const role = e.target.closest("[data-role]"); if(role){ setRole(role.dataset.role); return; }
   const pl = $("pl"); if(pl) pl.classList.add("hidden");
+  const dl = $("dl"); if(dl) dl.classList.add("hidden");
 });
 document.addEventListener("input", e=>{
   const k = e.target.dataset && e.target.dataset.k;
-  if(k){ let v = e.target.value; if(k==="pin"){ v = v.replace(/\D/g,"").slice(0,6); e.target.value = v; } V[k] = v; clearErr(); if(k==="pin") onPin(v); soft(); return; }
+  if(k && e.target.tagName!=="SELECT"){ let v = e.target.value; if(k==="pin"){ v = v.replace(/\D/g,"").slice(0,6); e.target.value = v; } V[k] = v; clearErr(); soft(); return; }
   if(e.target.dataset && e.target.dataset.pq) onPartner(e.target.value);
+  if(e.target.dataset && e.target.dataset.dq){ V._dq = e.target.value; V.district = null; showDistricts(e.target.value); }
+  if(e.target.id==="f_share"){ e.target.value = e.target.value.replace(/\D/g,"").slice(0,2); V.share = e.target.value; }
   if(e.target.id==="q"){ clearTimeout(qT); qT = setTimeout(()=>{ L.q = e.target.value; L.page = 1; loadList(); },350); }
 });
 document.addEventListener("change", e=>{
@@ -660,6 +683,23 @@ document.addEventListener("change", e=>{
 });
 function soft(){ const el = document.activeElement, id = el&&el.id, pos = el&&el.selectionStart; render(); if(id && $(id)){ $(id).focus(); try{ if(pos!=null) $(id).setSelectionRange(pos,pos); }catch(_){} } }
 function clearErr(){ $("msg").classList.remove("err"); }
+/* District picker: owner, ZH and state come from the chosen district */
+let DIST = null;
+async function ensureDistricts(){ if(DIST) return; try{ DIST = await API.districts(); }catch(_){ DIST = []; } if(S.view==="form") soft(); }
+function showDistricts(q){
+  const u = $("dl"); if(!u) return;
+  if(!DIST){ u.innerHTML = `<li class="sub" style="padding:7px 8px">Loading districts…</li>`; u.classList.remove("hidden"); return; }
+  const t = q.trim().toLowerCase();
+  const list = DIST.filter(d=>!t || d.name.toLowerCase().includes(t)).slice(0,30);
+  u.innerHTML = list.length ? list.map(d=>`<li><button type="button" data-dpick="${esc(d.id)}">${esc(d.name)} <span class="sub">· ${esc(d.state)}</span></button></li>`).join("") : `<li class="sub" style="padding:7px 8px">No district matches “${esc(q)}”</li>`;
+  u.classList.remove("hidden");
+}
+function pickDistrict(id){
+  const d = (DIST||[]).find(x=>x.id===id); if(!d) return;
+  V.district = {id:d.id, name:d.name}; V._dq = ""; V.state = d.state; S.districtName = d.name; S.districtId = d.id;
+  if(S.role==="MKT" || !S.rec.Owner){ S.owner = d.owner; const z = CFG.ZH_BY_ZONE[d.zone]; S.zh = z ? Object.assign({},z) : null; S.ownerDirty = true; }
+  clearErr(); render();
+}
 let pinSeq = 0;
 async function onPin(pin){
   if(pin.length!==6){ S.pin = "idle"; return; }
@@ -732,9 +772,9 @@ function renderList(){
 function show(v){ S.view = v; $("listView").classList.toggle("hidden",v!=="list"); $("formView").classList.toggle("hidden",v!=="form"); $("bar").classList.toggle("hidden",v!=="form"); window.scrollTo(0,0); }
 function blank(){ S.tab = "event"; S.tl = null; S.tlAll = false; S.recordId = null; S.rec = {}; V = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.districtId = null; S.pin = "idle"; S.ownerDirty = false; S.prefilled = false; clearErr(); }
 function showList(){ show("list"); loadList(); }
-function newRecord(){ blank(); show("form"); render(); }
+function newRecord(){ blank(); show("form"); render(); ensureDistricts(); }
 async function openRecord(id){
-  blank(); show("form"); $("msg").textContent = "Loading the request…"; $("btns").innerHTML = "";
+  blank(); show("form"); ensureDistricts(); $("msg").textContent = "Loading the request…"; $("btns").innerHTML = "";
   try{ const rec = await API.load(id); if(!rec.id) throw new Error("Record not found or no access."); loadRecord(rec); }
   catch(err){ $("msg").textContent = "Couldn’t open: "+(err.message||err); $("msg").classList.add("err"); }
 }
