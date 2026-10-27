@@ -282,6 +282,8 @@ table.sheet{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
 .ev-owner{font-size:13px;color:var(--muted);margin-top:3px}
 .today{font-size:13px;font-weight:600}
 .fh-right .meta{margin-top:10px}
+.sharerow{display:flex;gap:8px;align-items:center}.sharerow .opt{flex:0 0 auto;flex-wrap:nowrap}.sharerow .opt button{min-width:34px;padding:6px 10px}.sharerow > div:last-child{flex:1;min-width:0}
+.pct{position:relative}.pct::after{content:"%";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted)}.pct .in{padding-right:24px}
 </style>
 </head>
 <body>
@@ -378,7 +380,7 @@ const FIELDS = [
   {sec:"secBasic", k:"share", label:"Share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
   {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu", show:NOT_BRANDING},
   {sec:"secBasic", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, show:NOT_BRANDING},
-  {sec:"secBasic", k:"address", label:"Address", g:"Event_s_Address", m:"Address", type:"textarea", req:true},
+  {sec:"secBasic", k:"address", label:"Venue", g:"Event_s_Address", m:"Address", type:"textarea", req:true},
   {sec:"secBasic", k:"district", label:"District", type:"district", req:true},
   {sec:"secBasic", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
   {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"auto", req:true},
@@ -387,6 +389,7 @@ const FIELDS = [
   {sec:"secBasic", k:"photos", label:"Other attachments", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true},
   {sec:"secBasic", k:"other", label:"Additional event details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
   {sec:"secOther", k:"spons", label:"Sponsorship cost", g:"Event_s_Sponsorship_Cost", m:"Sponsorship_Cost", type:"money", req:true, show:NOT_BRANDING},
+  {sec:"secOther", k:"pshare", label:"Teachmint share", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"pshare", req:true, show:()=>V.cat==="Partner Event"},
   {sec:"secOther", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, standees, branding", show:NOT_BRANDING},
   {sec:"secOther", k:"proc", label:"Procurement cost", g:"Event_s_Procurement_Cost", m:"Procurement_Cost", type:"money", help:"Brochures, merchandise, bags, gifts", show:NOT_BRANDING},
 ];
@@ -397,7 +400,7 @@ const W = {map:6, cat:2, sub:2, date:2, name:4, address:6, district:2, pin:2, st
 const TAB_OF = sec => sec==="secOther" ? "cost" : "event";
 
 /* ============ STATE ============ */
-const S = {live:false, role:"MKT", user:{id:null,name:""}, recordId:null, rec:{}, files:{}, owner:null, zh:null, districtName:"", districtId:null, pin:"idle", ownerDirty:false, prefilled:false, busy:false, view:"list", tab:"event", tl:null, tlAll:false};
+const S = {shareMode:"%", live:false, role:"MKT", user:{id:null,name:""}, recordId:null, rec:{}, files:{}, owner:null, zh:null, districtName:"", districtId:null, pin:"idle", ownerDirty:false, prefilled:false, busy:false, view:"list", tab:"event", tl:null, tlAll:false};
 let V = {};   // the one set of values shown in the form
 const side = () => S.role==="MKT" ? "m" : "g";
 const other = () => S.role==="MKT" ? "g" : "m";
@@ -501,13 +504,22 @@ const shown = f => !f.show || f.show();
 const fileNames = v => Array.isArray(v) ? v.map(x=>x.File_Name__s||x.name||"file").join(", ") : "";
 function ordinalDate(iso){ if(!iso) return ""; const d = new Date(iso+"T00:00:00"); if(isNaN(d)) return iso; const n=d.getDate(), s=(n%10===1&&n!==11)?"st":(n%10===2&&n!==12)?"nd":(n%10===3&&n!==13)?"rd":"th"; return n+s+" "+d.toLocaleString("en-GB",{month:"long"})+" "+d.getFullYear(); }
 function lakhs(n){ return n>=1e7 ? "₹"+(+(n/1e7).toFixed(2))+" Cr" : n>=1e5 ? "₹"+(+(n/1e5).toFixed(2))+" lakh" : inr(n); }
+const money = v => Math.round(num(v)).toLocaleString("en-IN");   // 40000 → 40,000
+function teachmintSponsorship(){
+  const spons = num(V.spons);
+  if(V.sub==="Co-Sponsored Event") return spons*(num(V.share)>0 ? Math.min(100,num(V.share)) : 100)/100;
+  if(V.cat==="Partner Event"){
+    if(S.shareMode==="₹" && has(V.pshareAmt)) return Math.min(num(V.pshareAmt), spons||Infinity);
+    return has(V.pshare) ? spons*Math.min(100,num(V.pshare))/100 : spons;
+  }
+  return spons;
+}
 function calc(){
-  const co = V.sub==="Co-Sponsored Event", share = co ? (num(V.share)>0 ? Math.min(100,num(V.share)) : 100) : 100;
-  const total = num(V.spons)*share/100 + num(V.prod) + num(V.proc);
+  const ours = teachmintSponsorship(), total = ours + num(V.prod) + num(V.proc);
   let commit = "–";
   if(total && V.cat==="Partner Event") commit = lakhs(total*CFG.PARTNER_MULTIPLIER)+" billing";
   else if(total && V.cat==="End Customer Event") commit = Math.ceil(total/CFG.CAC)+" IFP";
-  return {total, commit, founder: total>CFG.FOUNDER_LIMIT};
+  return {ours, total, commit, founder: total>CFG.FOUNDER_LIMIT};
 }
 
 /* ============ WHO CAN DO WHAT ============ */
@@ -555,8 +567,8 @@ function render(){
 }
 function renderSheet(c){
   const venue = [String(V.address||"").split(/\n|,/)[0], V.district&&V.district.name].filter(has).join(", ");
-  const co = V.sub==="Co-Sponsored Event", share = co ? (num(V.share)>0?num(V.share):100) : 100;
-  const rows = [[co?`Sponsorship cost<small>Teachmint ${share}%</small>`:"Sponsorship cost", num(V.spons)*share/100],["Production cost", num(V.prod)],["Procurement expense", num(V.proc)]];
+  const split = V.sub==="Co-Sponsored Event" || V.cat==="Partner Event";
+  const rows = [[split && num(V.spons)?`Sponsorship cost<small>Teachmint share of ${inr(num(V.spons))}</small>`:"Sponsorship cost", c.ours],["Production cost", num(V.prod)],["Procurement expense", num(V.proc)]];
   let h = `<table class="sheet"><thead><tr><th>Event</th><th>Venue</th><th>Date</th><th>Expected audience</th><th>Item</th><th>Cost</th><th>Business commitment</th></tr></thead><tbody>`;
   rows.forEach((r,i)=>{
     h += "<tr>";
@@ -591,16 +603,21 @@ async function loadTimeline(id){
   if(S.view==="form" && S.recordId===id && S.tab==="time") renderTimeline();
 }
 function field(f,edit){
-  const v = V[f.k], id = "f_"+f.k, req = f.req ? ' <i aria-hidden="true">*</i>' : "", cls = "s"+(W[f.k]||2);
-  const lbl = f.k==="agenda" && V.cat==="Partner Branding" ? "Site recce" : f.label;
+  const v = V[f.k], id = "f_"+f.k, req = f.req ? ' <i aria-hidden="true">*</i>' : "", cls = "s"+((V.cat==="Partner Event" && ["spons","pshare","prod","proc"].includes(f.k)) ? 3 : (W[f.k]||2));
+  const lbl = f.k==="agenda" && V.cat==="Partner Branding" ? "Site recce" : f.k==="spons" && V.cat==="Partner Event" ? "Event sponsorship cost" : f.label;
   const label = `<label class="f" for="${id}">${esc(lbl)}${req}</label>`;
   if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
   if(!edit){
-    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup"||f.type==="district") t = v&&v.name; if(f.type==="map" && has(v)) return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static"><a href="${esc(v)}" target="_blank" rel="noopener">Open in Google Maps</a></div></div>`; if(f.type==="file") t = fileNames(v);
+    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="pshare") t = has(v)?(+num(v).toFixed(2))+"%":""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup"||f.type==="district") t = v&&v.name; if(f.type==="map" && has(v)) return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static"><a href="${esc(v)}" target="_blank" rel="noopener">Open in Google Maps</a></div></div>`; if(f.type==="file") t = fileNames(v);
     return `<div class="${cls}"><span class="f">${esc(f.k==="agenda" && V.cat==="Partner Branding" ? "Site recce" : f.label)}</span><div class="static">${has(t)?esc(t):"–"}</div></div>`;
   }
   let ctrl;
-  if(f.type==="category"||f.type==="subtype"){ const opts = f.type==="category" ? CATS : EC_SUBS; ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${opts.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
+  if(f.type==="pshare"){
+    const amtMode = S.shareMode==="₹", shown_ = amtMode ? (has(V.pshareAmt) ? money(V.pshareAmt) : "") : (has(V.pshare) ? String(+num(V.pshare).toFixed(2)) : "");
+    const ours = calc().ours;
+    ctrl = `<div class="sharerow"><div class="opt" role="group" aria-label="Share as"><button type="button" data-smode="%" aria-pressed="${!amtMode}">%</button><button type="button" data-smode="₹" aria-pressed="${amtMode}">₹</button></div><div class="${amtMode?"money":"pct"}"><input class="in" id="${id}" inputmode="decimal" value="${esc(shown_)}" placeholder="${amtMode?"Amount":"e.g. 50"}"></div></div><p class="cellnote">${num(V.spons)?"Teachmint bears "+inr(ours)+" of "+inr(num(V.spons)):"Enter the event sponsorship cost first"}</p>`;
+  }
+  else if(f.type==="category"||f.type==="subtype"){ const opts = f.type==="category" ? CATS : EC_SUBS; ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${opts.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
   else if(f.type==="file"){ const sv = fileNames(v), pend = (S.files[f.k]||[]).map(x=>x.name).join(", "); ctrl = `<input class="in" type="file" id="${id}" data-file="${f.k}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""}>${sv?`<p class="cellnote">Saved: ${esc(sv)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}`; }
   else if(f.type==="district") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-dq="1" autocomplete="off" placeholder="${DIST===null?"Loading districts…":"Type to search"}" value="${esc((V.district&&V.district.name)||V._dq||"")}"><ul class="ta-list hidden" id="dl"></ul></div>`;
   else if(f.type==="map") ctrl = `<div class="maprow"><input class="in" id="${id}" data-k="map" type="url" value="${esc(v)}" placeholder="Paste a Google Maps link"><button type="button" class="btn" id="locBtn">Use my location</button>${has(v)?`<a class="btn" href="${esc(v)}" target="_blank" rel="noopener">Open map</a>`:""}</div>${has(v)&&!/google\.|goo\.gl|maps\.app/i.test(v)?'<p class="hint err">This doesn’t look like a Google Maps link</p>':""}<p class="cellnote">In Google Maps: open the place → Share → Copy link</p>`;
@@ -610,7 +627,7 @@ function field(f,edit){
   else if(f.type==="select") ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${f.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
   else {
     const typ = f.type==="date"?"date":"text", im = (f.type==="money"||f.type==="pin")?'inputmode="numeric"':f.type==="percent"?'inputmode="decimal"':"";
-    const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.type==="percent"?'maxlength="2" placeholder="00"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""}>`;
+    const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(f.type==="money" && has(v) ? money(v) : v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.type==="percent"?'maxlength="2" placeholder="00"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""}>`;
     ctrl = f.type==="money" ? `<div class="money">${inp}</div>` : inp;
     if(f.type==="pin" && has(v) && String(v).length!==6) ctrl += `<p class="hint err">6 digits</p>`;
   }
@@ -630,7 +647,7 @@ function renderBar(p){
 /* ============ SAVE ============ */
 function missing(){
   const out = []; S.firstMissing = null;
-  for(const f of FIELDS){ if(!f.req || !shown(f)) continue; if(f.k==="sub" && V.cat==="Partner Event") continue; if(!has(V[f.k])){ out.push(f.label.toLowerCase()); if(!S.firstMissing) S.firstMissing = f; } }
+  for(const f of FIELDS){ if(!f.req || !shown(f)) continue; if(f.k==="pshare" && S.shareMode==="₹" && has(V.pshareAmt)) continue; if(f.k==="sub" && V.cat==="Partner Event") continue; if(!has(V[f.k])){ out.push(f.label.toLowerCase()); if(!S.firstMissing) S.firstMissing = f; } }
   if(has(V.pin) && String(V.pin).length!==6 && shown(byK("pin"))) out.push("a 6-digit pin code");
   return out;
 }
@@ -643,7 +660,7 @@ function payload(){
     let v = V[f.k];
     if(f.k==="sub" && V.cat==="Partner Event") v = "Partner Enablement Event";
     if(f.type==="lookup") v = v&&v.id ? {id:v.id} : null;
-    else if(f.type==="money"||f.type==="percent") v = has(v) ? num(v) : null;
+    else if(f.type==="money"||f.type==="percent"||f.type==="pshare") v = has(v) ? +num(v).toFixed(2) : null;
     else if(!has(v)) v = null;
     o[f[s]] = v;
   }
@@ -693,7 +710,7 @@ function loadRecord(rec){
     if(!has(v) && has(rec[f[o]]) && f.type!=="file" && perms().edit){ v = rec[f[o]]; S.prefilled = true; }   // first time: start from the other side’s values
     V[f.k] = v==null ? "" : v;
   }
-  V.map = rec[CFG.MAP_FIELD] || "";
+  V.map = rec[CFG.MAP_FIELD] || ""; S.shareMode = "%"; V.pshareAmt = "";
   if(rec.Owner) S.owner = {id:rec.Owner.id, name:rec.Owner.name};
   if(rec[C.zh]) S.zh = {id:rec[C.zh].id, name:rec[C.zh].name};
   if(rec[C.district]){ S.districtName = rec[C.district].name; S.districtId = rec[C.district].id; V.district = {id:rec[C.district].id, name:rec[C.district].name}; }
@@ -705,6 +722,7 @@ function loadRecord(rec){
 document.addEventListener("click", e=>{
   const set = e.target.closest("[data-set]");
   if(set){ V[set.dataset.set] = set.dataset.val; if(set.dataset.set==="cat"){ if(V.cat==="Partner Event") V.sub = "Partner Enablement Event"; else if(V.cat==="Partner Branding" || !EC_SUBS.includes(V.sub)) V.sub = ""; } clearErr(); render(); return; }
+  const sm = e.target.closest("[data-smode]"); if(sm){ const m = sm.dataset.smode; if(m!==S.shareMode){ if(m==="₹") V.pshareAmt = has(V.pshare)&&num(V.spons) ? String(Math.round(num(V.spons)*num(V.pshare)/100)) : ""; S.shareMode = m; render(); } return; }
   const tb = e.target.closest("[data-tab]"); if(tb){ S.tab = tb.dataset.tab; render(); return; }
   if(e.target.closest("#tlToggle")){ S.tlAll = !S.tlAll; renderTimeline(); return; }
   const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
@@ -724,6 +742,16 @@ document.addEventListener("click", e=>{
 });
 document.addEventListener("input", e=>{
   const k = e.target.dataset && e.target.dataset.k;
+  if(e.target.id==="f_pshare"){
+    if(S.shareMode==="₹"){ const d = e.target.value.replace(/\D/g,""); V.pshareAmt = d; V.pshare = num(V.spons) ? Math.min(100, num(d)/num(V.spons)*100).toFixed(4) : ""; e.target.value = d ? money(d) : ""; }
+    else { let d = e.target.value.replace(/[^\d.]/g,""); if(num(d)>100) d = "100"; V.pshare = d; e.target.value = d; }
+    clearErr(); softEnd(); return;
+  }
+  if(k && e.target.tagName!=="SELECT" && byK(k) && byK(k).type==="money"){
+    const d = e.target.value.replace(/\D/g,""); V[k] = d; e.target.value = d ? money(d) : "";
+    if(k==="spons" && S.shareMode==="₹" && has(V.pshareAmt)) V.pshare = num(d) ? Math.min(100, num(V.pshareAmt)/num(d)*100).toFixed(4) : "";
+    clearErr(); softEnd(); return;
+  }
   if(k && e.target.tagName!=="SELECT"){ let v = e.target.value; if(k==="pin"){ v = v.replace(/\D/g,"").slice(0,6); e.target.value = v; } V[k] = v; clearErr(); soft(); return; }
   if(e.target.dataset && e.target.dataset.pq) onPartner(e.target.value);
   if(e.target.dataset && e.target.dataset.dq){ V._dq = e.target.value; V.district = null; showDistricts(e.target.value); }
@@ -738,6 +766,7 @@ document.addEventListener("change", e=>{
     clearErr(); soft();
   }
 });
+function softEnd(){ const el = document.activeElement, id = el&&el.id; render(); if(id && $(id)){ const x = $(id); x.focus(); try{ x.setSelectionRange(x.value.length, x.value.length); }catch(_){} } }
 function soft(){ const el = document.activeElement, id = el&&el.id, pos = el&&el.selectionStart; render(); if(id && $(id)){ $(id).focus(); try{ if(pos!=null) $(id).setSelectionRange(pos,pos); }catch(_){} } }
 function clearErr(){ $("msg").classList.remove("err"); }
 function useMyLocation(){
@@ -835,7 +864,7 @@ function renderList(){
   $("prevPg").disabled = L.page<=1||L.loading; $("nextPg").disabled = !L.more||L.loading;
 }
 function show(v){ S.view = v; $("listView").classList.toggle("hidden",v!=="list"); $("formView").classList.toggle("hidden",v!=="form"); $("bar").classList.toggle("hidden",v!=="form"); window.scrollTo(0,0); }
-function blank(){ S.tab = "event"; S.tl = null; S.tlAll = false; S.recordId = null; S.rec = {}; V = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.districtId = null; S.pin = "idle"; S.ownerDirty = false; S.prefilled = false; clearErr(); }
+function blank(){ S.shareMode = "%"; S.tab = "event"; S.tl = null; S.tlAll = false; S.recordId = null; S.rec = {}; V = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.districtId = null; S.pin = "idle"; S.ownerDirty = false; S.prefilled = false; clearErr(); }
 function showList(){ show("list"); loadList(); }
 function newRecord(){ blank(); show("form"); render(); ensureDistricts(); }
 async function openRecord(id){
