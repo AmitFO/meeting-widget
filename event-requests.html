@@ -359,7 +359,8 @@ const CFG = {
   MODULE:"Marketing_Events", MAP_FIELD:"Google_Map_Location",   // URL field on Marketing Events
   PINCODE_MODULE:"Pincodes", DISTRICT_MODULE:"District", PARTNER_MODULE:"Accounts",
   CAC:2000, FOUNDER_LIMIT:50000, PARTNER_MULTIPLIER:100,
-  MARKETING_KEYWORDS:["marketing"],   // role or profile name contains this → Marketing; everyone else → GTM
+  MARKETING_KEYWORDS:["marketing"],
+  MARKETING_EMAILS:["amit.prasad@teachmint.com"],   // these users are always treated as Marketing   // role or profile name contains this → Marketing; everyone else → GTM
   ZH_BY_ZONE:{"North 1":{id:"681278000000676466",name:"Vivek Mishra"},"East":{id:"681278000000676466",name:"Vivek Mishra"},"North 2":{id:"681278000000676433",name:"Suraj Agrahari"},"South":{id:"681278000000813134",name:"Swapnil Omprakash Mandhana"},"West":{id:"681278000000676418",name:"Hariom Shivhare"}},
   TAG:{ PENDING_ZH:"Send to GTM Approval", ZH_OK:"GTM Approved", PENDING_AV:"Send to AV's Approval" },
   STATUS:{ DRAFT:"Draft", SUBMITTED:"Submitted", REJECTED:"Rejected", RESUBMITTED:"Resubmitted" }
@@ -432,7 +433,8 @@ const API = {
     if(!S.live) return {role:S.role, id:"me", name:S.role==="MKT"?"Preview Marketing user":"Preview GTM user"};
     const r = await ZOHO.CRM.CONFIG.getCurrentUser(); const u = (r&&r.users&&r.users[0])||{};
     const hay = (((u.role||{}).name||"")+" "+((u.profile||{}).name||"")).toLowerCase();
-    return {role:CFG.MARKETING_KEYWORDS.some(w=>hay.includes(w))?"MKT":"GTM", id:u.id, name:u.full_name||""};
+    const mkt = CFG.MARKETING_KEYWORDS.some(w=>hay.includes(w)) || CFG.MARKETING_EMAILS.includes(String(u.email||"").toLowerCase());
+    return {role:mkt?"MKT":"GTM", id:u.id, name:u.full_name||""};
   },
   async list(f){
     if(!S.live){ await wait(150); return {rows:MOCK.rows.filter(r=>matches(r,f)).map(r=>structuredClone(r)), more:false}; }
@@ -634,7 +636,7 @@ async function loadTimeline(id){
   if(S.view==="form" && S.recordId===id && S.tab==="time") renderTimeline();
 }
 function field(f,edit){
-  const v = V[f.k], id = "f_"+f.k, req = f.req ? ' <i aria-hidden="true">*</i>' : "", cls = "s"+((V.cat==="Partner Branding" && ["fpin","fcity","fstate"].includes(f.k)) ? 2 : (V.cat==="Partner Event" && ["spons","pshare","prod","proc"].includes(f.k)) ? 3 : (W[f.k]||2));
+  const v = V[f.k], id = "f_"+f.k, req = f.req ? ' <i aria-hidden="true">*</i>' : "", cls = "s"+((V.cat==="Partner Branding" && ["fpin","fcity","fstate"].includes(f.k)) ? 2 : (V.cat==="Partner Event" && S.role==="MKT" && ["spons","pshare","prod","proc"].includes(f.k)) ? 3 : (W[f.k]||2));
   const lbl = f.k==="spons" && V.cat==="Partner Event" ? "Event sponsorship cost" : f.label;
   const label = `<label class="f" for="${id}">${esc(lbl)}${req}</label>`;
   if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
