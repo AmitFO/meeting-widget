@@ -293,6 +293,7 @@ table.list{min-width:0!important;table-layout:fixed;width:100%}
 @media (max-width:560px){.toprow .btn{padding:9px 12px}}
 .fhead{grid-template-columns:auto minmax(200px,1fr) minmax(0,40%)!important}.fh-right{min-width:0}.fh-right .chips{flex-wrap:wrap}.fh-mid{min-width:0}
 @media (max-width:620px){.fhead{grid-template-columns:1fr!important}}
+input[type=file].in{font-size:12.5px;padding:5px 6px}
 </style>
 </head>
 <body>
@@ -382,7 +383,7 @@ const FIELDS = [
   {sec:"secBasic", k:"faddr", label:"Firm address", g:"Firm_Address", m:"Firm_Address", type:"textarea", req:true, show:()=>V.cat==="Partner Branding"},
   {sec:"secBasic", k:"map", label:"Google Map location", type:"map", show:()=>V.cat==="Partner Branding"},
   {sec:"secBasic", k:"more", label:"Additional details", g:"More_Details", m:"More_Details", type:"textarea", show:()=>V.cat==="Partner Branding"},
-  {sec:"secBasic", k:"share", label:"Partner’s contribution (%)", g:"Partner_s_Contribution", m:"Partner_s_Contribution", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"share", label:"Partner contribution %", g:"Partner_s_Contribution", m:"Partner_s_Contribution", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
   {sec:"secBasic", k:"name", label:"Event name", g:"Name", m:"Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu", show:NOT_BRANDING},
   {sec:"secBasic", k:"attendee", label:"Expected attendee", g:"Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, show:NOT_BRANDING},
   {sec:"secBasic", k:"address", label:"Venue", g:"Address", m:"Address", type:"textarea", req:true, show:NOT_BRANDING},
@@ -407,7 +408,7 @@ const FIELDS = [
 const SHARE = {type:{g:"Share_Type", m:"Share_Type"}, amt:{g:"Teachmint_Share_Amount", m:"Teachmint_Share_Amount"}, PCT:"Percentage (%)", AMT:"Amount (in Rs)"};   // filled with the district name
 const byK = k => FIELDS.find(f=>f.k===k);
 // width of each field on a 4-column grid
-const W = {firm:3, logo:3, poc:3, pocm:3, faddr:6, more:6, vendor:3, quote:3, recce:6, map:6, cat:2, sub:2, date:2, name:4, address:6, city:2, pin:1, state:2, country:1, partner:5, share:1, agenda:3, photos:3, other:6, attendee:2, spons:2, prod:2, proc:2};
+const W = {firm:4, logo:2, poc:3, pocm:3, faddr:6, more:6, vendor:3, quote:3, recce:6, map:6, cat:2, sub:2, date:2, name:4, address:6, city:2, pin:1, state:2, country:1, partner:4, share:2, agenda:3, photos:3, other:6, attendee:2, spons:2, prod:2, proc:2};
 const TAB_OF = sec => sec==="secOther" ? "cost" : "event";
 
 /* ============ STATE ============ */
@@ -649,7 +650,7 @@ function field(f,edit){
   }
   else if(f.type==="category"||f.type==="subtype"){ const opts = f.type==="category" ? CATS : EC_SUBS; ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${opts.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
   else if(f.type==="file"){ const sv = fileNames(v), pend = (S.files[f.k]||[]).map(x=>x.name).join(", "); ctrl = `<input class="in" type="file" id="${id}" data-file="${f.k}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""}>${sv?`<p class="cellnote">Saved: ${esc(sv)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}`; }
-  else if(f.type==="citylk"||f.type==="pinlk"){ const kind = f.type==="citylk"?"city":"pin"; ctrl = `<div class="typeahead"><input class="in" id="${id}" data-lq="${f.k}" autocomplete="off" ${kind==="pin"?'inputmode="numeric" maxlength="6"':""} placeholder="${kind==="pin"?"Type 3+ digits":"Type to search"}" value="${esc((v&&v.name)||V["_lq_"+f.k]||"")}"><ul class="ta-list hidden" id="ll_${f.k}"></ul></div>${kind==="pin"&&S.districtName?`<p class="cellnote">${esc(S.districtName)}</p>`:""}`; }
+  else if(f.type==="citylk"||f.type==="pinlk"){ const kind = f.type==="citylk"?"city":"pin"; ctrl = `<div class="typeahead"><input class="in" id="${id}" data-lq="${f.k}" autocomplete="off" ${kind==="pin"?'inputmode="numeric" maxlength="6"':""} placeholder="${kind==="pin"?"Type 3+ digits":"Type to search"}" value="${esc((v&&v.name)||V["_lq_"+f.k]||"")}"><ul class="ta-list hidden" id="ll_${f.k}"></ul></div>${kind==="pin"&&S.districtName&&V[f.k]&&V[f.k].id?`<p class="cellnote">${esc(S.districtName)}</p>`:""}`; }
   else if(f.type==="district") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-dq="1" autocomplete="off" placeholder="${DIST===null?"Loading districts…":"Type to search"}" value="${esc((V.district&&V.district.name)||V._dq||"")}"><ul class="ta-list hidden" id="dl"></ul></div>`;
   else if(f.type==="map") ctrl = `<div class="maprow"><input class="in" id="${id}" data-k="map" type="url" value="${esc(v)}" placeholder="Paste a Google Maps link"><button type="button" class="btn" id="locBtn">Use my location</button>${has(v)?`<a class="btn" href="${esc(v)}" target="_blank" rel="noopener">Open map</a>`:""}</div>${has(v)&&!/google\.|goo\.gl|maps\.app/i.test(v)?'<p class="hint err">This doesn’t look like a Google Maps link</p>':""}<p class="cellnote">In Google Maps: open the place → Share → Copy link</p>`;
   else if(f.type==="auto") ctrl = `<input class="in" id="${id}" value="${esc(v)}" readonly tabindex="-1" placeholder="From city">`;
@@ -658,7 +659,7 @@ function field(f,edit){
   else if(f.type==="select") ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${f.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
   else {
     const typ = f.type==="date"?"date":f.type==="phone"?"tel":"text", im = (f.type==="money"||f.type==="pin"||f.type==="phone")?'inputmode="numeric"':f.type==="percent"?'inputmode="decimal"':"";
-    const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(f.type==="money" && has(v) ? money(v) : v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.type==="percent"?'maxlength="2" placeholder="00"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""}>`;
+    const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(f.type==="money" && has(v) ? money(v) : v)}" ${im} ${f.type==="pin"?'maxlength="6" placeholder="6 digits"':""} ${f.type==="percent"?'maxlength="2" placeholder="e.g. 40"':""} ${f.ph?`placeholder="${esc(f.ph)}"`:""}>`;
     ctrl = f.type==="money" ? `<div class="money">${inp}</div>` : inp;
     if(f.type==="pin" && has(v) && String(v).length!==6) ctrl += `<p class="hint err">6 digits</p>`;
   }
@@ -805,7 +806,7 @@ document.addEventListener("change", e=>{
   const fk = e.target.dataset && e.target.dataset.file; if(fk) S.files[fk] = Array.from(e.target.files||[]);
   if(e.target.tagName==="SELECT" && e.target.dataset.k){
     const k = e.target.dataset.k; V[k] = e.target.value;
-    if(k==="cat"){ if(V.cat==="Partner Event") V.sub = "Partner Enablement Event"; else if(V.cat==="Partner Branding" || !EC_SUBS.includes(V.sub)) V.sub = ""; }
+    if(k==="cat") resetForCategory(V.cat);
     clearErr(); soft();
   }
 });
@@ -822,6 +823,13 @@ function useMyLocation(){
 }
 const STATE_FIX = {"Andaman & Nicobar":"Andaman & Nicobar (UT)","Chandigarh":"Chandigarh (UT)","Jammu & Kashmir":"Jammu & Kashmir(UT)","Ladakh":"Ladakh (UT)","Lakshadweep":"Lakshadweep (UT)","Puducherry":"Puducherry (UT)"};
 const toState = st => { const t = String(st||"").trim(); if(/^Uttar Pradesh\s*\d+$/i.test(t)) return "Uttar Pradesh"; return STATE_FIX[t] || t; };
+/* Changing the category clears every field on both tabs */
+function resetForCategory(cat){
+  const had = Object.keys(V).some(x=>x!=="cat" && x!=="country" && has(V[x]));
+  V = {cat, country:"India"}; if(cat==="Partner Event") V.sub = "Partner Enablement Event";
+  S.files = {}; S.shareMode = "%"; S.owner = null; S.zh = null; S.districtId = null; S.districtName = ""; S.ownerDirty = true; S.prefilled = false; S.tab = "event";
+  render(); if(had) toast("Category changed, so the other fields were cleared.");
+}
 /* City → State, Pin code → District (hidden) → Owner + ZH */
 let lqT; const LQ = {};
 const STATE_OF = {city:"state", fcity:"fstate"};
