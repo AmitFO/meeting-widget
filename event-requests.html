@@ -641,7 +641,7 @@ function field(f,edit){
   else if(f.type==="citylk"||f.type==="pinlk"){ const kind = f.type==="citylk"?"city":"pin"; ctrl = `<div class="typeahead"><input class="in" id="${id}" data-lq="${kind}" autocomplete="off" ${kind==="pin"?'inputmode="numeric" maxlength="6"':""} placeholder="${kind==="pin"?"Type 3+ digits":"Type to search"}" value="${esc((v&&v.name)||V["_lq_"+kind]||"")}"><ul class="ta-list hidden" id="ll_${kind}"></ul></div>${kind==="pin"&&S.districtName?`<p class="cellnote">${esc(S.districtName)}</p>`:""}`; }
   else if(f.type==="district") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-dq="1" autocomplete="off" placeholder="${DIST===null?"Loading districts…":"Type to search"}" value="${esc((V.district&&V.district.name)||V._dq||"")}"><ul class="ta-list hidden" id="dl"></ul></div>`;
   else if(f.type==="map") ctrl = `<div class="maprow"><input class="in" id="${id}" data-k="map" type="url" value="${esc(v)}" placeholder="Paste a Google Maps link"><button type="button" class="btn" id="locBtn">Use my location</button>${has(v)?`<a class="btn" href="${esc(v)}" target="_blank" rel="noopener">Open map</a>`:""}</div>${has(v)&&!/google\.|goo\.gl|maps\.app/i.test(v)?'<p class="hint err">This doesn’t look like a Google Maps link</p>':""}<p class="cellnote">In Google Maps: open the place → Share → Copy link</p>`;
-  else if(f.type==="auto") ctrl = `<input class="in" id="${id}" value="${esc(v)}" readonly tabindex="-1" placeholder="From district">`;
+  else if(f.type==="auto") ctrl = `<input class="in" id="${id}" value="${esc(v)}" readonly tabindex="-1" placeholder="From city">`;
   else if(f.type==="lookup") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-pq="${f.k}" autocomplete="off" placeholder="Search accounts" value="${esc((v&&v.name)||V["_pq_"+f.k]||"")}"><ul class="ta-list hidden" id="pl_${f.k}"></ul></div>`;
   else if(f.type==="textarea") ctrl = `<textarea class="in" id="${id}" data-k="${f.k}" rows="2">${esc(v)}</textarea>`;
   else if(f.type==="select") ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${f.options.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`;
@@ -944,7 +944,11 @@ async function boot(entityId){
 }
 if(window.ZOHO && ZOHO.embeddedApp){
   S.live = true;
-  ZOHO.embeddedApp.on("PageLoad", d=>{ const id = d && (Array.isArray(d.EntityId)?d.EntityId[0]:d.EntityId); boot(id); });
+  ZOHO.embeddedApp.on("PageLoad", d=>{
+    const pos = String((d && (d.ButtonPosition || d.buttonPosition)) || "");
+    const id = d && (Array.isArray(d.EntityId)?d.EntityId[0]:d.EntityId);
+    boot(/detail/i.test(pos) ? id : null);   // list / mass-action / web tab → home list
+  });
   ZOHO.embeddedApp.init();
 } else {
   $("demoBar").classList.remove("hidden");
