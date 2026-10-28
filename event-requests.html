@@ -284,34 +284,29 @@ table.sheet{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
 .fh-right .meta{margin-top:10px}
 .sharerow{display:flex;gap:8px;align-items:center}.sharerow .opt{flex:0 0 auto;flex-wrap:nowrap}.sharerow .opt button{min-width:34px;padding:6px 10px}.sharerow > div:last-child{flex:1;min-width:0}
 .pct{position:relative}.pct::after{content:"%";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted)}.pct .in{padding-right:24px}
+.toprow{display:flex;gap:10px;align-items:center;margin-bottom:10px}.toprow .in{flex:1;min-width:0;max-width:none}.toprow .btn{white-space:nowrap}
+.filters-row{margin-bottom:10px}
+table.list{min-width:0!important;table-layout:fixed;width:100%}
+.list th,.list td{padding:8px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.list col.c-no{width:13%}.list col.c-ev{width:31%}.list col.c-dt{width:15%}.list col.c-ow{width:17%}.list col.c-st{width:12%}.list col.c-tg{width:12%}
+.list .chip{font-size:11.5px;padding:2px 7px}
+@media (max-width:560px){.toprow .btn{padding:9px 12px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div id="demoBar" class="demo hidden" role="region" aria-label="Preview controls">
-    <span>Preview mode, no CRM connection.</span>
-    <span>View as
-      <span class="seg" role="group" aria-label="View as">
-        <button type="button" data-role="GTM" aria-pressed="false">GTM</button>
-        <button type="button" data-role="MKT" aria-pressed="true">Marketing</button>
-      </span>
-    </span>
-    <button type="button" class="linkbtn" id="resetDemo">Start over</button>
-  </div>
+  <div id="demoBar" class="demo hidden" role="region" aria-label="Preview"><span>Preview mode, no CRM connection. Add <b>?as=gtm</b> to the address to preview as GTM.</span> <button type="button" class="linkbtn" id="resetDemo">Start over</button></div>
 
   <!-- HOME: list of requests -->
   <section id="listView" aria-label="Event requests">
-    <div class="listhead">
-      <div><p class="sub">Open a request to view or edit it, or raise a new one.</p></div>
-      <button type="button" class="btn primary" id="newBtn">+ New event</button>
-    </div>
     <div class="panel">
-      <div class="filters">
+      <div class="toprow">
         <label class="hidden" for="q">Search</label>
         <input class="in" id="q" type="search" placeholder="Search event name or number" autocomplete="off">
-        <div class="opt" role="group" aria-label="Filter" id="filterBtns"></div>
+        <button type="button" class="btn primary" id="newBtn">+ New request</button>
       </div>
-      <div class="ledger-wrap"><table class="list" id="list"></table></div>
+      <div class="opt filters-row" role="group" aria-label="Filter" id="filterBtns"></div>
+      <table class="list" id="list"></table>
       <div class="pager"><span id="pageInfo"></span><span><button type="button" class="btn" id="prevPg">Previous</button> <button type="button" class="btn" id="nextPg">Next</button></span></div>
     </div>
   </section>
@@ -367,36 +362,38 @@ const CFG = {
   STATUS:{ DRAFT:"Draft", SUBMITTED:"Submitted", REJECTED:"Rejected", RESUBMITTED:"Resubmitted" }
 };
 const C = {status:"Status", tag:"Event_Tag", remarks:"Rejection_Remarks", district:"District", zh:"ZH", raisedBy:"Raised_by", number:"Event_Number"};
-const ATTENDEE = ["50 + KDMs","100 + KDMs","150 + KDMs","200 + KDMs","250 + KDMs","400 + KDMs","500 + KDMs"];
+const ATTENDEE = ["25 + KDMs","50 + KDMs","100 + KDMs","150 + KDMs","200 + KDMs","250 + KDMs","400 + KDMs","500 + KDMs"];
 const STATES = ["Andaman & Nicobar (UT)","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh (UT)","Chhattisgarh","Dadra & Nagar Haveli (UT) and Daman & Diu (UT)","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu & Kashmir(UT)","Jharkhand","Karnataka","Kerala","Ladakh (UT)","Lakshadweep (UT)","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Nepal","Odisha","Puducherry (UT)","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"];
 const CATS = ["End Customer Event","Partner Event","Partner Branding"], EC_SUBS = ["Sponsored Event","Co-Sponsored Event"];
 // k = key in the form, g = GTM field, m = Marketing field
 const NOT_BRANDING = ()=>V.cat!=="Partner Branding";
+const COUNTRIES = ["India","Phillipines","Saudi Arabia"];
 const FIELDS = [
-  {sec:"secType", k:"cat", label:"Event category", g:"Event_s_Category", m:"Event_Category", type:"category", req:true},
-  {sec:"secType", k:"sub", label:"Event sub type", g:"Event_s_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, show:()=>V.cat && V.cat!=="Partner Branding"},
-  {sec:"secType", k:"date", label:"Event date", g:"Event_s_Date", m:"Event_Date", type:"date", req:true, show:NOT_BRANDING},
-  {sec:"secBasic", k:"partner", label:"Partner name", g:"Partner_On_Events", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.cat==="Partner Branding"||V.sub==="Co-Sponsored Event"},
-  {sec:"secBasic", k:"share", label:"Share (%)", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
-  {sec:"secBasic", k:"name", label:"Event name", g:"Event_s_Name", m:"Event_Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu", show:NOT_BRANDING},
-  {sec:"secBasic", k:"attendee", label:"Expected attendee", g:"Event_s_Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, show:NOT_BRANDING},
-  {sec:"secBasic", k:"address", label:"Venue", g:"Event_s_Address", m:"Address", type:"textarea", req:true},
-  {sec:"secBasic", k:"district", label:"District", type:"district", req:true},
-  {sec:"secBasic", k:"pin", label:"Pin code", g:"Event_s_Pin_code", m:"Pin_code", type:"pin", req:true},
-  {sec:"secBasic", k:"state", label:"State", g:"Event_s_State", m:"State", type:"auto", req:true},
+  {sec:"secType", k:"cat", label:"Event category", g:"Event_Category", m:"Event_Category", type:"category", req:true},
+  {sec:"secType", k:"sub", label:"Event sub type", g:"Event_Sub_Type", m:"Event_Sub_Type", type:"subtype", req:true, show:()=>V.cat && V.cat!=="Partner Branding"},
+  {sec:"secType", k:"date", label:"Event date", g:"Event_Date", m:"Event_Date", type:"date", req:true, show:NOT_BRANDING},
+  {sec:"secBasic", k:"partner", label:"Partner name", g:"Partner", m:"Partner", type:"lookup", req:true, show:()=>V.cat==="Partner Event"||V.cat==="Partner Branding"||V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"share", label:"Partner’s contribution (%)", g:"Partner_s_Contribution", m:"Partner_s_Contribution", type:"percent", req:true, show:()=>V.sub==="Co-Sponsored Event"},
+  {sec:"secBasic", k:"name", label:"Event name", g:"Name", m:"Name", type:"text", req:true, ph:"e.g. Education Excellence Conclave – Jammu", show:NOT_BRANDING},
+  {sec:"secBasic", k:"attendee", label:"Expected attendee", g:"Expected_Attendee", m:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, show:NOT_BRANDING},
+  {sec:"secBasic", k:"address", label:"Venue", g:"Address", m:"Address", type:"textarea", req:true},
+  {sec:"secBasic", k:"city", label:"City", g:"City", m:"City", type:"citylk", req:true},
+  {sec:"secBasic", k:"pin", label:"Pin code", g:"Pin_Code", m:"Pin_Code", type:"pinlk", req:true},
+  {sec:"secBasic", k:"state", label:"State", g:"State", m:"State", type:"auto", req:true},
+  {sec:"secBasic", k:"country", label:"Country", g:"Country", m:"Country", type:"select", options:COUNTRIES, req:true},
   {sec:"secBasic", k:"map", label:"Google Maps location", type:"map", show:()=>V.cat==="Partner Branding"},
-  {sec:"secBasic", k:"agenda", label:"Event proposal", g:"Event_s_Agenda", m:"Event_Agenda", type:"file"},
-  {sec:"secBasic", k:"photos", label:"Other attachments", g:"Event_s_Photographs", m:"Photographs", type:"file", multiple:true},
-  {sec:"secBasic", k:"other", label:"Additional event details", g:"Event_s_Other_Details", m:"Other_Details", type:"textarea"},
+  {sec:"secBasic", k:"agenda", label:"Event proposal", g:"Event_Agenda", m:"Event_Agenda", type:"file"},
+  {sec:"secBasic", k:"photos", label:"Other attachments", g:"Photographs", m:"Photographs", type:"file", multiple:true},
+  {sec:"secBasic", k:"other", label:"Additional event details", g:"Other_Details", m:"Other_Details", type:"textarea"},
   {sec:"secOther", k:"spons", label:"Sponsorship cost", g:"Event_s_Sponsorship_Cost", m:"Sponsorship_Cost", type:"money", req:true, show:NOT_BRANDING},
-  {sec:"secOther", k:"pshare", label:"Teachmint share", g:"Event_s_Share_by_Teachmint", m:"Teachmint_Share", type:"pshare", req:true, show:()=>V.cat==="Partner Event"},
+  {sec:"secOther", k:"pshare", label:"Teachmint share", g:"Teachmint_Share_Percent", m:"Teachmint_Share_Percent", type:"pshare", req:true, show:()=>V.cat==="Partner Event" && S.role==="MKT"},
   {sec:"secOther", k:"prod", label:"Production cost", g:"Event_s_Production_Cost", m:"Production_Cost", type:"money", help:"Booth branding, standees, branding", show:NOT_BRANDING},
   {sec:"secOther", k:"proc", label:"Procurement cost", g:"Event_s_Procurement_Cost", m:"Procurement_Cost", type:"money", help:"Brochures, merchandise, bags, gifts", show:NOT_BRANDING},
 ];
-const CITY = {g:"Event_s_City", m:"City"};   // filled with the district name
+const SHARE = {type:{g:"Share_Type", m:"Share_Type"}, amt:{g:"Teachmint_Share_Amount", m:"Teachmint_Share_Amount"}, PCT:"Percentage (%)", AMT:"Amount (in Rs)"};   // filled with the district name
 const byK = k => FIELDS.find(f=>f.k===k);
 // width of each field on a 4-column grid
-const W = {map:6, cat:2, sub:2, date:2, name:4, address:6, district:2, pin:2, state:2, partner:5, share:1, agenda:3, photos:3, other:6, attendee:2, spons:2, prod:2, proc:2};
+const W = {map:6, cat:2, sub:2, date:2, name:4, address:6, city:2, pin:1, state:2, country:1, partner:5, share:1, agenda:3, photos:3, other:6, attendee:2, spons:2, prod:2, proc:2};
 const TAB_OF = sec => sec==="secOther" ? "cost" : "event";
 
 /* ============ STATE ============ */
@@ -411,11 +408,13 @@ const MOCK = {
         "560001":{district:{id:"d2",name:"Bengaluru Urban"},state:"Karnataka",zone:"South",owner:{id:"u2",name:"District owner, Bengaluru"}}},
   partners:[{id:"p1",Account_Name:"Brightpath Learning Solutions"},{id:"p2",Account_Name:"Kashmir Edu Systems"}],
   rows:[], n:0, hist:{},
+  cities:[{id:"c1",Name:"Jammu",State:{name:"Jammu & Kashmir"}},{id:"c2",Name:"Bengaluru",State:{name:"Karnataka"}},{id:"c3",Name:"Kanpur",State:{name:"Uttar Pradesh"}},{id:"c4",Name:"Pune",State:{name:"Maharashtra"}}],
+  pincodes:[{id:"p180001",Name:"180001",District:{id:"d1",name:"Jammu"}},{id:"p180004",Name:"180004",District:{id:"d1",name:"Jammu"}},{id:"p560001",Name:"560001",District:{id:"d2",name:"Bengaluru Urban"}},{id:"p208001",Name:"208001",District:{id:"d3",name:"Kanpur Nagar"}}],
   districts:[{id:"d1",name:"Jammu",state:"Jammu & Kashmir(UT)",zone:"North 1",owner:{id:"u1",name:"District owner, Jammu"}},{id:"d2",name:"Bengaluru Urban",state:"Karnataka",zone:"South",owner:{id:"u2",name:"District owner, Bengaluru"}},{id:"d3",name:"Kanpur Nagar",state:"Uttar Pradesh",zone:"North 2",owner:{id:"u3",name:"District owner, Kanpur"}},{id:"d4",name:"Pune",state:"Maharashtra",zone:"West",owner:{id:"u4",name:"District owner, Pune"}}]
 };
 const API = {
   async me(){
-    if(!S.live) return {role:S.role, id:"me", name:"Preview user"};
+    if(!S.live) return {role:S.role, id:"me", name:S.role==="MKT"?"Preview Marketing user":"Preview GTM user"};
     const r = await ZOHO.CRM.CONFIG.getCurrentUser(); const u = (r&&r.users&&r.users[0])||{};
     const hay = (((u.role||{}).name||"")+" "+((u.profile||{}).name||"")).toLowerCase();
     return {role:CFG.MARKETING_KEYWORDS.some(w=>hay.includes(w))?"MKT":"GTM", id:u.id, name:u.full_name||""};
@@ -446,6 +445,17 @@ const API = {
       if(!(r&&r.info&&r.info.more_records)) break;
     }
     return out.sort((a,b)=>a.name.localeCompare(b.name));
+  },
+  async lookupSearch(kind,q){
+    if(!S.live){ await wait(150); const src = kind==="city" ? MOCK.cities : MOCK.pincodes; return src.filter(r=>r.Name.toLowerCase().startsWith(q.toLowerCase())).slice(0,20); }
+    const mod = kind==="city" ? "Cities" : CFG.PINCODE_MODULE, t = q.replace(/[(),]/g,"\\$&");
+    const r = await ZOHO.CRM.API.searchRecord({Entity:mod, Type:"criteria", Query:"(Name:starts_with:"+t+")", per_page:20});
+    return (r&&r.data)||[];
+  },
+  async district(id){
+    if(!S.live) return MOCK.districts.find(d=>d.id===id)||null;
+    const r = await ZOHO.CRM.API.getRecord({Entity:CFG.DISTRICT_MODULE, RecordID:id}); const d = r&&r.data&&r.data[0]; if(!d) return null;
+    return {id:d.id, name:d.Name, zone:d.Zone||"", owner:d.Owner?{id:d.Owner.id,name:d.Owner.name}:null};
   },
   async pincode(pin){
     if(!S.live){ await wait(300); return MOCK.pins[pin]||null; }
@@ -507,7 +517,7 @@ function lakhs(n){ return n>=1e7 ? "₹"+(+(n/1e7).toFixed(2))+" Cr" : n>=1e5 ? 
 const money = v => Math.round(num(v)).toLocaleString("en-IN");   // 40000 → 40,000
 function teachmintSponsorship(){
   const spons = num(V.spons);
-  if(V.sub==="Co-Sponsored Event") return spons*(num(V.share)>0 ? Math.min(100,num(V.share)) : 100)/100;
+  if(S.role!=="MKT") return spons;
   if(V.cat==="Partner Event"){
     if(S.shareMode==="₹" && has(V.pshareAmt)) return Math.min(num(V.pshareAmt), spons||Infinity);
     return has(V.pshare) ? spons*Math.min(100,num(V.pshare))/100 : spons;
@@ -541,7 +551,7 @@ function perms(){
 function render(){
   const p = perms(), r = S.rec;
   $("title").textContent = V.cat==="Partner Branding" ? "Partner branding" : (S.recordId ? "Event request" : "New request");
-  $("subtitle").textContent = (S.role==="MKT" ? "Marketing details" : "GTM proposal") + (S.prefilled ? " · prefilled, please check" : "");
+  $("subtitle").textContent = "Domestic Event" + (S.prefilled ? " · prefilled, please check" : "");
   const ch = [`<span class="today">${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>`];
   if(r[C.number]) ch.push(`<span class="chip"><b>${esc(r[C.number])}</b></span>`);
   if(r[C.status]) ch.push(`<span class="chip">${esc(r[C.status])}</span>`);
@@ -567,7 +577,7 @@ function render(){
 }
 function renderSheet(c){
   const venue = [String(V.address||"").split(/\n|,/)[0], V.district&&V.district.name].filter(has).join(", ");
-  const split = V.sub==="Co-Sponsored Event" || V.cat==="Partner Event";
+  const split = V.cat==="Partner Event";
   const rows = [[split && num(V.spons)?`Sponsorship cost<small>Teachmint share of ${inr(num(V.spons))}</small>`:"Sponsorship cost", c.ours],["Production cost", num(V.prod)],["Procurement expense", num(V.proc)]];
   let h = `<table class="sheet"><thead><tr><th>Event</th><th>Venue</th><th>Date</th><th>Expected audience</th><th>Item</th><th>Cost</th><th>Business commitment</th></tr></thead><tbody>`;
   rows.forEach((r,i)=>{
@@ -608,7 +618,7 @@ function field(f,edit){
   const label = `<label class="f" for="${id}">${esc(lbl)}${req}</label>`;
   if(f.type==="subtype" && V.cat==="Partner Event") return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
   if(!edit){
-    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="pshare") t = has(v)?(+num(v).toFixed(2))+"%":""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup"||f.type==="district") t = v&&v.name; if(f.type==="map" && has(v)) return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static"><a href="${esc(v)}" target="_blank" rel="noopener">Open in Google Maps</a></div></div>`; if(f.type==="file") t = fileNames(v);
+    let t = v; if(f.type==="money") t = has(v)?inr(num(v)):""; if(f.type==="pshare") t = has(v)?(+num(v).toFixed(2))+"%":""; if(f.type==="date") t = ordinalDate(v); if(f.type==="percent") t = has(v)?num(v)+"%":""; if(f.type==="lookup"||f.type==="district"||f.type==="citylk"||f.type==="pinlk") t = v&&v.name; if(f.type==="map" && has(v)) return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static"><a href="${esc(v)}" target="_blank" rel="noopener">Open in Google Maps</a></div></div>`; if(f.type==="file") t = fileNames(v);
     return `<div class="${cls}"><span class="f">${esc(f.k==="agenda" && V.cat==="Partner Branding" ? "Site recce" : f.label)}</span><div class="static">${has(t)?esc(t):"–"}</div></div>`;
   }
   let ctrl;
@@ -619,6 +629,7 @@ function field(f,edit){
   }
   else if(f.type==="category"||f.type==="subtype"){ const opts = f.type==="category" ? CATS : EC_SUBS; ctrl = `<select class="in" id="${id}" data-k="${f.k}"><option value="">Select</option>${opts.map(o=>`<option ${v===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
   else if(f.type==="file"){ const sv = fileNames(v), pend = (S.files[f.k]||[]).map(x=>x.name).join(", "); ctrl = `<input class="in" type="file" id="${id}" data-file="${f.k}" ${f.multiple?"multiple":""} ${f.accept?`accept="${f.accept}"`:""}>${sv?`<p class="cellnote">Saved: ${esc(sv)}</p>`:""}${pend?`<p class="cellnote">To upload: ${esc(pend)}</p>`:""}`; }
+  else if(f.type==="citylk"||f.type==="pinlk"){ const kind = f.type==="citylk"?"city":"pin"; ctrl = `<div class="typeahead"><input class="in" id="${id}" data-lq="${kind}" autocomplete="off" ${kind==="pin"?'inputmode="numeric" maxlength="6"':""} placeholder="${kind==="pin"?"Type 3+ digits":"Type to search"}" value="${esc((v&&v.name)||V["_lq_"+kind]||"")}"><ul class="ta-list hidden" id="ll_${kind}"></ul></div>${kind==="pin"&&S.districtName?`<p class="cellnote">${esc(S.districtName)}</p>`:""}`; }
   else if(f.type==="district") ctrl = `<div class="typeahead"><input class="in" id="${id}" data-dq="1" autocomplete="off" placeholder="${DIST===null?"Loading districts…":"Type to search"}" value="${esc((V.district&&V.district.name)||V._dq||"")}"><ul class="ta-list hidden" id="dl"></ul></div>`;
   else if(f.type==="map") ctrl = `<div class="maprow"><input class="in" id="${id}" data-k="map" type="url" value="${esc(v)}" placeholder="Paste a Google Maps link"><button type="button" class="btn" id="locBtn">Use my location</button>${has(v)?`<a class="btn" href="${esc(v)}" target="_blank" rel="noopener">Open map</a>`:""}</div>${has(v)&&!/google\.|goo\.gl|maps\.app/i.test(v)?'<p class="hint err">This doesn’t look like a Google Maps link</p>':""}<p class="cellnote">In Google Maps: open the place → Share → Copy link</p>`;
   else if(f.type==="auto") ctrl = `<input class="in" id="${id}" value="${esc(v)}" readonly tabindex="-1" placeholder="From district">`;
@@ -648,7 +659,7 @@ function renderBar(p){
 function missing(){
   const out = []; S.firstMissing = null;
   for(const f of FIELDS){ if(!f.req || !shown(f)) continue; if(f.k==="pshare" && S.shareMode==="₹" && has(V.pshareAmt)) continue; if(f.k==="sub" && V.cat==="Partner Event") continue; if(!has(V[f.k])){ out.push(f.label.toLowerCase()); if(!S.firstMissing) S.firstMissing = f; } }
-  if(has(V.pin) && String(V.pin).length!==6 && shown(byK("pin"))) out.push("a 6-digit pin code");
+  if(!has(V.pin) && has(V._lq_pin)) out.push("a pin code from the list");
   return out;
 }
 function fail(list){ if(S.firstMissing){ const t = TAB_OF(S.firstMissing.sec); if(t!==S.tab){ S.tab = t; render(); } const el = $("f_"+S.firstMissing.k); el && el.focus(); S.firstMissing = null; } $("msg").textContent = "Add "+list.join(", ")+" to continue."; $("msg").classList.add("err"); }
@@ -656,6 +667,7 @@ function payload(){
   const o = {}, s = side();
   for(const f of FIELDS){
     if(f.type==="file" || f.type==="district" || f.type==="map") continue;
+    if(f.type==="citylk"||f.type==="pinlk"){ o[f[s]] = V[f.k]&&V[f.k].id ? {id:V[f.k].id} : null; continue; }
     if(!shown(f) && f.k!=="sub"){ continue; }
     let v = V[f.k];
     if(f.k==="sub" && V.cat==="Partner Event") v = "Partner Enablement Event";
@@ -664,9 +676,14 @@ function payload(){
     else if(!has(v)) v = null;
     o[f[s]] = v;
   }
-  o[CITY[s]] = V.district ? V.district.name : null;
+  if(V.cat==="Partner Event" && S.role==="MKT"){
+    const amt = S.shareMode==="₹";
+    o[SHARE.type[s]] = amt ? SHARE.AMT : SHARE.PCT;
+    o[SHARE.amt[s]] = amt && has(V.pshareAmt) ? num(V.pshareAmt) : null;
+    o[byK("pshare")[s]] = amt ? null : (has(V.pshare) ? +num(V.pshare).toFixed(2) : null);
+  }
   o[CFG.MAP_FIELD] = has(V.map) ? String(V.map).trim() : null;
-  if(V.district) o[C.district] = {id:V.district.id};
+  if(S.districtId) o[C.district] = {id:S.districtId};
   if(V.cat==="Partner Branding") o[byK("sub")[s]] = null;
   o.Name = V.cat==="Partner Branding" ? "Partner Branding – "+((V.district&&V.district.name)||"") : (V.name || "Event request");
   if(S.ownerDirty || !S.recordId){
@@ -710,7 +727,9 @@ function loadRecord(rec){
     if(!has(v) && has(rec[f[o]]) && f.type!=="file" && perms().edit){ v = rec[f[o]]; S.prefilled = true; }   // first time: start from the other side’s values
     V[f.k] = v==null ? "" : v;
   }
-  V.map = rec[CFG.MAP_FIELD] || ""; S.shareMode = "%"; V.pshareAmt = "";
+  V.map = rec[CFG.MAP_FIELD] || "";
+  { const sd = has(rec[SHARE.type[s]]) || has(rec[SHARE.amt[s]]) ? s : o;   // same prefill rule as other fields
+    S.shareMode = rec[SHARE.type[sd]]===SHARE.AMT ? "₹" : "%"; V.pshareAmt = has(rec[SHARE.amt[sd]]) ? String(Math.round(num(rec[SHARE.amt[sd]]))) : ""; }
   if(rec.Owner) S.owner = {id:rec.Owner.id, name:rec.Owner.name};
   if(rec[C.zh]) S.zh = {id:rec[C.zh].id, name:rec[C.zh].name};
   if(rec[C.district]){ S.districtName = rec[C.district].name; S.districtId = rec[C.district].id; V.district = {id:rec[C.district].id, name:rec[C.district].name}; }
@@ -727,6 +746,7 @@ document.addEventListener("click", e=>{
   if(e.target.closest("#tlToggle")){ S.tlAll = !S.tlAll; renderTimeline(); return; }
   const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
   if(e.target.closest("#locBtn")){ useMyLocation(); return; }
+  const lp = e.target.closest("[data-lpick]"); if(lp){ lookupPick(lp.dataset.lpick, lp.dataset.id); return; }
   const dk = e.target.closest("[data-dpick]"); if(dk){ pickDistrict(dk.dataset.dpick); return; }
   if(e.target.closest("#f_district")){ showDistricts(e.target.value||""); return; }
   const pk = e.target.closest("[data-pick]"); if(pk){ V.partner = {id:pk.dataset.pick, name:pk.dataset.name}; render(); return; }
@@ -739,21 +759,22 @@ document.addEventListener("click", e=>{
   const role = e.target.closest("[data-role]"); if(role){ setRole(role.dataset.role); return; }
   const pl = $("pl"); if(pl) pl.classList.add("hidden");
   const dl = $("dl"); if(dl) dl.classList.add("hidden");
+  document.querySelectorAll('[id^="ll_"]').forEach(u=>u.classList.add("hidden"));
 });
 document.addEventListener("input", e=>{
   const k = e.target.dataset && e.target.dataset.k;
   if(e.target.id==="f_pshare"){
-    if(S.shareMode==="₹"){ const d = e.target.value.replace(/\D/g,""); V.pshareAmt = d; V.pshare = num(V.spons) ? Math.min(100, num(d)/num(V.spons)*100).toFixed(4) : ""; e.target.value = d ? money(d) : ""; }
+    if(S.shareMode==="₹"){ const d = e.target.value.replace(/\D/g,""); V.pshareAmt = d; e.target.value = d ? money(d) : ""; }
     else { let d = e.target.value.replace(/[^\d.]/g,""); if(num(d)>100) d = "100"; V.pshare = d; e.target.value = d; }
     clearErr(); softEnd(); return;
   }
   if(k && e.target.tagName!=="SELECT" && byK(k) && byK(k).type==="money"){
     const d = e.target.value.replace(/\D/g,""); V[k] = d; e.target.value = d ? money(d) : "";
-    if(k==="spons" && S.shareMode==="₹" && has(V.pshareAmt)) V.pshare = num(d) ? Math.min(100, num(V.pshareAmt)/num(d)*100).toFixed(4) : "";
     clearErr(); softEnd(); return;
   }
   if(k && e.target.tagName!=="SELECT"){ let v = e.target.value; if(k==="pin"){ v = v.replace(/\D/g,"").slice(0,6); e.target.value = v; } V[k] = v; clearErr(); soft(); return; }
   if(e.target.dataset && e.target.dataset.pq) onPartner(e.target.value);
+  if(e.target.dataset && e.target.dataset.lq){ if(e.target.dataset.lq==="pin") e.target.value = e.target.value.replace(/\D/g,"").slice(0,6); lookupQuery(e.target.dataset.lq, e.target.value); }
   if(e.target.dataset && e.target.dataset.dq){ V._dq = e.target.value; V.district = null; showDistricts(e.target.value); }
   if(e.target.id==="f_share"){ e.target.value = e.target.value.replace(/\D/g,"").slice(0,2); V.share = e.target.value; }
   if(e.target.id==="q"){ clearTimeout(qT); qT = setTimeout(()=>{ L.q = e.target.value; L.page = 1; loadList(); },350); }
@@ -777,6 +798,31 @@ function useMyLocation(){
     V.map = "https://www.google.com/maps?q="+a.toFixed(6)+","+b.toFixed(6); clearErr(); render();
   }, ()=>{ $("msg").textContent = "Couldn’t get your location (permission blocked). Paste the Google Maps link instead."; $("msg").classList.add("err"); }, {enableHighAccuracy:true, timeout:10000});
 }
+const STATE_FIX = {"Andaman & Nicobar":"Andaman & Nicobar (UT)","Chandigarh":"Chandigarh (UT)","Jammu & Kashmir":"Jammu & Kashmir(UT)","Ladakh":"Ladakh (UT)","Lakshadweep":"Lakshadweep (UT)","Puducherry":"Puducherry (UT)"};
+const toState = st => { const t = String(st||"").trim(); if(/^Uttar Pradesh\s*\d+$/i.test(t)) return "Uttar Pradesh"; return STATE_FIX[t] || t; };
+/* City → State, Pin code → District (hidden) → Owner + ZH */
+let lqT; const LQ = {city:[], pin:[]};
+function lookupQuery(kind,q){
+  V["_lq_"+kind] = q; V[kind] = null; if(kind==="city") V.state = ""; clearTimeout(lqT);
+  const u = $("ll_"+kind); if(!u) return;
+  if(q.trim().length < (kind==="pin"?3:2)){ u.classList.add("hidden"); return; }
+  lqT = setTimeout(async ()=>{
+    let rows = []; try{ rows = await API.lookupSearch(kind, q.trim()); }catch(_){}
+    LQ[kind] = rows; const ul = $("ll_"+kind); if(!ul) return;
+    ul.innerHTML = rows.length ? rows.map(r=>`<li><button type="button" data-lpick="${kind}" data-id="${esc(r.id)}">${esc(r.Name)} <span class="sub">· ${esc(kind==="city" ? toState(r.State&&r.State.name) : (r.District&&r.District.name)||"")}</span></button></li>`).join("") : `<li class="sub" style="padding:7px 8px">No ${kind==="city"?"city":"pin code"} matches “${esc(q)}”</li>`;
+    ul.classList.remove("hidden");
+  },250);
+}
+async function lookupPick(kind,id){
+  const r = LQ[kind].find(x=>x.id===id); if(!r) return;
+  V[kind] = {id:r.id, name:r.Name}; V["_lq_"+kind] = "";
+  if(kind==="city") V.state = toState(r.State&&r.State.name);
+  if(kind==="pin" && r.District){
+    S.districtId = r.District.id; S.districtName = r.District.name; S.ownerDirty = true; render();
+    try{ const d = await API.district(r.District.id); if(d){ S.owner = d.owner; const z = CFG.ZH_BY_ZONE[d.zone]; S.zh = z ? Object.assign({},z) : null; } }catch(_){}
+  }
+  clearErr(); render();
+}
 /* District picker: owner, ZH and state come from the chosen district */
 let DIST = null;
 async function ensureDistricts(){ if(DIST) return; try{ DIST = await API.districts(); }catch(_){ DIST = []; } if(S.view==="form") soft(); }
@@ -785,12 +831,12 @@ function showDistricts(q){
   if(!DIST){ u.innerHTML = `<li class="sub" style="padding:7px 8px">Loading districts…</li>`; u.classList.remove("hidden"); return; }
   const t = q.trim().toLowerCase();
   const list = DIST.filter(d=>!t || d.name.toLowerCase().includes(t)).slice(0,30);
-  u.innerHTML = list.length ? list.map(d=>`<li><button type="button" data-dpick="${esc(d.id)}">${esc(d.name)} <span class="sub">· ${esc(d.state)}</span></button></li>`).join("") : `<li class="sub" style="padding:7px 8px">No district matches “${esc(q)}”</li>`;
+  u.innerHTML = list.length ? list.map(d=>`<li><button type="button" data-dpick="${esc(d.id)}">${esc(d.name)} <span class="sub">· ${esc(toState(d.state))}</span></button></li>`).join("") : `<li class="sub" style="padding:7px 8px">No district matches “${esc(q)}”</li>`;
   u.classList.remove("hidden");
 }
 function pickDistrict(id){
   const d = (DIST||[]).find(x=>x.id===id); if(!d) return;
-  V.district = {id:d.id, name:d.name}; V._dq = ""; V.state = d.state; S.districtName = d.name; S.districtId = d.id;
+  V.district = {id:d.id, name:d.name}; V._dq = ""; V.state = toState(d.state); S.districtName = d.name; S.districtId = d.id;
   if(S.role==="MKT" || !S.rec.Owner){ S.owner = d.owner; const z = CFG.ZH_BY_ZONE[d.zone]; S.zh = z ? Object.assign({},z) : null; S.ownerDirty = true; }
   clearErr(); render();
 }
@@ -853,12 +899,12 @@ async function loadList(){
 }
 function renderList(){
   $("filterBtns").innerHTML = FILTERS.map(([k,l])=>`<button type="button" data-filter="${k}" aria-pressed="${L.filter===k}">${esc(l)}</button>`).join("");
-  const head = `<thead><tr><th scope="col">Event no.</th><th scope="col">Event</th><th scope="col">Date</th><th scope="col">Owner</th><th scope="col">Status</th><th scope="col">Tag</th></tr></thead>`;
+  const head = `<colgroup><col class="c-no"><col class="c-ev"><col class="c-dt"><col class="c-ow"><col class="c-st"><col class="c-tg"></colgroup><thead><tr><th scope="col">Event no.</th><th scope="col">Event</th><th scope="col">Date</th><th scope="col">Owner</th><th scope="col">Status</th><th scope="col">Tag</th></tr></thead>`;
   let body;
   if(L.loading) body = `<tr><td colspan="6" class="empty">Loading requests…</td></tr>`;
   else if(L.error) body = `<tr><td colspan="6" class="empty">Couldn’t load requests: ${esc(L.error)}</td></tr>`;
   else if(!L.rows.length) body = `<tr><td colspan="6" class="empty">${L.filter==="all"&&!L.q?"No event requests yet. Click “+ New event” to raise one.":"No requests match this filter."}</td></tr>`;
-  else body = L.rows.map(r=>`<tr><td data-l="no">${esc(r.Event_Number||"–")}</td><td data-l="event"><button type="button" class="open" data-open="${esc(r.id)}">${esc(r.Event_Name||r.Event_s_Name||r.Name||"Untitled")}</button></td><td data-l="date">${esc(ordinalDate(r.Event_Date||r.Event_s_Date)||"–")}</td><td data-l="owner">${esc((r.Owner&&r.Owner.name)||"–")}</td><td data-l="status">${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td data-l="tag">${esc(r.Event_Tag||"")}</td></tr>`).join("");
+  else body = L.rows.map(r=>`<tr><td data-l="no">${esc(r.Event_Number||"–")}</td><td data-l="event" title="${esc(r.Name||"")}"><button type="button" class="open" data-open="${esc(r.id)}">${esc(r.Name||"Untitled")}</button></td><td data-l="date">${esc(ordinalDate(r.Event_Date)||"–")}</td><td data-l="owner">${esc((r.Owner&&r.Owner.name)||"–")}</td><td data-l="status">${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td data-l="tag" title="${esc(r.Event_Tag||"")}">${esc(r.Event_Tag||"")}</td></tr>`).join("");
   $("list").innerHTML = head+"<tbody>"+body+"</tbody>";
   $("pageInfo").textContent = L.rows.length ? "Page "+L.page : "";
   $("prevPg").disabled = L.page<=1||L.loading; $("nextPg").disabled = !L.more||L.loading;
@@ -866,9 +912,9 @@ function renderList(){
 function show(v){ S.view = v; $("listView").classList.toggle("hidden",v!=="list"); $("formView").classList.toggle("hidden",v!=="form"); $("bar").classList.toggle("hidden",v!=="form"); window.scrollTo(0,0); }
 function blank(){ S.shareMode = "%"; S.tab = "event"; S.tl = null; S.tlAll = false; S.recordId = null; S.rec = {}; V = {}; S.files = {}; S.owner = null; S.zh = null; S.districtName = ""; S.districtId = null; S.pin = "idle"; S.ownerDirty = false; S.prefilled = false; clearErr(); }
 function showList(){ show("list"); loadList(); }
-function newRecord(){ blank(); show("form"); render(); ensureDistricts(); }
+function newRecord(){ blank(); V.country = "India"; show("form"); render(); }
 async function openRecord(id){
-  blank(); show("form"); ensureDistricts(); $("msg").textContent = "Loading the request…"; $("btns").innerHTML = "";
+  blank(); show("form"); $("msg").textContent = "Loading the request…"; $("btns").innerHTML = "";
   try{ const rec = await API.load(id); if(!rec.id) throw new Error("Record not found or no access."); loadRecord(rec); }
   catch(err){ $("msg").textContent = "Couldn’t open: "+(err.message||err); $("msg").classList.add("err"); }
 }
@@ -882,7 +928,7 @@ function setRole(r){
 
 /* ============ BOOT ============ */
 async function boot(entityId){
-  const u = await API.me(); S.role = u.role; S.user = {id:u.id, name:u.name};
+  const u = await API.me(); if(S.live) S.role = u.role; else u.name = S.role==="MKT"?"Preview Marketing user":"Preview GTM user"; S.user = {id:u.id, name:u.name};
   if(entityId) openRecord(entityId); else showList();
 }
 if(window.ZOHO && ZOHO.embeddedApp){
@@ -891,6 +937,7 @@ if(window.ZOHO && ZOHO.embeddedApp){
   ZOHO.embeddedApp.init();
 } else {
   $("demoBar").classList.remove("hidden");
+  S.role = new URLSearchParams(location.search).get("as")==="gtm" ? "GTM" : "MKT";
   $("resetDemo").addEventListener("click",()=>{ MOCK.rows = []; MOCK.n = 0; showList(); });
   boot(null);
 }
