@@ -426,7 +426,6 @@ const FIELDS = [
   {sec:"secType", k:"sub", label:"Event sub type", api:"Event_Sub_Type", type:"subtype", req:true, gtm:true, show:()=>V.cat && !isBR()},
   {sec:"secType", k:"date", label:"Event date", api:"Event_Date", type:"date", req:true, gtm:true, show:EV},
   {sec:"secBasic", k:"partner", label:"Partner name", api:"Partner", type:"partner", req:true, gtm:true, show:needPartner},
-  {sec:"secBasic", k:"pcontrib", label:"Partner contribution", api:"Partner_s_Contribution", type:"money", req:true, show:isCO},
   {sec:"secBasic", k:"name", label:"Event name", api:"Name", type:"text", req:true, gtm:true, ph:"e.g. Education Excellence Conclave – Jammu", show:EV},
   {sec:"secBasic", k:"attendee", label:"Expected attendee", api:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, gtm:true, show:EV},
   {sec:"secBasic", k:"address", label:"Venue", api:"Address", type:"textarea", req:true, show:EV},
@@ -454,6 +453,7 @@ const FIELDS = [
   // Initial cost (first proposal)
   {sec:"init", k:"spons", label:"Sponsorship cost", api:"Sponsorship_Cost", type:"money", req:true, gtm:true, show:EV},
   {sec:"init", k:"ishare", label:"Teachmint contribution", type:"share", req:true, set:"init", show:isPE},
+  {sec:"init", k:"pcontrib", label:"Partner contribution", api:"Partner_s_Contribution", type:"money", req:true, show:isCO},
   {sec:"init", k:"prod", label:"Production cost", api:"Production_Cost", type:"money", req:true, help:"Booth branding, standees, branding", show:EV},
   {sec:"init", k:"proc", label:"Procurement cost", api:"Procurement_Cost", type:"money", req:true, help:"Brochures, merchandise, bags, gifts", show:EV},
   {sec:"init", k:"gift", label:"Gift’s required", api:"Gift_s_Required", type:"check", gtm:true, show:EV},
@@ -464,13 +464,14 @@ const FIELDS = [
   // Final cost (negotiated, used in approvals)
   {sec:"final", k:"fspons", label:"Sponsorship cost", api:"Event_s_Sponsorship_Cost", type:"money", req:true, show:EV},
   {sec:"final", k:"fshare", label:"Teachmint contribution", type:"share", req:true, set:"final", show:isPE},
+  {sec:"final", k:"fpcontrib", label:"Partner contribution", type:"money", req:true, show:isCO},
   {sec:"final", k:"fprod", label:"Production cost", api:"Event_s_Production_Cost", type:"money", req:true, show:EV},
   {sec:"final", k:"fproc", label:"Procurement cost", api:"Event_s_Procurement_Cost", type:"money", req:true, show:EV}
 ];
 const SHARE_API = { init:{type:"Share_Type", pct:"Teachmint_Share_Percent", amt:"Teachmint_Share_Amount"}, final:{type:"Final_Share_Type", pct:"Final_TM_Share_Percent", amt:"Final_TM_Share_Amount"} };
 const W = {cat:2, sub:2, date:2, partner:4, pcontrib:2, name:4, attendee:2, address:6, city:2, state:2, pin:1, country:1, agenda:3, photos:3, other:6,
   firm:4, logo:2, poc:3, pocm:3, faddr:6, fpin:2, fcity:2, fstate:2, map:6, more:6, recce:6, vendor:3, quote:3,
-  spons:2, ishare:4, prod:2, proc:2, gift:2, giftc:1, merch:2, merchc:1, broc:2, fspons:2, fshare:4, fprod:2, fproc:2};
+  spons:2, ishare:4, pcontrib:2, fpcontrib:2, prod:2, proc:2, gift:2, giftc:1, merch:2, merchc:1, broc:2, fspons:2, fshare:4, fprod:2, fproc:2};
 const byK = k => FIELDS.find(f=>f.k===k);
 const STATE_FIX = {"Andaman & Nicobar":"Andaman & Nicobar (UT)","Chandigarh":"Chandigarh (UT)","Jammu & Kashmir":"Jammu & Kashmir(UT)","Ladakh":"Ladakh (UT)","Lakshadweep":"Lakshadweep (UT)","Puducherry":"Puducherry (UT)"};
 const toState = st => { const t = String(st||"").trim(); if(/^Uttar Pradesh\s*\d+$/i.test(t)) return "Uttar Pradesh"; return STATE_FIX[t] || t; };
@@ -578,6 +579,7 @@ function newSubSourceId(){ const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let r =
 /* Costs: Initial = first proposal, Final = negotiated (used for approvals and the ₹50K rule) */
 function tmSponsorship(set){
   const spons = num(V[set==="init"?"spons":"fspons"]);
+  if(isCO()) return Math.max(0, spons - num(V[set==="init"?"pcontrib":"fpcontrib"]));   // Teachmint bears the rest
   if(!isPE()) return spons;
   const sh = V[set==="init"?"ishare":"fshare"]||{};
   if(S.share[set]==="₹") return has(sh.amt) ? Math.min(num(sh.amt), spons||Infinity) : spons;
@@ -709,7 +711,7 @@ function renderCost(p){
     if(can && f.needs && !V[f.needs]) return field(f,true).replace('<input class="in"','<input class="in" disabled title="Tick the box first"');
     return field(f,can); };
   const fl = (list, editable) => { const L = list.filter(shown), main = L.filter(f=>!DETAIL_KEYS.includes(f.k)), det = L.filter(f=>DETAIL_KEYS.includes(f.k));
-    const four = main.some(f=>f.type==="share");
+    const four = main.some(f=>f.type==="share" || f.k==="pcontrib" || f.k==="fpcontrib");
     return `<div class="fgrid${four?" cost4":""}">${main.map(f=>one(f,editable)).join("")}</div>`+(det.length?`<div class="detrow">${det.map(f=>one(f,editable)).join("")}</div>`:""); };
   const of = sec => FIELDS.filter(f=>f.sec===sec);
   if(isBR()) blocks.push(fl(of("brVendor"), p.edit));
@@ -728,14 +730,20 @@ function renderCost(p){
     const set = activeSet(), c = costs(set);
     $("summary").innerHTML = `<div class="big"><span>${set==="init"?"Total event cost*":"Final event cost*"}</span><b>${c.total?inr(c.total):"–"}</b></div><div class="big"><span>Business commitment</span><b>${esc(c.commit)}</b></div>`;
     renderSheet(c, set);
-    let due = "within 45 days of the event date";
-    if(V.date){ const d = new Date(V.date+"T00:00:00"); if(!isNaN(d)){ d.setDate(d.getDate()+45); due = "by "+d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+" (45 days from the event date)"; } }
+    const fmt = d => d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+    const ev = V.date ? new Date(V.date+"T00:00:00") : null, ok = ev && !isNaN(ev);
+    let due;
+    if(isPE()){
+      const base = ok ? ev : new Date(), m = base.getMonth(), qEnd = new Date(base.getFullYear(), Math.floor(m/3)*3+3, 0);
+      const fyQ = [4,4,4,1,1,1,2,2,2,3,3,3][m], fyStart = m>=3 ? base.getFullYear() : base.getFullYear()-1;
+      due = "by "+fmt(qEnd)+" (end of Q"+fyQ+" FY "+fyStart+"-"+String(fyStart+1).slice(2)+")";
+    } else due = ok ? "by "+fmt(new Date(ev.getFullYear(), ev.getMonth(), ev.getDate()+45)) : "45 days after the event date (select the date)";
     $("foot").innerHTML = `* GST &amp; transportation charges are extra, at actuals.<br>* ${isPE()?"Partner target":"Panel commitment"} to be fulfilled ${esc(due)}.`;
   }
 }
 function field(f, edit){
   const v = V[f.k], id = "f_"+f.k, rq = reqOf(f) ? ' <i aria-hidden="true">*</i>' : "", cls = "s"+(W[f.k]||2);
-  let lbl = f.label; if(f.k==="spons"||f.k==="fspons"){ if(isPE()) lbl = "Event sponsorship"; }
+  let lbl = f.label; if(f.k==="spons"||f.k==="fspons"){ if(isPE()||isCO()) lbl = "Event sponsorship"; }
   const label = `<label class="f" for="${id}">${esc(lbl)}${rq}</label>`;
   if(f.type==="subtype" && isPE()) return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
   if(f.type==="check"){ return `<div class="${cls}"><span class="f">&nbsp;</span><label class="check">${esc(f.label)} <input type="checkbox" id="${id}" data-chk="${f.k}" ${v?"checked":""} ${edit?"":"disabled"}></label></div>`; }
@@ -763,7 +771,7 @@ function field(f, edit){
     ctrl = f.type==="money" ? `<div class="money">${inp}</div>` : inp;
   }
   let help = f.help||"";
-  if((f.k==="spons"||f.k==="fspons") && isPE()){ const set = f.k==="spons"?"init":"final", amt = tmSponsorship(set); help = num(V[f.k]) ? "Cost to Teachmint: "+inr(amt) : "Cost to Teachmint is shown here"; }
+  if((f.k==="spons"||f.k==="fspons") && (isPE()||isCO())){ const set = f.k==="spons"?"init":"final", amt = tmSponsorship(set); help = num(V[f.k]) ? "Cost to Teachmint: "+inr(amt) : "Cost to Teachmint is shown here"; }
   return `<div class="${cls}">${label}${ctrl}${help?`<p class="cellnote">${esc(help)}</p>`:""}</div>`;
 }
 function shareCtrl(f, edit){
@@ -771,7 +779,7 @@ function shareCtrl(f, edit){
   const note = spons ? "Teachmint bears "+inr(ours) : "Enter sponsorship first";
   if(!edit) return `<span class="f">${esc(f.label)}</span><div class="static">${amtMode ? (has(sh.amt)?inr(num(sh.amt)):"–") : (has(sh.pct)?(+num(sh.pct).toFixed(2))+"%":"–")}</div>`;
   const val = amtMode ? (has(sh.amt)?money(sh.amt):"") : (has(sh.pct)?String(+num(sh.pct).toFixed(2)):"");
-  return `<label class="f" for="f_${f.k}">${esc(f.label)} <i aria-hidden="true">*</i></label><div class="sharerow"><div class="${amtMode?"money":"pct"}"><input class="in" id="f_${f.k}" data-share="${f.k}" inputmode="decimal" value="${esc(val)}" placeholder="${amtMode?"Amount":"%"}"></div><span class="mini" role="group" aria-label="Contribution as"><button type="button" data-smode="${set}|%" aria-pressed="${!amtMode}">%</button><button type="button" data-smode="${set}|₹" aria-pressed="${amtMode}">₹</button></span></div>`;
+  return `<label class="f" for="f_${f.k}">${esc(f.label)} <i aria-hidden="true">*</i></label><div class="sharerow"><div class="${amtMode?"money":"pct"}"><input class="in" id="f_${f.k}" data-share="${f.k}" inputmode="decimal" value="${esc(val)}" placeholder="${amtMode?"Amount":"e.g. 50"}"></div><span class="mini" role="group" aria-label="Contribution as"><button type="button" data-smode="${set}|%" aria-pressed="${!amtMode}">%</button><button type="button" data-smode="${set}|₹" aria-pressed="${amtMode}">₹</button></span></div>`;
 }
 function renderSheet(c, set){
   const P = set==="init" ? {s:"spons",p:"prod",q:"proc"} : {s:"fspons",p:"fprod",q:"fproc"};
@@ -852,6 +860,7 @@ function missing(tabOnly){
     else ok = has(V[f.k]);
     if(!ok){ out.push((f.sec==="final"&&!caseA()?"final ":"")+f.label.toLowerCase()); if(!S.firstMissing) S.firstMissing = f; }
   }
+  if(isCO()) [["spons","pcontrib"],["fspons","fpcontrib"]].forEach(([a,b])=>{ if(shown(byK(b)) && has(V[b]) && num(V[b])>num(V[a])) out.push("a partner contribution no higher than the sponsorship"); });
   if(shown(byK("pocm")) && has(V.pocm) && String(V.pocm).replace(/\D/g,"").length<10) out.push("a 10-digit mobile number");
   return out;
 }
@@ -874,6 +883,10 @@ function payload(){
     else if(f.type==="check") v = !!v;
     else if(!has(v)) v = null;
     o[f.api] = v;
+  }
+  if(isCO()){
+    const lock = set => lockedField(byK(set==="init"?"pcontrib":"fpcontrib"), perms());
+    for(const set of ["init","final"]){ if(lock(set)) continue; const a = SHARE_API[set]; o[a.type] = CFG.SHARE.AMT; o[a.pct] = null; o[a.amt] = tmSponsorship(set); }
   }
   // Teachmint share (Partner Enablement), initial and final kept separately
   for(const set of ["init","final"]){
@@ -913,6 +926,7 @@ const ACT = {
     const re = st()===ST.REJECTED, wasA = caseA(), o = payload();
     if(wasA && !isBR()){
       o.Event_s_Sponsorship_Cost = has(V.spons)?num(V.spons):null; o.Event_s_Production_Cost = has(V.prod)?num(V.prod):null; o.Event_s_Procurement_Cost = has(V.proc)?num(V.proc):null;
+      if(isCO()){ const a = SHARE_API.final; o[a.type] = CFG.SHARE.AMT; o[a.pct] = null; o[a.amt] = tmSponsorship("init"); }
       if(isPE()){ const a = SHARE_API.final, sh = V.ishare||{}, amt = S.share.init==="₹"; o[a.type] = amt?CFG.SHARE.AMT:CFG.SHARE.PCT; o[a.amt] = amt&&has(sh.amt)?num(sh.amt):null; o[a.pct] = !amt&&has(sh.pct)?+num(sh.pct).toFixed(2):null; }
     }
     o[C.status] = re ? ST.RESUBMITTED : ST.SUBMITTED;
@@ -944,6 +958,7 @@ function recToV(rec){
   if(rec[CFG.MAP_FIELD]) v.map = rec[CFG.MAP_FIELD];
   v.ishare = {pct: rec[SHARE_API.init.pct]??"", amt: rec[SHARE_API.init.amt]??""};
   v.fshare = {pct: rec[SHARE_API.final.pct]??"", amt: rec[SHARE_API.final.amt]??""};
+  if(rec.Event_Sub_Type==="Co-Sponsored Event" && has(rec[SHARE_API.final.amt])) v.fpcontrib = String(Math.max(0, num(rec.Event_s_Sponsorship_Cost) - num(rec[SHARE_API.final.amt])));
   return v;
 }
 function loadRecord(rec){
@@ -953,7 +968,7 @@ function loadRecord(rec){
   if(V.cat==="Partner Event") V.sub = "Partner Enablement Event";
   // Final cost starts as a copy of the Initial cost
   if(caseB() && !has(V.fspons)){
-    [["fspons","spons"],["fprod","prod"],["fproc","proc"]].forEach(([a,b])=>{ if(!has(V[a]) && has(V[b])) V[a] = V[b]; });
+    [["fspons","spons"],["fprod","prod"],["fproc","proc"],["fpcontrib","pcontrib"]].forEach(([a,b])=>{ if(!has(V[a]) && has(V[b])) V[a] = V[b]; });
     if(isPE() && !has(V.fshare.pct) && !has(V.fshare.amt)) V.fshare = Object.assign({}, V.ishare);
   }
   S.owner = rec.Owner ? {id:rec.Owner.id, name:rec.Owner.name} : null;
