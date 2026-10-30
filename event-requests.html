@@ -312,6 +312,10 @@ input[type=file].in{font-size:12.5px;padding:5px 6px}
 .done .next{font-size:13.5px;color:var(--muted);margin:14px 0 22px}
 .done .btns{justify-content:center}
 .cmp td{padding:4px 10px 4px 0;font-size:13px}.cmp td:first-child{color:var(--muted)}
+.detrow{display:grid;grid-template-columns:max-content 86px max-content 86px minmax(86px,1fr);gap:8px 14px;align-items:end;margin-top:10px}
+.detrow > div{min-width:0;grid-column:auto!important}.detrow .check{white-space:nowrap}.detrow label.f{white-space:nowrap}
+.detrow .in:disabled{opacity:.5}
+@media (max-width:620px){.detrow{grid-template-columns:auto 84px}}
 </style>
 </head>
 <body>
@@ -357,7 +361,7 @@ input[type=file].in{font-size:12.5px;padding:5px 6px}
     <section class="panel tabpanel hidden" id="tab-cost" role="tabpanel">
       <div id="costBlocks"></div>
       <div class="summary" id="summary"></div>
-      <p class="foot" id="foot">* GST &amp; transportation charges are extra, at actuals.</p>
+      <p class="foot" id="foot"></p>
       <h2 class="sec" id="sheetH" style="margin-top:16px">Sample draft</h2>
       <div class="sheet-wrap" id="sheet"></div>
     </section>
@@ -419,8 +423,8 @@ const FIELDS = [
   {sec:"secBasic", k:"attendee", label:"Expected attendee", api:"Expected_Attendee", type:"select", options:ATTENDEE, req:true, gtm:true, show:EV},
   {sec:"secBasic", k:"address", label:"Venue", api:"Address", type:"textarea", req:true, show:EV},
   {sec:"secBasic", k:"city", label:"City", api:"City", type:"citylk", req:true, gtm:true, show:EV},
-  {sec:"secBasic", k:"pin", label:"Pin code", api:"Pin_Code", type:"pinlk", req:true, gtm:true, show:EV},
   {sec:"secBasic", k:"state", label:"State", api:"State", type:"auto", req:true, gtm:true, show:EV},
+  {sec:"secBasic", k:"pin", label:"Pin code", api:"Pin_Code", type:"pinlk", req:true, gtm:true, show:EV},
   {sec:"secBasic", k:"country", label:"Country", api:"Country", type:"select", options:COUNTRIES, req:true, gtm:true, show:EV},
   {sec:"secBasic", k:"agenda", label:"Event proposal", api:"Event_Agenda", type:"file", req:true, gtm:true, show:EV},
   {sec:"secBasic", k:"photos", label:"Other attachments", api:"Photographs", type:"file", multiple:true, show:EV},
@@ -445,10 +449,10 @@ const FIELDS = [
   {sec:"init", k:"prod", label:"Production cost", api:"Production_Cost", type:"money", req:true, help:"Booth branding, standees, branding", show:EV},
   {sec:"init", k:"proc", label:"Procurement cost", api:"Procurement_Cost", type:"money", req:true, help:"Brochures, merchandise, bags, gifts", show:EV},
   {sec:"init", k:"gift", label:"Gift’s required", api:"Gift_s_Required", type:"check", gtm:true, show:EV},
-  {sec:"init", k:"giftc", label:"Gift’s count", api:"Gift_s_Count", type:"count", req:()=>!!V.gift, show:()=>EV() && !!V.gift},
+  {sec:"init", k:"giftc", label:"Gift count", api:"Gift_s_Count", type:"count", req:()=>!!V.gift, show:EV, needs:"gift"},
   {sec:"init", k:"merch", label:"Merchandise required", api:"Merchandise_Required", type:"check", gtm:true, show:EV},
-  {sec:"init", k:"merchc", label:"Merchandise count", api:"Merchandise_s_Count", type:"count", req:()=>!!V.merch, show:()=>EV() && !!V.merch},
-  {sec:"init", k:"broc", label:"Brochure count", api:"Brochure_s_Count", type:"count", req:true, show:EV},
+  {sec:"init", k:"merchc", label:"Merch count", api:"Merchandise_s_Count", type:"count", req:()=>!!V.merch, show:EV, needs:"merch"},
+  {sec:"init", k:"broc", label:"Brochures", api:"Brochure_s_Count", type:"count", req:true, show:EV},
   // Final cost (negotiated, used in approvals)
   {sec:"final", k:"fspons", label:"Sponsorship cost", api:"Event_s_Sponsorship_Cost", type:"money", req:true, show:EV},
   {sec:"final", k:"fshare", label:"Teachmint share", type:"share", req:true, set:"final", show:isPE},
@@ -456,7 +460,7 @@ const FIELDS = [
   {sec:"final", k:"fproc", label:"Procurement cost", api:"Event_s_Procurement_Cost", type:"money", req:true, show:EV}
 ];
 const SHARE_API = { init:{type:"Share_Type", pct:"Teachmint_Share_Percent", amt:"Teachmint_Share_Amount"}, final:{type:"Final_Share_Type", pct:"Final_TM_Share_Percent", amt:"Final_TM_Share_Amount"} };
-const W = {cat:2, sub:2, date:2, partner:4, pcontrib:2, name:4, attendee:2, address:6, city:2, pin:1, state:2, country:1, agenda:3, photos:3, other:6,
+const W = {cat:2, sub:2, date:2, partner:4, pcontrib:2, name:4, attendee:2, address:6, city:2, state:2, pin:1, country:1, agenda:3, photos:3, other:6,
   firm:4, logo:2, poc:3, pocm:3, faddr:6, fpin:2, fcity:2, fstate:2, map:6, more:6, recce:6, vendor:3, quote:3,
   spons:2, ishare:4, prod:2, proc:2, gift:2, giftc:1, merch:2, merchc:1, broc:2, fspons:2, fshare:4, fprod:2, fproc:2};
 const byK = k => FIELDS.find(f=>f.k===k);
@@ -692,7 +696,11 @@ function lockedField(f,p){
 function renderCost(p){
   const g = mode()==="gtm" && !isBR();
   const blocks = [];
-  const fl = (list, editable) => `<div class="fgrid">${list.filter(shown).map(f=>field(f, editable && !lockedField(f,p))).join("")}</div>`;
+  const one = (f, editable) => { const can = editable && !lockedField(f,p);
+    if(can && f.needs && !V[f.needs]) return field(f,true).replace('<input class="in"','<input class="in" disabled title="Tick the box first"');
+    return field(f,can); };
+  const fl = (list, editable) => { const L = list.filter(shown), main = L.filter(f=>!DETAIL_KEYS.includes(f.k)), det = L.filter(f=>DETAIL_KEYS.includes(f.k));
+    return `<div class="fgrid">${main.map(f=>one(f,editable)).join("")}</div>`+(det.length?`<div class="detrow">${det.map(f=>one(f,editable)).join("")}</div>`:""); };
   const of = sec => FIELDS.filter(f=>f.sec===sec);
   if(isBR()) blocks.push(fl(of("brVendor"), p.edit));
   else if(g || caseA()) blocks.push(fl(of("init"), p.edit));
@@ -708,8 +716,11 @@ function renderCost(p){
   ["summary","foot","sheetH","sheet"].forEach(id=>$(id).classList.toggle("hidden", !showSum));
   if(showSum){
     const set = activeSet(), c = costs(set);
-    $("summary").innerHTML = `<div class="big"><span>${set==="init"?"Total event cost*":"Final event cost*"}</span><b class="cost">${c.total?inr(c.total):"–"}</b></div><div class="big"><span>Business commitment</span><b class="target">${esc(c.commit)}</b></div>`;
+    $("summary").innerHTML = `<div class="big"><span>${set==="init"?"Total event cost*":"Final event cost*"}</span><b>${c.total?inr(c.total):"–"}</b></div><div class="big"><span>Business commitment</span><b>${esc(c.commit)}</b></div>`;
     renderSheet(c, set);
+    let due = "within 45 days of the event date";
+    if(V.date){ const d = new Date(V.date+"T00:00:00"); if(!isNaN(d)){ d.setDate(d.getDate()+45); due = "by "+d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+" (45 days from the event date)"; } }
+    $("foot").innerHTML = `* GST &amp; transportation charges are extra, at actuals.<br>* ${isPE()?"Partner target":"Panel commitment"} to be fulfilled ${esc(due)}.`;
   }
 }
 function field(f, edit){
@@ -758,8 +769,8 @@ function renderSheet(c, set){
   rows.forEach((r,i)=>{ h += "<tr>";
     if(i===0) h += `<td class="ev" rowspan="3">${esc(V.name||"Event name")}</td><td class="ctr" rowspan="3">${esc(venue||"Venue")}</td><td class="ctr" rowspan="3">${esc(ordinalDate(V.date)||"Date")}</td><td class="ctr" rowspan="3">${esc(V.attendee||"–")}</td>`;
     h += `<td>${r[0]}</td><td class="num">${r[1]?Math.round(r[1]).toLocaleString("en-IN"):"–"}</td>`;
-    if(i===0) h += `<td class="commit target" rowspan="4">${esc(c.commit)}</td>`; h += "</tr>"; });
-  h += `</tbody><tfoot><tr><td colspan="4">*GST &amp; Transportation charges at actuals</td><td></td><td class="num cost">${c.total?Math.round(c.total).toLocaleString("en-IN"):"–"}</td></tr></tfoot></table>`;
+    if(i===0) h += `<td class="commit" rowspan="4">${esc(c.commit)}</td>`; h += "</tr>"; });
+  h += `</tbody><tfoot><tr><td colspan="4">*GST &amp; Transportation charges at actuals</td><td></td><td class="num">${c.total?Math.round(c.total).toLocaleString("en-IN"):"–"}</td></tr></tfoot></table>`;
   $("sheet").innerHTML = h;
 }
 function renderRemarks(p){
