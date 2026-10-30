@@ -316,13 +316,14 @@ input[type=file].in{font-size:12.5px;padding:5px 6px}
 .detrow > div{min-width:0;grid-column:auto!important}.detrow .check{white-space:nowrap}.detrow label.f{white-space:nowrap}
 .detrow .in:disabled{opacity:.5}
 @media (max-width:620px){.detrow{grid-template-columns:auto 84px}}
-.cost4{grid-template-columns:repeat(4,minmax(0,1fr))!important}.cost4 > div{grid-column:auto!important}
+.cost4{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)!important}.cost4 > div{grid-column:auto!important}
 .lblrow{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}.lblrow label.f{margin:0}
 .mini{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
 .mini button{border:0;background:transparent;color:var(--muted);font-size:11.5px;line-height:1;padding:3px 7px;cursor:pointer}
 .mini button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 @media (max-width:620px){.cost4{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 .cost4 label.f{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sharerow{display:flex;gap:6px;align-items:center}.sharerow > div{flex:1;min-width:0}.sharerow .mini{flex:0 0 auto}
 </style>
 </head>
 <body>
@@ -452,7 +453,7 @@ const FIELDS = [
   {sec:"brVendor", k:"quote", label:"Quoted amount", api:"Quoted_Amount", type:"money", req:true, br:true, show:isBR},
   // Initial cost (first proposal)
   {sec:"init", k:"spons", label:"Sponsorship cost", api:"Sponsorship_Cost", type:"money", req:true, gtm:true, show:EV},
-  {sec:"init", k:"ishare", label:"TM share", type:"share", req:true, set:"init", show:isPE},
+  {sec:"init", k:"ishare", label:"Teachmint contribution", type:"share", req:true, set:"init", show:isPE},
   {sec:"init", k:"prod", label:"Production cost", api:"Production_Cost", type:"money", req:true, help:"Booth branding, standees, branding", show:EV},
   {sec:"init", k:"proc", label:"Procurement cost", api:"Procurement_Cost", type:"money", req:true, help:"Brochures, merchandise, bags, gifts", show:EV},
   {sec:"init", k:"gift", label:"Gift’s required", api:"Gift_s_Required", type:"check", gtm:true, show:EV},
@@ -462,7 +463,7 @@ const FIELDS = [
   {sec:"init", k:"broc", label:"Brochures", api:"Brochure_s_Count", type:"count", req:true, show:EV},
   // Final cost (negotiated, used in approvals)
   {sec:"final", k:"fspons", label:"Sponsorship cost", api:"Event_s_Sponsorship_Cost", type:"money", req:true, show:EV},
-  {sec:"final", k:"fshare", label:"TM share", type:"share", req:true, set:"final", show:isPE},
+  {sec:"final", k:"fshare", label:"Teachmint contribution", type:"share", req:true, set:"final", show:isPE},
   {sec:"final", k:"fprod", label:"Production cost", api:"Event_s_Production_Cost", type:"money", req:true, show:EV},
   {sec:"final", k:"fproc", label:"Procurement cost", api:"Event_s_Procurement_Cost", type:"money", req:true, show:EV}
 ];
@@ -737,7 +738,7 @@ function field(f, edit){
   let lbl = f.label; if(f.k==="spons"||f.k==="fspons"){ if(isPE()) lbl = "Event sponsorship"; }
   const label = `<label class="f" for="${id}">${esc(lbl)}${rq}</label>`;
   if(f.type==="subtype" && isPE()) return `<div class="${cls}"><span class="f">${esc(f.label)}</span><div class="static">Partner Enablement Event</div></div>`;
-  if(f.type==="check"){ return `<div class="${cls}"><span class="f">&nbsp;</span><label class="check"><input type="checkbox" id="${id}" data-chk="${f.k}" ${v?"checked":""} ${edit?"":"disabled"}> ${esc(f.label)}</label></div>`; }
+  if(f.type==="check"){ return `<div class="${cls}"><span class="f">&nbsp;</span><label class="check">${esc(f.label)} <input type="checkbox" id="${id}" data-chk="${f.k}" ${v?"checked":""} ${edit?"":"disabled"}></label></div>`; }
   if(f.type==="share") return `<div class="${cls}">${shareCtrl(f, edit)}</div>`;
   if(!edit){
     let t = v;
@@ -761,14 +762,16 @@ function field(f, edit){
     const inp = `<input class="in" id="${id}" data-k="${f.k}" type="${typ}" value="${esc(shownV)}" ${im} ${f.ph?`placeholder="${esc(f.ph)}"`:""} ${f.type==="count"?'placeholder="0"':""}>`;
     ctrl = f.type==="money" ? `<div class="money">${inp}</div>` : inp;
   }
-  return `<div class="${cls}">${label}${ctrl}${f.help?`<p class="cellnote">${esc(f.help)}</p>`:""}</div>`;
+  let help = f.help||"";
+  if((f.k==="spons"||f.k==="fspons") && isPE()){ const set = f.k==="spons"?"init":"final", amt = tmSponsorship(set); help = num(V[f.k]) ? "Cost to Teachmint: "+inr(amt) : "Cost to Teachmint is shown here"; }
+  return `<div class="${cls}">${label}${ctrl}${help?`<p class="cellnote">${esc(help)}</p>`:""}</div>`;
 }
 function shareCtrl(f, edit){
   const set = f.set, sh = V[f.k]||{}, amtMode = S.share[set]==="₹", spons = num(V[set==="init"?"spons":"fspons"]), ours = tmSponsorship(set);
   const note = spons ? "Teachmint bears "+inr(ours) : "Enter sponsorship first";
-  if(!edit) return `<span class="f">${esc(f.label)}</span><div class="static">${amtMode ? (has(sh.amt)?inr(num(sh.amt)):"–") : (has(sh.pct)?(+num(sh.pct).toFixed(2))+"%":"–")}</div><p class="cellnote">${esc(note)}</p>`;
+  if(!edit) return `<span class="f">${esc(f.label)}</span><div class="static">${amtMode ? (has(sh.amt)?inr(num(sh.amt)):"–") : (has(sh.pct)?(+num(sh.pct).toFixed(2))+"%":"–")}</div>`;
   const val = amtMode ? (has(sh.amt)?money(sh.amt):"") : (has(sh.pct)?String(+num(sh.pct).toFixed(2)):"");
-  return `<div class="lblrow"><label class="f" for="f_${f.k}">${esc(f.label)} <i aria-hidden="true">*</i></label><span class="mini" role="group" aria-label="Share as"><button type="button" data-smode="${set}|%" aria-pressed="${!amtMode}">%</button><button type="button" data-smode="${set}|₹" aria-pressed="${amtMode}">₹</button></span></div><div class="${amtMode?"money":"pct"}"><input class="in" id="f_${f.k}" data-share="${f.k}" inputmode="decimal" value="${esc(val)}" placeholder="${amtMode?"Amount":"e.g. 50"}"></div><p class="cellnote">${esc(note)}</p>`;
+  return `<label class="f" for="f_${f.k}">${esc(f.label)} <i aria-hidden="true">*</i></label><div class="sharerow"><div class="${amtMode?"money":"pct"}"><input class="in" id="f_${f.k}" data-share="${f.k}" inputmode="decimal" value="${esc(val)}" placeholder="${amtMode?"Amount":"%"}"></div><span class="mini" role="group" aria-label="Contribution as"><button type="button" data-smode="${set}|%" aria-pressed="${!amtMode}">%</button><button type="button" data-smode="${set}|₹" aria-pressed="${amtMode}">₹</button></span></div>`;
 }
 function renderSheet(c, set){
   const P = set==="init" ? {s:"spons",p:"prod",q:"proc"} : {s:"fspons",p:"fprod",q:"fproc"};
