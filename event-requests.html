@@ -579,7 +579,8 @@ function costs(set){
   const ours = tmSponsorship(set), total = ours + num(V[set==="init"?"prod":"fprod"]) + num(V[set==="init"?"proc":"fproc"]);
   let commit = "–";
   if(total && isPE()) commit = lakhs(total*CFG.PARTNER_MULTIPLIER)+" billing";
-  else if(total && V.cat==="End Customer Event") commit = Math.ceil(total/CFG.CAC)+" IFP";
+  else if(total && V.cat==="End Customer Event") commit = Math.ceil(total/CFG.CAC)+" Panels";
+  else if(total && !V.cat) commit = "Select the event category";
   return {ours, total, commit};
 }
 function calcStored(row){ /* preview only: mimic the CRM formulas */
