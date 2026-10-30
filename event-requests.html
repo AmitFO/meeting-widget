@@ -456,7 +456,7 @@ const FIELDS = [
   {sec:"final", k:"fproc", label:"Procurement cost", api:"Event_s_Procurement_Cost", type:"money", req:true, show:EV}
 ];
 const SHARE_API = { init:{type:"Share_Type", pct:"Teachmint_Share_Percent", amt:"Teachmint_Share_Amount"}, final:{type:"Final_Share_Type", pct:"Final_TM_Share_Percent", amt:"Final_TM_Share_Amount"} };
-const W = {cat:2, sub:2, date:2, partner:4, pcontrib:2, name:4, attendee:2, address:6, city:2, pin:2, state:2, country:2, agenda:3, photos:3, other:6,
+const W = {cat:2, sub:2, date:2, partner:4, pcontrib:2, name:4, attendee:2, address:6, city:2, pin:1, state:2, country:1, agenda:3, photos:3, other:6,
   firm:4, logo:2, poc:3, pocm:3, faddr:6, fpin:2, fcity:2, fstate:2, map:6, more:6, recce:6, vendor:3, quote:3,
   spons:2, ishare:4, prod:2, proc:2, gift:2, giftc:1, merch:2, merchc:1, broc:2, fspons:2, fshare:4, fprod:2, fproc:2};
 const byK = k => FIELDS.find(f=>f.k===k);
@@ -670,36 +670,46 @@ function render(){
   renderRemarks(p);
   renderBar(p);
 }
+/* Cost screens
+   A: Marketing raises it          → one set only (Initial). On first submit it is copied to Final.
+   B: Marketing completes GTM's    → GTM's Initial (read-only) + Final (Marketing fills) + counts
+   C: after the first submit       → Initial (read-only) + Final (editable only when Rejected) */
+const DETAIL_KEYS = ["gift","giftc","merch","merchc","broc"];
+const caseA = () => S.role==="MKT" && (isNew() || (st()===ST.DRAFT && !raisedByGTM()));
+const caseB = () => S.role==="MKT" && st()===ST.DRAFT && raisedByGTM() && !isNew();
+const activeSet = () => caseA() ? "init" : "final";
 function lockedField(f,p){
-  if(f.sec==="init") return !p.initEdit || (f.k==="spons" && S.role==="MKT" && raisedByGTM() && has(S.rec.Sponsorship_Cost));
-  if(f.sec==="final") return !p.finalEdit;
+  if(f.sec==="init"){
+    if(mode()==="gtm") return !p.initEdit;
+    if(caseA()) return !p.edit;
+    if(caseB()) return !DETAIL_KEYS.includes(f.k);
+    return true;
+  }
+  if(f.sec==="final") return !(caseB() || (S.role==="MKT" && st()===ST.REJECTED));
   if(f.k==="cat" && !isNew() && S.role==="MKT" && st()!==ST.DRAFT) return true;
   return false;
 }
-function mirrorFinal(p){
-  if(!p.finalEdit || S.finalTouched || mode()==="gtm" || isBR()) return;
-  if(!p.initEdit && S.recordId) return;   // once submitted, final stands on its own
-  V.fspons = V.spons; V.fprod = V.prod; V.fproc = V.proc; V.fshare = Object.assign({}, V.ishare); S.share.final = S.share.init;
-}
 function renderCost(p){
-  mirrorFinal(p);
   const g = mode()==="gtm" && !isBR();
   const blocks = [];
-  const grid = (sec, editable) => `<div class="fgrid">${FIELDS.filter(f=>f.sec===sec && shown(f)).map(f=>field(f, editable && !lockedField(f,p))).join("")}</div>`;
-  if(isBR()) blocks.push(`<div class="fgrid">${FIELDS.filter(f=>f.sec==="brVendor"&&shown(f)).map(f=>field(f,p.edit)).join("")}</div>`);
-  else if(g) blocks.push(grid("init", p.edit));
+  const fl = (list, editable) => `<div class="fgrid">${list.filter(shown).map(f=>field(f, editable && !lockedField(f,p))).join("")}</div>`;
+  const of = sec => FIELDS.filter(f=>f.sec===sec);
+  if(isBR()) blocks.push(fl(of("brVendor"), p.edit));
+  else if(g || caseA()) blocks.push(fl(of("init"), p.edit));
   else {
-    const ic = costs("init");
-    blocks.push(`<div class="cost-block"><h3>Initial cost <span class="lock">${p.initEdit?"first proposal, locks on submit":"locked"}</span></h3>${grid("init", p.edit)}<p class="cellnote">Initial total: <b>${ic.total?inr(ic.total):"–"}</b> · ${esc(ic.commit)}</p></div>`);
-    blocks.push(`<div class="cost-block"><h3>Final cost <span class="lock">${p.finalEdit?"negotiated, used for approvals":"locked"}</span></h3>${grid("final", p.edit)}</div>`);
+    const ic = costs("init"), b = caseB();
+    const initList = of("init").filter(f=>!b || !DETAIL_KEYS.includes(f.k));
+    blocks.push(`<div class="cost-block"><h3>Initial cost <span class="lock">${b?"proposed by GTM":"first proposal, locked"}</span></h3>${fl(initList, false)}<p class="cellnote">Initial total: <b>${ic.total?inr(ic.total):"–"}</b>${ic.commit!=="–"?" · "+esc(ic.commit):""}</p></div>`);
+    const finEdit = !lockedField(byK("fspons"),p);
+    blocks.push(`<div class="cost-block"><h3>Final cost <span class="lock">${finEdit?"negotiated, used for approvals":"locked"}</span></h3>${fl(of("final").concat(b ? of("init").filter(f=>DETAIL_KEYS.includes(f.k)) : []), p.edit || b)}</div>`);
   }
   $("costBlocks").innerHTML = blocks.join("");
   const showSum = !isBR() && !g;
   ["summary","foot","sheetH","sheet"].forEach(id=>$(id).classList.toggle("hidden", !showSum));
   if(showSum){
-    const c = costs("final");
-    $("summary").innerHTML = `<div class="big"><span>Final event cost*</span><b class="cost">${c.total?inr(c.total):"–"}</b></div><div class="big"><span>Business commitment</span><b class="target">${esc(c.commit)}</b></div>`;
-    renderSheet(c);
+    const set = activeSet(), c = costs(set);
+    $("summary").innerHTML = `<div class="big"><span>${set==="init"?"Total event cost*":"Final event cost*"}</span><b class="cost">${c.total?inr(c.total):"–"}</b></div><div class="big"><span>Business commitment</span><b class="target">${esc(c.commit)}</b></div>`;
+    renderSheet(c, set);
   }
 }
 function field(f, edit){
@@ -740,9 +750,10 @@ function shareCtrl(f, edit){
   const val = amtMode ? (has(sh.amt)?money(sh.amt):"") : (has(sh.pct)?String(+num(sh.pct).toFixed(2)):"");
   return `<label class="f" for="f_${f.k}">${esc(f.label)} <i aria-hidden="true">*</i></label><div class="sharerow"><div class="opt" role="group" aria-label="Share as"><button type="button" data-smode="${set}|%" aria-pressed="${!amtMode}">%</button><button type="button" data-smode="${set}|₹" aria-pressed="${amtMode}">₹</button></div><div class="${amtMode?"money":"pct"}"><input class="in" id="f_${f.k}" data-share="${f.k}" inputmode="decimal" value="${esc(val)}" placeholder="${amtMode?"Amount":"e.g. 50"}"></div></div><p class="cellnote">${esc(note)}</p>`;
 }
-function renderSheet(c){
+function renderSheet(c, set){
+  const P = set==="init" ? {s:"spons",p:"prod",q:"proc"} : {s:"fspons",p:"fprod",q:"fproc"};
   const venue = [String(V.address||"").split(/\n|,/)[0], V.city&&V.city.name].filter(has).join(", ");
-  const rows = [[isPE()&&num(V.fspons)?`Sponsorship cost<small>Teachmint share of ${inr(num(V.fspons))}</small>`:"Sponsorship cost", c.ours],["Production cost", num(V.fprod)],["Procurement expense", num(V.fproc)]];
+  const rows = [[isPE()&&num(V[P.s])?`Sponsorship cost<small>Teachmint share of ${inr(num(V[P.s]))}</small>`:"Sponsorship cost", c.ours],["Production cost", num(V[P.p])],["Procurement expense", num(V[P.q])]];
   let h = `<table class="sheet"><thead><tr><th>Event</th><th>Venue</th><th>Date</th><th>Expected audience</th><th>Item</th><th>Cost</th><th>Business commitment</th></tr></thead><tbody>`;
   rows.forEach((r,i)=>{ h += "<tr>";
     if(i===0) h += `<td class="ev" rowspan="3">${esc(V.name||"Event name")}</td><td class="ctr" rowspan="3">${esc(venue||"Venue")}</td><td class="ctr" rowspan="3">${esc(ordinalDate(V.date)||"Date")}</td><td class="ctr" rowspan="3">${esc(V.attendee||"–")}</td>`;
@@ -807,12 +818,16 @@ function missing(tabOnly){
   const secs = tabOnly ? secsOf[tabOnly] : secsOf.event.concat(secsOf.cost);
   for(const f of FIELDS){
     if(!secs.includes(f.sec) || !shown(f) || !reqOf(f)) continue;
+    if(S.role==="MKT" && !isBR()){
+      if(f.sec==="final" && caseA()) continue;
+      if(f.sec==="init" && !caseA() && !(caseB() && DETAIL_KEYS.includes(f.k))) continue;
+    }
     if(f.k==="sub" && isPE()) continue;
     let ok;
     if(f.type==="share"){ const sh = V[f.k]||{}; ok = S.share[f.set]==="₹" ? has(sh.amt) : has(sh.pct); }
     else if(f.type==="file") ok = has(V[f.k]) || (S.files[f.k]&&S.files[f.k].length);
     else ok = has(V[f.k]);
-    if(!ok){ out.push((f.sec==="final"?"final ":f.sec==="init"&&mode()!=="gtm"?"initial ":"")+f.label.toLowerCase()); if(!S.firstMissing) S.firstMissing = f; }
+    if(!ok){ out.push((f.sec==="final"&&!caseA()?"final ":"")+f.label.toLowerCase()); if(!S.firstMissing) S.firstMissing = f; }
   }
   if(shown(byK("pocm")) && has(V.pocm) && String(V.pocm).replace(/\D/g,"").length<10) out.push("a 10-digit mobile number");
   return out;
@@ -864,7 +879,7 @@ async function commit(data, okText, done){
 }
 function needRemarks(){ const rm = $("remarks").value.trim(); if(!rm){ $("remarks").focus(); $("msg").textContent = "Add remarks to reject."; $("msg").classList.add("err"); return null; } return rm; }
 const ACT = {
-  next(){ const e = missing("event"); if(e.length) return fail(e); S.tab = "cost"; render(); window.scrollTo(0,0); },
+  next(){ S.tab = "cost"; render(); window.scrollTo(0,0); },
   back(){ S.tab = "event"; render(); window.scrollTo(0,0); },
   async gtmSubmit(){ const e = missing(); if(e.length) return fail(e);
     const o = payload(); o[C.status] = ST.DRAFT; const first = isNew();
@@ -872,7 +887,11 @@ const ACT = {
   async save(){ if(!has(V.cat)) { S.firstMissing = byK("cat"); return fail(["event category"]); } if(!isBR() && !has(V.name)){ S.firstMissing = byK("name"); return fail(["event name"]); }
     const o = payload(); if(isNew()) o[C.status] = ST.DRAFT; await commit(o, "Draft saved."); },
   async submit(){ const e = missing(); if(e.length) return fail(e);
-    const re = st()===ST.REJECTED, o = payload();
+    const re = st()===ST.REJECTED, wasA = caseA(), o = payload();
+    if(wasA && !isBR()){
+      o.Event_s_Sponsorship_Cost = has(V.spons)?num(V.spons):null; o.Event_s_Production_Cost = has(V.prod)?num(V.prod):null; o.Event_s_Procurement_Cost = has(V.proc)?num(V.proc):null;
+      if(isPE()){ const a = SHARE_API.final, sh = V.ishare||{}, amt = S.share.init==="₹"; o[a.type] = amt?CFG.SHARE.AMT:CFG.SHARE.PCT; o[a.amt] = amt&&has(sh.amt)?num(sh.amt):null; o[a.pct] = !amt&&has(sh.pct)?+num(sh.pct).toFixed(2):null; }
+    }
     o[C.status] = re ? ST.RESUBMITTED : ST.SUBMITTED;
     const toBH = re && S.rec[C.rejBy]==="Founder" && S.route==="bh";
     o[C.tag] = toBH ? T.BH_SEND : T.ZH_SEND;
@@ -910,7 +929,7 @@ function loadRecord(rec){
   S.share.final = rec[SHARE_API.final.type]===CFG.SHARE.AMT ? "₹" : (rec[SHARE_API.final.type] ? "%" : S.share.init);
   if(V.cat==="Partner Event") V.sub = "Partner Enablement Event";
   // Final cost starts as a copy of the Initial cost
-  if(perms().finalEdit){
+  if(caseB() && !has(V.fspons)){
     [["fspons","spons"],["fprod","prod"],["fproc","proc"]].forEach(([a,b])=>{ if(!has(V[a]) && has(V[b])) V[a] = V[b]; });
     if(isPE() && !has(V.fshare.pct) && !has(V.fshare.amt)) V.fshare = Object.assign({}, V.ishare);
   }
@@ -923,7 +942,7 @@ function loadRecord(rec){
 /* ================= EVENTS ================= */
 document.addEventListener("click", e=>{
   const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
-  const tb = e.target.closest("[data-tab]"); if(tb){ if(tb.dataset.tab==="cost" && perms().edit){ const m = missing("event"); if(m.length) return fail(m); } S.tab = tb.dataset.tab; render(); return; }
+  const tb = e.target.closest("[data-tab]"); if(tb){ S.tab = tb.dataset.tab; render(); return; }
   const sm = e.target.closest("[data-smode]"); if(sm){ const [set,m] = sm.dataset.smode.split("|"); if(set==="final") S.finalTouched = true; S.share[set] = m; render(); return; }
   if(e.target.closest("#tlToggle")){ S.tlAll = !S.tlAll; renderTimeline(); return; }
   if(e.target.closest("#locBtn")){ useMyLocation(); return; }
