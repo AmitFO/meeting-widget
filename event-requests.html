@@ -404,7 +404,7 @@ const CFG = {
   BH_USER:"681278000000439001",        // Venkata Aditya (AV)
   FOUNDER_USER:"681278000000314001",   // Sales-Ops (Divyansh)
   ZH_BY_ZONE:{"North 1":{id:"681278000000676466",name:"Vivek Mishra"},"East":{id:"681278000000676466",name:"Vivek Mishra"},"North 2":{id:"681278000000676433",name:"Suraj Agrahari"},"South":{id:"681278000000813134",name:"Swapnil Omprakash Mandhana"},"West":{id:"681278000000676418",name:"Hariom Shivhare"}},
-  TAG:{ ZH_SEND:"Send to ZH Approval", ZH_PEND:"Pending ZH Approval", ZH_OK:"Approved by ZH", ZH_NO:"Rejected by ZH",
+  TAG:{ MKT_PEND:"Pending on Marketing", ZH_SEND:"Send to ZH Approval", ZH_PEND:"Pending ZH Approval", ZH_OK:"Approved by ZH", ZH_NO:"Rejected by ZH",
         BH_SEND:"Send to BH Approval", BH_PEND:"Pending BH Approval", BH_OK:"Approved by BH", BH_NO:"Rejected by BH",
         FD_SEND:"Send to Founder's Approval", FD_PEND:"Pending Founder's Approval", FD_OK:"Approved by Founders", FD_NO:"Rejected by Founders" },
   STATUS:{ DRAFT:"Draft", SUBMITTED:"Submitted", REJECTED:"Rejected", RESUBMITTED:"Resubmitted", APPROVED:"Approved" },
@@ -918,7 +918,7 @@ const ACT = {
   next(){ S.tab = "cost"; render(); window.scrollTo(0,0); },
   back(){ S.tab = "event"; render(); window.scrollTo(0,0); },
   async gtmSubmit(){ const e = missing(); if(e.length) return fail(e);
-    const o = payload(); o[C.status] = ST.DRAFT; const first = isNew();
+    const o = payload(); o[C.status] = ST.DRAFT; o[C.tag] = T.MKT_PEND; const first = isNew();
     await commit(o, "Saved.", {title: first?"Request submitted":"Request updated", next:"Marketing will complete the details and send it for approval."}); },
   async save(){ if(!has(V.cat)) { S.firstMissing = byK("cat"); return fail(["event category"]); } if(!isBR() && !has(V.name)){ S.firstMissing = byK("name"); return fail(["event name"]); }
     const o = payload(); if(isNew()) o[C.status] = ST.DRAFT; await commit(o, "Draft saved."); },
@@ -1073,7 +1073,7 @@ let listSeq = 0, qT;
 const TAGS_OF = {zh:[T.ZH_SEND,T.ZH_PEND,T.ZH_OK], bh:[T.BH_SEND,T.BH_PEND], fd:[T.FD_SEND,T.FD_PEND]};
 function criteria(f){
   const c = [], e2 = t => String(t).replace(/[(),]/g,"\\$&"), anyOf = (fld,vals)=>"("+vals.map(v=>"("+fld+":equals:"+e2(v)+")").join("or")+")";
-  if(f.filter==="pendmkt") c.push("((Raised_by_Team:equals:GTM)and(Status:equals:Draft))");
+  if(f.filter==="pendmkt") c.push("(Event_Tag:equals:"+e2(T.MKT_PEND)+")");
   if(f.filter==="mine") c.push("(Raised_by:equals:"+S.user.id+")");
   if(TAGS_OF[f.filter]) c.push(anyOf("Event_Tag", TAGS_OF[f.filter]));
   if(f.filter==="rejected") c.push("(Status:equals:Rejected)");
@@ -1083,7 +1083,7 @@ function criteria(f){
   return c.length ? (c.length>1 ? "("+c.join("and")+")" : c[0]) : "";
 }
 function matches(r,f){
-  if(f.filter==="pendmkt" && !(r.Raised_by_Team==="GTM" && r.Status===ST.DRAFT)) return false;
+  if(f.filter==="pendmkt" && r.Event_Tag!==T.MKT_PEND) return false;
   if(f.filter==="mine" && !(r[C.raisedBy]&&r[C.raisedBy].id===S.user.id)) return false;
   if(TAGS_OF[f.filter] && !TAGS_OF[f.filter].includes(r.Event_Tag)) return false;
   if(f.filter==="rejected" && r.Status!==ST.REJECTED) return false;
