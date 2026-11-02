@@ -407,10 +407,10 @@ const CFG = {
   TAG:{ MKT_PEND:"Pending on Marketing", ZH_SEND:"Send to ZH Approval", ZH_PEND:"Pending ZH Approval", ZH_OK:"Approved by ZH", ZH_NO:"Rejected by ZH",
         BH_SEND:"Send to BH Approval", BH_PEND:"Pending BH Approval", BH_OK:"Approved by BH", BH_NO:"Rejected by BH",
         FD_SEND:"Send to Founder's Approval", FD_PEND:"Pending Founder's Approval", FD_OK:"Approved by Founders", FD_NO:"Rejected by Founders" },
-  STATUS:{ DRAFT:"Draft", SUBMITTED:"Submitted", REJECTED:"Rejected", RESUBMITTED:"Resubmitted", APPROVED:"Approved" },
+  STATUS:{ HOLD:"On hold", DRAFT:"Draft", SUBMITTED:"Submitted", REJECTED:"Rejected", RESUBMITTED:"Resubmitted", APPROVED:"Approved" },
   SHARE:{ PCT:"Percentage (%)", AMT:"Amount (in Rs)" }
 };
-const C = {status:"Status", tag:"Event_Tag", remarks:"Rejection_Remarks", rejBy:"Rejected_by", team:"Raised_by_Team", district:"District", zh:"ZH", raisedBy:"Raised_by", number:"Event_Number", sub:"Sub_Source_ID",
+const C = {holdBy:"On_Hold_by", status:"Status", tag:"Event_Tag", remarks:"Rejection_Remarks", rejBy:"Rejected_by", team:"Raised_by_Team", district:"District", zh:"ZH", raisedBy:"Raised_by", number:"Event_Number", sub:"Sub_Source_ID",
   zhAck:"ZH_Acknowledged", zhOn:"ZH_Approved_On", bhAck:"BH_Acknowledged", bhOn:"BH_Approved_On", fdAck:"Founder_Acknowledged", fdOn:"Founder_Approved_On"};
 const T = CFG.TAG, ST = CFG.STATUS;
 const ATTENDEE = ["25 + KDMs","50 + KDMs","100 + KDMs","150 + KDMs","200 + KDMs","250 + KDMs","400 + KDMs","500 + KDMs"];
@@ -599,12 +599,14 @@ function calcStored(row){ /* preview only: mimic the CRM formulas */
 
 /* ================= WHO CAN DO WHAT ================= */
 const st = () => S.rec[C.status]||"", tag = () => S.rec[C.tag]||"";
+const withZH = () => [T.ZH_SEND, T.ZH_PEND].includes(tag());
+const openDraft = () => st()===ST.DRAFT && !withZH();   // Status stays Draft until the ZH acknowledges
 const isNew = () => !S.recordId;
 const raisedByGTM = () => S.rec[C.team]==="GTM";
 function mode(){   // "gtm" short form, "mkt" detailed form
   if(S.role==="GTM") return "gtm";
   if(S.role==="MKT") return "mkt";
-  return raisedByGTM() && st()===ST.DRAFT ? "gtm" : "mkt";
+  return raisedByGTM() && openDraft() ? "gtm" : "mkt";
 }
 const shown = f => {
   if(f.show && !f.show()) return false;
@@ -615,12 +617,14 @@ const shown = f => {
 function perms(){
   const p = {edit:false, initEdit:false, finalEdit:false, actions:[], note:""}, s = st(), t = tag();
   if(S.role==="GTM"){
-    if(isNew() || (s===ST.DRAFT && raisedByGTM())){ p.edit = p.initEdit = true; p.actions = ["gtmSubmit"]; p.note = "Fill the basic details and the sponsorship cost. Marketing completes the rest."; }
+    if(isNew() || (openDraft() && raisedByGTM())){ p.edit = p.initEdit = true; p.actions = ["gtmSubmit"]; p.note = "Fill the basic details and the sponsorship cost. Marketing completes the rest."; }
     else p.note = statusNote();
     return p;
   }
   if(S.role==="MKT"){
-    if(isNew() || s===ST.DRAFT){ p.edit = p.initEdit = p.finalEdit = true; p.actions = ["save","submit"]; p.note = raisedByGTM() && !isNew() ? "Raised by GTM. Complete every field, then submit to the ZH." : "Fill every field. Submit sends it to the ZH."; }
+    if(s===ST.HOLD){ p.edit = p.finalEdit = true; p.actions = ["save","submit"]; p.note = "On hold ("+(S.rec[C.holdBy]||"")+"). Update and resubmit when ready."; }
+    else if(t===T.ZH_SEND || t===T.ZH_PEND){ p.actions = ["zhHold","zhReject","zhApprove"]; p.note = "Waiting for the ZH’s email reply. Record their decision."; }
+    else if(isNew() || openDraft()){ p.edit = p.initEdit = p.finalEdit = true; p.actions = ["save","submit"]; p.note = raisedByGTM() && !isNew() ? "Raised by GTM. Complete every field, then submit to the ZH." : "Fill every field. Submit sends it to the ZH."; }
     else if(s===ST.REJECTED){ p.edit = p.finalEdit = true; p.actions = ["save","submit"]; p.note = "Rejected by "+(S.rec[C.rejBy]||"approver")+". Update the final cost and resubmit."; }
     else if(t===T.ZH_SEND || t===T.ZH_PEND){ p.actions = ["zhReject","zhApprove"]; p.note = "Waiting for the ZH’s email reply. Record their decision."; }
     else if(t===T.ZH_OK){ p.actions = ["sendBH"]; p.note = "ZH approved. Send it to the BH."; }
@@ -628,25 +632,26 @@ function perms(){
     return p;
   }
   if(S.role==="BH"){
-    if(t===T.BH_SEND || t===T.BH_PEND){ p.actions = ["bhReject","bhApprove"]; p.note = costs("final").total>CFG.FOUNDER_LIMIT ? "Above ₹50,000: approval goes to the Founder next." : "Your approval completes this request."; }
+    if(s!==ST.HOLD && (t===T.BH_SEND || t===T.BH_PEND)){ p.actions = ["bhHold","bhReject","bhApprove"]; p.note = costs("final").total>CFG.FOUNDER_LIMIT ? "Above ₹50,000: approval goes to the Founder next." : "Your approval completes this request."; }
     else p.note = statusNote();
     return p;
   }
   if(S.role==="FD"){
-    if(t===T.FD_SEND || t===T.FD_PEND){ p.actions = ["fdReject","fdApprove"]; p.note = "Your approval completes this request."; }
+    if(s!==ST.HOLD && (t===T.FD_SEND || t===T.FD_PEND)){ p.actions = ["fdHold","fdReject","fdApprove"]; p.note = "Your approval completes this request."; }
     else p.note = statusNote();
   }
   return p;
 }
 function statusNote(){
   const s = st(), t = tag();
+  if(t===T.FD_SEND||t===T.FD_PEND) return "BH approved. With the Founder for approval.";
+  if(s===ST.HOLD) return "On hold ("+(S.rec[C.holdBy]||"")+").";
   if(s===ST.APPROVED) return "Approved and locked."+(S.rec[C.sub]?" Sub Source ID: "+S.rec[C.sub]:"");
   if(s===ST.REJECTED) return "Rejected by "+(S.rec[C.rejBy]||"approver")+". Marketing is revising it.";
+  if(withZH()) return "With the ZH for approval.";
   if(s===ST.DRAFT) return raisedByGTM() ? "Pending on Marketing to complete the details." : "Draft.";
-  if(t===T.ZH_SEND||t===T.ZH_PEND) return "With the ZH for approval.";
   if(t===T.ZH_OK) return "Approved by the ZH. Marketing sends it to the BH.";
   if(t===T.BH_SEND||t===T.BH_PEND) return "With the BH for approval.";
-  if(t===T.FD_SEND||t===T.FD_PEND) return "With the Founder for approval.";
   return "Read-only.";
 }
 
@@ -665,6 +670,7 @@ function render(){
   $("meta").innerHTML = meta.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   const notes = [];
   if(st()===ST.REJECTED && has(r[C.remarks])) notes.push(`<p class="note warn"><b>Rejected by ${esc(r[C.rejBy]||"")}:</b> ${esc(r[C.remarks])}</p>`);
+  if(st()===ST.HOLD && has(r[C.remarks])) notes.push(`<p class="note warn"><b>On hold by ${esc(r[C.holdBy]||"")}:</b> ${esc(r[C.remarks])}</p>`);
   if(st()===ST.APPROVED && r[C.sub]) notes.push(`<p class="note"><b>Sub Source ID:</b> ${esc(r[C.sub])}</p>`);
   $("notes").innerHTML = notes.join("");
   // tabs
@@ -690,8 +696,8 @@ function render(){
    B: Marketing completes GTM's    → GTM's Initial (read-only) + Final (Marketing fills) + counts
    C: after the first submit       → Initial (read-only) + Final (editable only when Rejected) */
 const DETAIL_KEYS = ["gift","giftc","merch","merchc","broc"];
-const caseA = () => S.role==="MKT" && (isNew() || (st()===ST.DRAFT && !raisedByGTM()));
-const caseB = () => S.role==="MKT" && st()===ST.DRAFT && raisedByGTM() && !isNew();
+const caseA = () => S.role==="MKT" && (isNew() || (openDraft() && !raisedByGTM()));
+const caseB = () => S.role==="MKT" && openDraft() && raisedByGTM() && !isNew();
 const activeSet = () => caseA() ? "init" : "final";
 function lockedField(f,p){
   if(f.sec==="init"){
@@ -700,7 +706,7 @@ function lockedField(f,p){
     if(caseB()) return !DETAIL_KEYS.includes(f.k);
     return true;
   }
-  if(f.sec==="final") return !(caseB() || (S.role==="MKT" && st()===ST.REJECTED));
+  if(f.sec==="final") return !(caseB() || (S.role==="MKT" && (st()===ST.REJECTED || st()===ST.HOLD)));
   if(f.k==="cat" && !isNew() && S.role==="MKT" && st()!==ST.DRAFT) return true;
   return false;
 }
@@ -794,11 +800,11 @@ function renderSheet(c, set){
   $("sheet").innerHTML = h;
 }
 function renderRemarks(p){
-  const rej = p.actions.find(a=>/Reject$/.test(a));
+  const rej = p.actions.find(a=>/(Reject|Hold)$/.test(a));
   const founderRejected = S.role==="MKT" && st()===ST.REJECTED && S.rec[C.rejBy]==="Founder";
   $("remarksPanel").classList.toggle("hidden", !rej && !founderRejected);
   $("remarks").classList.toggle("hidden", !rej); $("remH").textContent = rej ? "Remarks" : "Resubmit to";
-  $("remHint").textContent = rej==="zhReject" ? "Paste what the ZH wrote in their email reply. Required to reject." : rej ? "Required to reject. Marketing will see this." : "The Founder rejected it. Choose where the resubmission goes.";
+  $("remHint").textContent = rej==="zhReject"||rej==="zhHold" ? "Paste what the ZH wrote in their email reply. Required to reject or hold." : rej ? "Required to reject or put on hold. Marketing will see this." : "The Founder rejected it. Choose where the resubmission goes.";
   $("routeBox").innerHTML = founderRejected ? `<div class="routes" role="radiogroup" aria-label="Resubmit route"><label class="check"><input type="radio" name="route" value="zh" ${S.route==="zh"?"checked":""}> ZH, then BH</label><label class="check"><input type="radio" name="route" value="bh" ${S.route==="bh"?"checked":""}> BH only</label></div>` : "";
 }
 function renderBar(p){
@@ -810,11 +816,12 @@ function renderBar(p){
     else {
       b.push(`<button class="btn" data-act="back">← Back</button>`);
       if(formActs.includes("save")) b.push(`<button class="btn" data-act="save">Save draft</button>`);
-      if(formActs.includes("submit")) b.push(`<button class="btn primary" data-act="submit">${st()===ST.REJECTED?"Resubmit":"Submit"}</button>`);
+      if(formActs.includes("submit")) b.push(`<button class="btn primary" data-act="submit">${st()===ST.REJECTED||st()===ST.HOLD?"Resubmit":"Submit"}</button>`);
       if(formActs.includes("gtmSubmit")) b.push(`<button class="btn primary" data-act="gtmSubmit">Submit</button>`);
     }
   }
-  const map = {zhReject:`<button class="btn reject" data-act="zhReject">ZH rejected</button>`, zhApprove:`<button class="btn approve" data-act="zhApprove">ZH approved</button>`,
+  const hb = a => `<button class="btn" data-act="${a}">On hold</button>`;
+  const map = {zhHold:hb("zhHold"), bhHold:hb("bhHold"), fdHold:hb("fdHold"), zhReject:`<button class="btn reject" data-act="zhReject">ZH rejected</button>`, zhApprove:`<button class="btn approve" data-act="zhApprove">ZH approved</button>`,
     sendBH:`<button class="btn primary" data-act="sendBH">Send to BH</button>`,
     bhReject:`<button class="btn reject" data-act="bhReject">Reject</button>`, bhApprove:`<button class="btn approve" data-act="bhApprove">Approve</button>`,
     fdReject:`<button class="btn reject" data-act="fdReject">Reject</button>`, fdApprove:`<button class="btn approve" data-act="fdApprove">Approve</button>`};
@@ -923,26 +930,30 @@ const ACT = {
   async save(){ if(!has(V.cat)) { S.firstMissing = byK("cat"); return fail(["event category"]); } if(!isBR() && !has(V.name)){ S.firstMissing = byK("name"); return fail(["event name"]); }
     const o = payload(); if(isNew()) o[C.status] = ST.DRAFT; await commit(o, "Draft saved."); },
   async submit(){ const e = missing(); if(e.length) return fail(e);
-    const re = st()===ST.REJECTED, wasA = caseA(), o = payload();
+    const re = st()===ST.REJECTED || st()===ST.HOLD, wasA = caseA(), o = payload();
     if(wasA && !isBR()){
       o.Event_s_Sponsorship_Cost = has(V.spons)?num(V.spons):null; o.Event_s_Production_Cost = has(V.prod)?num(V.prod):null; o.Event_s_Procurement_Cost = has(V.proc)?num(V.proc):null;
       if(isCO()){ const a = SHARE_API.final; o[a.type] = CFG.SHARE.AMT; o[a.pct] = null; o[a.amt] = tmSponsorship("init"); }
       if(isPE()){ const a = SHARE_API.final, sh = V.ishare||{}, amt = S.share.init==="₹"; o[a.type] = amt?CFG.SHARE.AMT:CFG.SHARE.PCT; o[a.amt] = amt&&has(sh.amt)?num(sh.amt):null; o[a.pct] = !amt&&has(sh.pct)?+num(sh.pct).toFixed(2):null; }
     }
-    o[C.status] = re ? ST.RESUBMITTED : ST.SUBMITTED;
+    o[C.status] = re ? ST.RESUBMITTED : ST.DRAFT;
     const toBH = re && S.rec[C.rejBy]==="Founder" && S.route==="bh";
     o[C.tag] = toBH ? T.BH_SEND : T.ZH_SEND;
     await commit(o, "", {title: re?"Request resubmitted":"Request submitted", next: toBH ? "Sent to the BH for approval." : "Sent to the ZH for approval by email."}); },
-  async zhApprove(){ await commit({[C.tag]:T.ZH_OK, [C.zhAck]:true, [C.zhOn]:zohoNow(), [C.remarks]:null}, "Recorded: approved by the ZH."); },
+  async zhApprove(){ await commit({[C.status]:ST.SUBMITTED, [C.tag]:T.ZH_OK, [C.zhAck]:true, [C.zhOn]:zohoNow(), [C.remarks]:null}, "Recorded: approved by the ZH."); },
   async zhReject(){ const rm = needRemarks(); if(!rm) return; await commit({[C.tag]:T.ZH_NO, [C.status]:ST.REJECTED, [C.rejBy]:"ZH", [C.remarks]:rm}, "Recorded: rejected by the ZH."); },
   async sendBH(){ await commit({[C.tag]:T.BH_SEND}, "Sent to the BH."); },
-  async bhApprove(){ const o = {[C.bhAck]:true, [C.bhOn]:zohoNow()};
-    if(costs("final").total > CFG.FOUNDER_LIMIT){ o[C.tag] = T.FD_SEND; await commit(o, "", {title:"Approved", next:"Above ₹50,000, so it now goes to the Founder."}); }
-    else { o[C.tag] = T.BH_OK; o[C.status] = ST.APPROVED; o[C.sub] = S.rec[C.sub] || newSubSourceId(); await commit(o, "", {title:"Approved", next:"The request is approved and locked."}); } },
+  async bhApprove(){ const o = {[C.bhAck]:true, [C.bhOn]:zohoNow(), [C.status]:ST.APPROVED};
+    if(costs("final").total > CFG.FOUNDER_LIMIT){ o[C.tag] = T.FD_SEND; await commit(o, "", {title:"Approved", next:"Above ₹50,000, so the Founder approves next."}); }
+    else { o[C.tag] = T.BH_OK; o[C.sub] = S.rec[C.sub] || newSubSourceId(); await commit(o, "", {title:"Approved", next:"The request is approved and locked."}); } },
   async bhReject(){ const rm = needRemarks(); if(!rm) return; await commit({[C.tag]:T.BH_NO, [C.status]:ST.REJECTED, [C.rejBy]:"BH", [C.remarks]:rm}, "Rejected. Marketing will be notified."); },
-  async fdApprove(){ await commit({[C.fdAck]:true, [C.fdOn]:zohoNow(), [C.tag]:T.FD_OK, [C.status]:ST.APPROVED, [C.sub]:S.rec[C.sub]||newSubSourceId()}, "", {title:"Approved", next:"The request is approved and locked."}); },
+  async fdApprove(){ await commit({[C.fdAck]:true, [C.fdOn]:zohoNow(), [C.tag]:T.FD_OK, [C.sub]:S.rec[C.sub]||newSubSourceId()}, "", {title:"Approved", next:"The request is approved and locked."}); },
+  async zhHold(){ await hold("ZHs"); },
+  async bhHold(){ await hold("BH"); },
+  async fdHold(){ await hold("Founders"); },
   async fdReject(){ const rm = needRemarks(); if(!rm) return; await commit({[C.tag]:T.FD_NO, [C.status]:ST.REJECTED, [C.rejBy]:"Founder", [C.remarks]:rm}, "Rejected. Marketing will be notified."); }
 };
+async function hold(by){ const rm = needRemarks(); if(!rm) return; await commit({[C.status]:ST.HOLD, [C.holdBy]:by, [C.remarks]:rm, [C.tag]:null}, "Put on hold. Marketing will be notified."); }
 function showDone(d){
   S.view = "done"; show("done");
   $("doneTitle").textContent = d.title;
@@ -1067,7 +1078,7 @@ async function lookupPick(k,id){
 }
 
 /* ================= HOME LIST ================= */
-const FILTERS = [["all","All"],["pendmkt","Pending on Marketing"],["mine","Raised by me"],["zh","With ZH"],["bh","With BH"],["fd","With Founder"],["rejected","Rejected"],["approved","Approved"]];
+const FILTERS = [["all","All"],["pendmkt","Pending on Marketing"],["mine","Raised by me"],["zh","With ZH"],["bh","With BH"],["fd","With Founder"],["rejected","Rejected"],["hold","On hold"],["approved","Approved"]];
 const L = {filter:"all", q:"", page:1, more:false, rows:[], loading:false};
 let listSeq = 0, qT;
 const TAGS_OF = {zh:[T.ZH_SEND,T.ZH_PEND,T.ZH_OK], bh:[T.BH_SEND,T.BH_PEND], fd:[T.FD_SEND,T.FD_PEND]};
@@ -1078,6 +1089,7 @@ function criteria(f){
   if(TAGS_OF[f.filter]) c.push(anyOf("Event_Tag", TAGS_OF[f.filter]));
   if(f.filter==="rejected") c.push("(Status:equals:Rejected)");
   if(f.filter==="approved") c.push("(Status:equals:Approved)");
+  if(f.filter==="hold") c.push("(Status:equals:On hold)");
   const t = e2((f.q||"").trim());
   if(t){ const parts = ["(Name:starts_with:"+t+")"]; if(/^\d{1,4}$/.test(t)) parts.push("(Event_Number:equals:ME - "+t.padStart(4,"0")+")"); c.push(parts.length>1?"("+parts.join("or")+")":parts[0]); }
   return c.length ? (c.length>1 ? "("+c.join("and")+")" : c[0]) : "";
@@ -1088,6 +1100,7 @@ function matches(r,f){
   if(TAGS_OF[f.filter] && !TAGS_OF[f.filter].includes(r.Event_Tag)) return false;
   if(f.filter==="rejected" && r.Status!==ST.REJECTED) return false;
   if(f.filter==="approved" && r.Status!==ST.APPROVED) return false;
+  if(f.filter==="hold" && r.Status!==ST.HOLD) return false;
   if(f.q && !((r.Name||"")+" "+(r.Event_Number||"")).toLowerCase().includes(f.q.toLowerCase())) return false;
   return true;
 }
