@@ -398,6 +398,7 @@ input[type=file].in{font-size:12.5px;padding:5px 6px}
 const CFG = {
   MODULE:"Marketing_Events", PINCODE_MODULE:"Pincodes", DISTRICT_MODULE:"District", CITY_MODULE:"Cities", ACCOUNT_MODULE:"Accounts",
   MAP_FIELD:"Google_Map_Location",
+  LINK_FIELD:"Record_Link", RECORD_URL:"https://crm.zoho.in/crm/org60028699883/tab/CustomModule41/",
   CAC:2000, FOUNDER_LIMIT:50000, PARTNER_MULTIPLIER:100,
   MARKETING_KEYWORDS:["marketing"],
   MARKETING_EMAILS:["amit.prasad@teachmint.com"],
@@ -918,10 +919,17 @@ async function commit(data, okText, done){
   S.busy = true; render();
   try{
     S.recordId = await API.save(data); S.files = {}; S.filesApi = null; S.ownerDirty = false;
+    await ensureLink(S.recordId);
     const fresh = await API.load(S.recordId); if(fresh && fresh.id) loadRecord(fresh);
     if(done) showDone(done); else toast(okText);
   }catch(err){ $("msg").textContent = "Couldn’t save: "+(err.message||err); $("msg").classList.add("err"); }
   S.busy = false; if(S.view==="form") render();
+}
+/* Direct CRM link for the email buttons (Record Link field). Never blocks a save. */
+async function ensureLink(id){
+  const url = CFG.RECORD_URL + id;
+  if(!S.live || !id || (S.rec && S.rec.id===id && S.rec[CFG.LINK_FIELD]===url)) return;
+  try{ await ZOHO.CRM.API.updateRecord({Entity:CFG.MODULE, APIData:{id, [CFG.LINK_FIELD]:url}, Trigger:[]}); }catch(_){}
 }
 function needRemarks(){ const rm = $("remarks").value.trim(); if(!rm){ $("remarks").focus(); $("msg").textContent = "Add remarks to reject."; $("msg").classList.add("err"); return null; } return rm; }
 const ACT = {
@@ -993,6 +1001,7 @@ function loadRecord(rec){
   S.zh = rec[C.zh] ? {id:rec[C.zh].id, name:rec[C.zh].name} : null;
   if(rec[C.district]){ S.districtId = rec[C.district].id; S.districtName = rec[C.district].name; }
   render(); loadTimeline(rec.id);
+  if(S.live && rec[CFG.LINK_FIELD]!==CFG.RECORD_URL+rec.id) ensureLink(rec.id);
 }
 
 /* ================= EVENTS ================= */
