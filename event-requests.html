@@ -38,89 +38,28 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 
 .demo{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:13.5px}
-.demo .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.demo .seg button{border:0;background:transparent;padding:5px 12px;cursor:pointer}
-.demo .seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .linkbtn{border:0;background:none;color:var(--mkt);cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
 
-.head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:22px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:12.5px;border:1px solid var(--line);border-radius:20px;padding:3px 10px;background:var(--surface);white-space:nowrap}
 .chip b{font-weight:600}
-.you-gtm{border-color:var(--gtm);color:var(--gtm)}
-.you-mkt{border-color:var(--mkt);color:var(--mkt)}
 
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}
-.panel-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px}
 
-.cats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.cat{border:1px solid var(--line);border-radius:8px;background:var(--field);padding:14px;text-align:left;cursor:pointer}
-.cat strong{display:block;font-weight:600}
-.cat span{font-size:13px;color:var(--muted)}
-.cat[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
-.cat:disabled{cursor:default}
-.subtypes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.pill{border:1px solid var(--line);border-radius:20px;background:var(--field);padding:6px 14px;cursor:pointer}
-.pill[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
-.auto-note{margin-top:12px;font-size:13.5px;color:var(--muted)}
-
-.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px 16px}
-.c2{grid-column:span 2}.c3{grid-column:span 3}.c4{grid-column:span 4}.c6{grid-column:span 6}
 label.f{display:block;font-size:13px;font-weight:500;margin-bottom:5px}
 label.f i{font-style:normal;color:var(--up)}
 .in{width:100%;border:1px solid var(--line);border-radius:6px;background:var(--field);padding:8px 10px;min-height:38px}
 .in:disabled,.in[readonly]{background:var(--field-off);color:var(--muted)}
 textarea.in{min-height:72px;resize:vertical}
-.hint{font-size:12.5px;color:var(--muted);margin-top:4px}
-.hint.err{color:var(--up)}
-.hint.ok{color:var(--down)}
-.owner{display:flex;align-items:center;gap:8px;min-height:38px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--field-off)}
-.owner .dot{width:8px;height:8px;border-radius:50%;background:var(--line)}
-.owner.found .dot{background:var(--down)}
 .typeahead{position:relative}
 .ta-list{position:absolute;z-index:5;left:0;right:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--line);border-radius:6px;max-height:200px;overflow:auto;list-style:none;padding:4px;margin-left:0}
 .ta-list li button{width:100%;text-align:left;border:0;background:none;padding:7px 8px;border-radius:4px;cursor:pointer}
 .ta-list li button:hover{background:var(--field-off)}
-
-/* Negotiation ledger */
-.ledger-wrap{overflow-x:auto}
-table.ledger{width:100%;border-collapse:collapse;min-width:640px}
-.ledger th,.ledger td{padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle;text-align:left}
-.ledger thead th{font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
-.ledger thead th.gtm{color:var(--gtm);background:var(--gtm-soft)}
-.ledger thead th.mkt{color:var(--mkt);background:var(--mkt-soft)}
-.ledger td.gtm{background:color-mix(in srgb,var(--gtm-soft) 45%,transparent)}
-.ledger td.mkt{background:color-mix(in srgb,var(--mkt-soft) 45%,transparent)}
-.ledger th[scope="row"]{font-weight:500;width:24%}
-.ledger th[scope="row"] small{display:block;font-weight:400;color:var(--muted);font-size:12px;line-height:1.35}
-.ledger .in{min-width:0}
-.ledger tr.total th,.ledger tr.total td{font-weight:600;border-bottom:0}
-.ledger tr.commit th,.ledger tr.commit td{font-weight:600}
 .money{position:relative}
 .money::before{content:"₹";position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
 .money .in{padding-left:24px;text-align:right}
-.diff{display:inline-block;font-size:12.5px;border-radius:4px;padding:2px 7px;white-space:nowrap}
-.diff.same{color:var(--muted)}
-.diff.up{color:var(--up);background:var(--up-soft)}
-.diff.down{color:var(--down);background:var(--down-soft)}
 .static{min-height:38px;display:flex;align-items:center}
-.filecell{font-size:13px}
-.filecell input{max-width:100%;font-size:13px}
-.legend{font-size:13px;color:var(--muted)}
 
-/* Sample draft — the proposal sheet approvers see */
-.sheet-wrap{overflow-x:auto}
-table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
-.sheet th,.sheet td{border:1px solid var(--ink);padding:8px 10px;vertical-align:middle}
-.sheet thead th{font-weight:600;text-align:center}
-.sheet td.ev{font-weight:600}
-.sheet td.num{text-align:right}
-.sheet td.ctr{text-align:center}
-.sheet td.commit{font-size:20px;font-weight:700;text-align:center}
-.sheet small{display:block;color:var(--muted);font-size:12px;font-weight:400}
-.sheet tfoot td{font-weight:600}
-
-.remarks{margin-top:14px}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px))}
 .bar-in{max-width:1040px;margin:0 auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .bar .msg{font-size:13.5px;color:var(--muted);max-width:560px}
@@ -128,40 +67,21 @@ table.sheet{width:100%;border-collapse:collapse;min-width:640px;font-size:14px}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:9px 16px;font-weight:500;cursor:pointer}
 .btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
-.btn.reject{background:var(--up);border-color:var(--up);color:#fff}
-.btn.approve{background:var(--down);border-color:var(--down);color:#fff}
 .btn:disabled{opacity:.55;cursor:not-allowed}
 .hidden{display:none!important}
 .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 16px;border-radius:6px;font-size:14px;z-index:20}
 
-@media (max-width:560px){
-  .cats{grid-template-columns:1fr}
-  .grid{grid-template-columns:1fr 1fr}
-  .c2,.c3,.c4,.c6{grid-column:span 2}
-}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
-.form-grid .full{grid-column:1/-1}
 .summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .summary div{background:var(--field-off);border-radius:8px;padding:12px}
 .summary span{display:block;font-size:12.5px;color:var(--muted)}
 .summary b{font-size:18px;font-weight:600}
 .note{font-size:13px;color:var(--muted);background:var(--field-off);border-radius:6px;padding:8px 12px;margin-bottom:14px}
 .note.warn{color:var(--up);background:var(--up-soft)}
-.side-gtm{border-color:var(--gtm)!important;color:var(--gtm)!important}
-@media (max-width:560px){.form-grid,.summary{grid-template-columns:1fr}.listhead .btn{width:100%}.bar .btns{width:100%}.bar .btn{flex:1}}
-/* ---------- list, options, info ---------- */
-.info{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 16px}
-.info div span{display:block;font-size:12.5px;color:var(--muted)}
-.info div b{font-weight:500}
 .opt{display:flex;flex-wrap:wrap;gap:6px}
 .opt button{border:1px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink);padding:6px 12px;cursor:pointer;font-size:13.5px}
 .opt button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .cellnote{font-size:12px;color:var(--muted);margin-top:4px}
-.listhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:18px}
-.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
-.filters .in{max-width:300px}
-table.list{width:100%;border-collapse:collapse;min-width:720px}
 .list th,.list td{padding:10px 12px;border-bottom:1px solid var(--line-soft);text-align:left;vertical-align:middle;font-size:14px}
 .list thead th{font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
 .list tbody tr:hover{background:var(--field-off)}
@@ -169,30 +89,15 @@ table.list{width:100%;border-collapse:collapse;min-width:720px}
 .list .open:hover{text-decoration:underline}
 .pager{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:13.5px;color:var(--muted)}
 .empty{padding:28px 12px;text-align:center;color:var(--muted)}
-.back{margin-bottom:10px;display:inline-block}
-.listhead + .panel{margin-top:0}
 /* ---------- phones ---------- */
 @media (max-width:560px){
   .wrap{padding:14px 12px 140px}
-  h1{font-size:20px}
   .panel{padding:14px;border-radius:8px}
-  .head,.listhead{flex-direction:column;align-items:stretch;gap:10px}
-  .listhead .btn{width:100%;padding:12px}
   .chips{gap:4px}
-  .info{grid-template-columns:1fr 1fr;gap:10px}
-  .listhead{margin-bottom:12px}
-  .form-grid,.summary{grid-template-columns:1fr}
-  .in,select.in,textarea.in{font-size:16px;min-height:44px}          /* stops iPhone zoom on focus */
+  .in,select.in,textarea.in{font-size:16px;min-height:44px}
   .opt{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
   .opt button{flex:0 0 auto;padding:9px 12px;min-height:40px}
-  .form-grid .opt{flex-wrap:wrap;overflow:visible}
-  .form-grid .opt button{flex:1 1 auto}
-  .filters{flex-direction:column;align-items:stretch}
-  .filters .in{max-width:none}
-  .filters .opt{max-width:100%;min-width:0;width:100%}
   .wrap,.panel{min-width:0;max-width:100%}
-  /* list becomes cards */
-  table.list{min-width:0}
   .list thead{display:none}
   .list tbody tr{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:12px 0;border-bottom:1px solid var(--line)}
   .list tbody td{display:block;padding:0;border:0;font-size:13.5px}
@@ -223,18 +128,16 @@ label.f,.f{display:block;font-size:12.5px;font-weight:500;margin-bottom:3px;colo
 .s1{grid-column:span 1}.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}
 h2.sec{font-size:14px;font-weight:600;margin:4px 0 8px}
 h2.sec + .fgrid{margin-bottom:14px}
-.fhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}
-.fh-left{min-width:0}.fh-left h1{font-size:19px;margin-top:2px}
-.fh-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:55%}
+.fh-left{min-width:0}
+.fh-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .chips{justify-content:flex-end}
 .meta{display:grid;grid-template-columns:auto auto;gap:2px 10px;margin:0;font-size:12.5px}
 .meta dt{color:var(--muted);text-align:right}.meta dd{margin:0;font-weight:500}
-.back{margin:0 0 4px;font-size:13px}
+.back{margin:0 0 4px;font-size:13px;display:inline-block}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 12px}
 .tab{border:0;background:none;color:var(--muted);padding:8px 14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
-.summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
-.summary div{padding:10px 12px}.summary b{font-size:16px}
+.summary{gap:10px;margin-top:14px}
 .tl{list-style:none;margin:0;padding:0}
 .tl li{position:relative;padding:0 0 14px 18px;border-left:2px solid var(--line);margin-left:5px}
 .tl li::before{content:"";position:absolute;left:-6px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--mkt)}
@@ -244,7 +147,7 @@ h2.sec + .fgrid{margin-bottom:14px}
 .bar-in{flex-wrap:nowrap}.bar .btns{flex-wrap:nowrap;flex-shrink:0}.bar .btn{padding:8px 16px;white-space:nowrap}
 @media (max-width:620px){
   .fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.s3,.s4,.s5,.s6{grid-column:span 2}.s1,.s2{grid-column:span 1}
-  .fhead{flex-direction:column}.fh-right{align-items:flex-start;max-width:none}.chips{justify-content:flex-start}.meta dt{text-align:left}
+  .fh-right{align-items:flex-start}.chips{justify-content:flex-start}.meta dt{text-align:left}
 }
 @media (max-width:420px){
   .fgrid,.summary{grid-template-columns:1fr}.s1,.s2,.s3,.s4,.s5,.s6{grid-column:span 1}
@@ -253,17 +156,15 @@ h2.sec + .fgrid{margin-bottom:14px}
 }
 .maprow{display:flex;gap:8px;align-items:center}.maprow .in{flex:1;min-width:0}.maprow .btn{white-space:nowrap;padding:6px 12px;text-decoration:none;display:inline-flex;align-items:center;min-height:34px}
 @media (max-width:420px){.maprow{flex-wrap:wrap}.maprow .btn{flex:1;justify-content:center}}
-.fhead{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:18px}
-.fh-mid{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:22px 0 0;font-size:13px;align-self:start}
-.fh-mid dt{color:var(--muted)}.fh-mid dd{margin:0;font-weight:600;overflow-wrap:anywhere}
-.fh-right{max-width:none}
+.fhead{display:grid;grid-template-columns:auto minmax(200px,1fr) minmax(0,40%);align-items:start;gap:18px;margin-bottom:12px}
+.fh-mid{display:block;margin:16px 0 0;min-width:0}
+.fh-right{min-width:0}.fh-right .chips{flex-wrap:wrap}
 :root{--cost:#1E7A47;--target:#A9473D}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--cost:#6CC793;--target:#E0938A}}
 :root[data-theme="dark"]{--cost:#6CC793;--target:#E0938A}
 .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
 .summary .big{padding:14px 16px}.summary .big span{font-size:13px}
 .summary .big b{display:block;font-size:24px;font-weight:700;margin-top:2px}
-.cost{color:var(--cost)!important}.target{color:var(--target)!important}
 .foot{font-size:11.5px;color:var(--muted);margin-top:6px}
 .sheet-wrap{overflow-x:auto}
 table.sheet{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
@@ -277,31 +178,24 @@ table.sheet{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
 @media (max-width:420px){.summary{grid-template-columns:1fr}}
 .fh-left h1{font-size:13.5px;font-weight:600;margin:2px 0 0}
 .fh-left .sub{font-size:12px}
-.fh-mid{display:block;margin:16px 0 0}
 .ev-name{font-size:19px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
 .ev-owner{font-size:13px;color:var(--muted);margin-top:3px}
 .today{font-size:13px;font-weight:600}
 .fh-right .meta{margin-top:10px}
-.sharerow{display:flex;gap:8px;align-items:center}.sharerow .opt{flex:0 0 auto;flex-wrap:nowrap}.sharerow .opt button{min-width:34px;padding:6px 10px}.sharerow > div:last-child{flex:1;min-width:0}
 .pct{position:relative}.pct::after{content:"%";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted)}.pct .in{padding-right:24px}
 .toprow{display:flex;gap:10px;align-items:center;margin-bottom:10px}.toprow .in{flex:1;min-width:0;max-width:none}.toprow .btn{white-space:nowrap}
 .filters-row{margin-bottom:10px}
-table.list{min-width:0!important;table-layout:fixed;width:100%}
+table.list{min-width:0!important;table-layout:fixed;width:100%;border-collapse:collapse}
 .list th,.list td{padding:8px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .list col.c-no{width:13%}.list col.c-ev{width:31%}.list col.c-dt{width:15%}.list col.c-ow{width:17%}.list col.c-st{width:12%}.list col.c-tg{width:12%}
 .list .chip{font-size:11.5px;padding:2px 7px}
 @media (max-width:560px){.toprow .btn{padding:9px 12px}}
-.fhead{grid-template-columns:auto minmax(200px,1fr) minmax(0,40%)!important}.fh-right{min-width:0}.fh-right .chips{flex-wrap:wrap}.fh-mid{min-width:0}
-@media (max-width:620px){.fhead{grid-template-columns:1fr!important}}
 input[type=file].in{font-size:12.5px;padding:5px 6px}
-</style>
-<style>
 .cost-block{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
 .cost-block h3{font-size:13.5px;font-weight:600;margin:0 0 8px;display:flex;gap:8px;align-items:center}
 .lock{font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:1px 8px}
 .check{display:flex;align-items:center;gap:8px;min-height:34px;font-size:14px;cursor:pointer}
 .check input{width:16px;height:16px}
-.routes{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:14px}
 .done{max-width:460px;margin:40px auto;text-align:center}
 .done .tick{width:84px;height:84px;border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--cost) 16%,transparent)}
 .done .tick svg{width:44px;height:44px}
@@ -311,13 +205,11 @@ input[type=file].in{font-size:12.5px;padding:5px 6px}
 .done h1{font-size:20px;margin-bottom:6px}.done .rec{font-size:16px;font-weight:600;margin:10px 0 2px}.done .num{color:var(--muted);font-size:13.5px}
 .done .next{font-size:13.5px;color:var(--muted);margin:14px 0 22px}
 .done .btns{justify-content:center}
-.cmp td{padding:4px 10px 4px 0;font-size:13px}.cmp td:first-child{color:var(--muted)}
-.detrow{display:grid;grid-template-columns:max-content 86px max-content 86px minmax(86px,1fr);gap:8px 14px;align-items:end;margin-top:10px}
+.detrow{display:grid;grid-template-columns:max-content 86px max-content 86px;gap:8px 14px;align-items:end;margin-top:10px}
 .detrow > div{min-width:0;grid-column:auto!important}.detrow .check{white-space:nowrap}.detrow label.f{white-space:nowrap}
 .detrow .in:disabled{opacity:.5}
 @media (max-width:620px){.detrow{grid-template-columns:auto 84px}}
 .cost4{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)!important}.cost4 > div{grid-column:auto!important}
-.lblrow{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}.lblrow label.f{margin:0}
 .mini{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
 .mini button{border:0;background:transparent;color:var(--muted);font-size:11.5px;line-height:1;padding:3px 7px;cursor:pointer}
 .mini button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
@@ -354,13 +246,6 @@ input[type=file].in{font-size:12.5px;padding:5px 6px}
       <div class="fh-right"><div class="chips" id="chips"></div><dl class="meta" id="meta"></dl></div>
     </div>
     <div id="notes"></div>
-    <section class="panel hidden" id="remarksPanel" aria-labelledby="remH">
-      <h2 id="remH" style="margin-bottom:4px">Remarks</h2>
-      <p class="sub" id="remHint" style="margin-bottom:8px"></p>
-      <label class="hidden" for="remarks">Remarks</label>
-      <textarea class="in" id="remarks"></textarea>
-      <div id="routeBox"></div>
-    </section>
     <div class="tabs" role="tablist" aria-label="Request sections" id="tabs"></div>
     <section class="panel tabpanel" id="tab-event" role="tabpanel">
       <h2 class="sec">Event type</h2><div class="fgrid" id="secType"></div>
@@ -398,10 +283,9 @@ input[type=file].in{font-size:12.5px;padding:5px 6px}
 const CFG = {
   MODULE:"Marketing_Events", PINCODE_MODULE:"Pincodes", DISTRICT_MODULE:"District", CITY_MODULE:"Cities", ACCOUNT_MODULE:"Accounts",
   MAP_FIELD:"Google_Map_Location",
-  LINK_FIELD:"Record_Link", RECORD_URL:"https://crm.zoho.in/crm/org60028699883/tab/CustomModule41/",
   CAC:2000, FOUNDER_LIMIT:50000, PARTNER_MULTIPLIER:100,
   MARKETING_KEYWORDS:["marketing"],
-  MARKETING_EMAILS:["amit.prasad@teachmint.com","ashish.kapoor@teachmint.com"],
+  MARKETING_EMAILS:["amit.prasad@teachmint.com"],
   BH_USER:"681278000000439001",        // Venkata Aditya (AV)
   FOUNDER_USER:"681278000000314001",   // Sales-Ops (Divyansh)
   ZH_BY_ZONE:{"North 1":{id:"681278000000676466",name:"Vivek Mishra"},"East":{id:"681278000000676466",name:"Vivek Mishra"},"North 2":{id:"681278000000676433",name:"Suraj Agrahari"},"South":{id:"681278000000813134",name:"Swapnil Omprakash Mandhana"},"West":{id:"681278000000676418",name:"Hariom Shivhare"}},
@@ -411,8 +295,7 @@ const CFG = {
   STATUS:{ HOLD:"On hold", DRAFT:"Draft", SUBMITTED:"Submitted", REJECTED:"Rejected", RESUBMITTED:"Resubmitted", APPROVED:"Approved" },
   SHARE:{ PCT:"Percentage (%)", AMT:"Amount (in Rs)" }
 };
-const C = {holdBy:"On_Hold_by", status:"Status", tag:"Event_Tag", remarks:"Rejection_Remarks", rejBy:"Rejected_by", team:"Raised_by_Team", district:"District", zh:"ZH", raisedBy:"Raised_by", number:"Event_Number", sub:"Sub_Source_ID",
-  zhAck:"ZH_Acknowledged", zhOn:"ZH_Approved_On", bhAck:"BH_Acknowledged", bhOn:"BH_Approved_On", fdAck:"Founder_Acknowledged", fdOn:"Founder_Approved_On"};
+const C = {holdBy:"On_Hold_by", status:"Status", tag:"Event_Tag", remarks:"Rejection_Remarks", rejBy:"Rejected_by", team:"Raised_by_Team", district:"District", zh:"ZH", raisedBy:"Raised_by", number:"Event_Number", sub:"Sub_Source_ID"};
 const T = CFG.TAG, ST = CFG.STATUS;
 const ATTENDEE = ["25 + KDMs","50 + KDMs","100 + KDMs","150 + KDMs","200 + KDMs","250 + KDMs","400 + KDMs","500 + KDMs"];
 const COUNTRIES = ["India","Phillipines","Saudi Arabia"];
@@ -457,11 +340,10 @@ const FIELDS = [
   {sec:"init", k:"pcontrib", label:"Partner contribution", api:"Partner_s_Contribution", type:"money", req:true, show:isCO},
   {sec:"init", k:"prod", label:"Production cost", api:"Production_Cost", type:"money", req:true, help:"Booth branding, standees, branding", show:EV},
   {sec:"init", k:"proc", label:"Procurement cost", api:"Procurement_Cost", type:"money", req:true, help:"Brochures, merchandise, bags, gifts", show:EV},
-  {sec:"init", k:"gift", label:"Gift’s required", api:"Gift_s_Required", type:"check", gtm:true, show:EV},
-  {sec:"init", k:"giftc", label:"Gift count", api:"Gift_s_Count", type:"count", req:()=>!!V.gift, show:EV, needs:"gift"},
-  {sec:"init", k:"merch", label:"Merchandise required", api:"Merchandise_Required", type:"check", gtm:true, show:EV},
-  {sec:"init", k:"merchc", label:"Merch count", api:"Merchandise_s_Count", type:"count", req:()=>!!V.merch, show:EV, needs:"merch"},
-  {sec:"init", k:"broc", label:"Brochures", api:"Brochure_s_Count", type:"count", req:true, show:EV},
+  {sec:"init", k:"gift", label:"Gifts & Merchandise required", api:"Gifts_and_Merchandise_Required", type:"check", gtm:true, show:EV},
+  {sec:"init", k:"giftc", label:"Gifts & Merch count", api:"Gifts_and_Merchandise_Count", type:"count", req:()=>!!V.gift, show:EV, needs:"gift"},
+  {sec:"init", k:"broq", label:"Brochures required", api:"Brochure_s_Required", type:"check", gtm:true, show:EV},
+  {sec:"init", k:"broc", label:"Brochure count", api:"Brochure_s_Count", type:"count", req:()=>!!V.broq, show:EV, needs:"broq"},
   // Final cost (negotiated, used in approvals)
   {sec:"final", k:"fspons", label:"Sponsorship cost", api:"Event_s_Sponsorship_Cost", type:"money", req:true, show:EV},
   {sec:"final", k:"fshare", label:"Teachmint contribution", type:"share", req:true, set:"final", show:isPE},
@@ -472,14 +354,14 @@ const FIELDS = [
 const SHARE_API = { init:{type:"Share_Type", pct:"Teachmint_Share_Percent", amt:"Teachmint_Share_Amount"}, final:{type:"Final_Share_Type", pct:"Final_TM_Share_Percent", amt:"Final_TM_Share_Amount"} };
 const W = {cat:2, sub:2, date:2, partner:4, pcontrib:2, name:4, attendee:2, address:6, city:2, state:2, pin:1, country:1, agenda:3, photos:3, other:6,
   firm:4, logo:2, poc:3, pocm:3, faddr:6, fpin:2, fcity:2, fstate:2, map:6, more:6, recce:6, vendor:3, quote:3,
-  spons:2, ishare:4, pcontrib:2, fpcontrib:2, prod:2, proc:2, gift:2, giftc:1, merch:2, merchc:1, broc:2, fspons:2, fshare:4, fprod:2, fproc:2};
+  spons:2, ishare:4, fpcontrib:2, prod:2, proc:2, gift:2, giftc:1, broq:2, broc:1, fspons:2, fshare:4, fprod:2, fproc:2};
 const byK = k => FIELDS.find(f=>f.k===k);
 const STATE_FIX = {"Andaman & Nicobar":"Andaman & Nicobar (UT)","Chandigarh":"Chandigarh (UT)","Jammu & Kashmir":"Jammu & Kashmir(UT)","Ladakh":"Ladakh (UT)","Lakshadweep":"Lakshadweep (UT)","Puducherry":"Puducherry (UT)"};
 const toState = st => { const t = String(st||"").trim(); if(/^Uttar Pradesh\s*\d+$/i.test(t)) return "Uttar Pradesh"; return STATE_FIX[t] || t; };
 
 /* ================= STATE ================= */
 const S = {live:false, role:"MKT", user:{id:null,name:""}, recordId:null, rec:{}, files:{}, owner:null, zh:null, districtId:null, districtName:"",
-  ownerDirty:false, busy:false, view:"list", tab:"event", tl:null, tlAll:false, share:{init:"%", final:"%"}, route:"zh", done:null};
+  ownerDirty:false, busy:false, view:"list", tab:"event", tl:null, tlAll:false, share:{init:"%", final:"%"}, done:null};
 let V = {};
 
 /* ================= DATA (Zoho SDK or preview) ================= */
@@ -570,12 +452,10 @@ const inr = n => "₹"+Math.round(n).toLocaleString("en-IN");
 const money = v => Math.round(num(v)).toLocaleString("en-IN");
 const fileNames = v => Array.isArray(v) ? v.map(x=>x.File_Name__s||x.name||"file").join(", ") : "";
 const reqOf = f => typeof f.req==="function" ? f.req() : !!f.req;
+const tagOf = r => (r && r[C.tag]) || "None";
 function ordinalDate(iso){ if(!iso) return ""; const d = new Date(iso+"T00:00:00"); if(isNaN(d)) return iso; const n=d.getDate(), s=(n%10===1&&n!==11)?"st":(n%10===2&&n!==12)?"nd":(n%10===3&&n!==13)?"rd":"th"; return n+s+" "+d.toLocaleString("en-GB",{month:"long"})+" "+d.getFullYear(); }
 function lakhs(n){ return n>=1e7 ? "₹"+(+(n/1e7).toFixed(2))+" Cr" : n>=1e5 ? "₹"+(+(n/1e5).toFixed(2))+" lakh" : inr(n); }
 function shortTime(t){ const d = new Date(t); return isNaN(d) ? String(t) : d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}); }
-function zohoNow(){ const d = new Date(), p = n=>String(n).padStart(2,"0"), o = -d.getTimezoneOffset(), sg = o>=0?"+":"-", oa = Math.abs(o);
-  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+sg+p(Math.floor(oa/60))+":"+p(oa%60); }
-function newSubSourceId(){ const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let r = ""; for(let i=0;i<6;i++) r += A[Math.floor(Math.random()*A.length)]; return "EV"+String(new Date().getFullYear()).slice(2)+"-"+r; }
 
 /* Costs: Initial = first proposal, Final = negotiated (used for approvals and the ₹50K rule) */
 function tmSponsorship(set){
@@ -599,9 +479,10 @@ function calcStored(row){ /* preview only: mimic the CRM formulas */
 }
 
 /* ================= WHO CAN DO WHAT ================= */
+/* No approvals in the widget. ZH replies by email, BH approves in CRM, Founder by email; Marketing updates the tag in CRM. */
 const st = () => S.rec[C.status]||"", tag = () => S.rec[C.tag]||"";
 const withZH = () => [T.ZH_SEND, T.ZH_PEND].includes(tag());
-const openDraft = () => (st()===ST.DRAFT || (st()===ST.RESUBMITTED && !tag())) && !withZH();   // Status stays Draft until the ZH acknowledges
+const openDraft = () => st()===ST.DRAFT && !withZH();
 const isNew = () => !S.recordId;
 const raisedByGTM = () => S.rec[C.team]==="GTM";
 function mode(){   // "gtm" short form, "mkt" detailed form
@@ -616,45 +497,32 @@ const shown = f => {
   return true;
 };
 function perms(){
-  const p = {edit:false, initEdit:false, finalEdit:false, actions:[], note:""}, s = st(), t = tag();
+  const p = {edit:false, initEdit:false, finalEdit:false, actions:[], note:""}, s = st();
   if(S.role==="GTM"){
     if(isNew() || (openDraft() && raisedByGTM())){ p.edit = p.initEdit = true; p.actions = ["gtmSubmit"]; p.note = "Fill the basic details and the sponsorship cost. Marketing completes the rest."; }
     else p.note = statusNote();
     return p;
   }
   if(S.role==="MKT"){
-    if(s===ST.HOLD){ p.edit = p.finalEdit = true; p.actions = ["save","submit"]; p.note = "On hold ("+(S.rec[C.holdBy]||"")+"). Update and resubmit when ready."; }
-    else if(t===T.ZH_SEND || t===T.ZH_PEND){ p.actions = ["zhHold","zhReject","zhApprove"]; p.note = "Waiting for the ZH’s email reply. Record their decision."; }
-    else if(isNew() || openDraft()){ p.edit = true; p.initEdit = st()!==ST.RESUBMITTED; p.finalEdit = true; p.actions = ["save","submit"]; if(!isNew() && !missing().length) p.actions.push("sendZH"); p.note = raisedByGTM() && !isNew() ? "Raised by GTM. Complete every field, then submit to the ZH." : "Fill every field. Submit sends it to the ZH."; }
-    else if(s===ST.REJECTED){ p.edit = p.finalEdit = true; p.actions = ["save","submit"]; p.note = "Rejected by "+(S.rec[C.rejBy]||"approver")+". Update the final cost and resubmit."; }
-    else if(t===T.ZH_SEND || t===T.ZH_PEND){ p.actions = ["zhReject","zhApprove"]; p.note = "Waiting for the ZH’s email reply. Record their decision."; }
-    else if(t===T.ZH_OK){ p.actions = ["sendBH"]; p.note = "ZH approved. Send it to the BH."; }
+    if(isNew() || openDraft()){ p.edit = p.initEdit = p.finalEdit = true; p.actions = ["submit","submitZH"]; p.note = raisedByGTM() && !isNew() ? "Raised by GTM. Complete every field. Submit saves it; Submit to ZH sends it for approval." : "Submit saves it (Tag: None). Submit to ZH sends it for approval."; }
+    else if(s===ST.REJECTED || s===ST.HOLD){ p.edit = p.finalEdit = true; p.actions = ["submit","submitZH"]; p.note = (s===ST.HOLD ? "On hold ("+(S.rec[C.holdBy]||"")+")" : "Rejected by "+(S.rec[C.rejBy]||"approver"))+". Update the final cost, then Submit to ZH."; }
     else p.note = statusNote();
     return p;
   }
-  if(S.role==="BH"){
-    if(s!==ST.HOLD && (t===T.BH_SEND || t===T.BH_PEND)){ p.actions = ["bhHold","bhReject","bhApprove"]; p.note = costs("final").total>CFG.FOUNDER_LIMIT ? "Above ₹50,000: approval goes to the Founder next." : "Your approval completes this request."; }
-    else p.note = statusNote();
-    return p;
-  }
-  if(S.role==="FD"){
-    if(s!==ST.HOLD && (t===T.FD_SEND || t===T.FD_PEND)){ p.actions = ["fdHold","fdReject","fdApprove"]; p.note = "Your approval completes this request."; }
-    else p.note = statusNote();
-  }
+  p.note = statusNote();
   return p;
 }
 function statusNote(){
   const s = st(), t = tag();
-  if(t===T.FD_SEND||t===T.FD_PEND) return "BH approved. With the Founder for approval.";
+  if(t===T.FD_SEND||t===T.FD_PEND) return "With the Founder for approval.";
   if(s===ST.HOLD) return "On hold ("+(S.rec[C.holdBy]||"")+").";
-  if(s===ST.APPROVED) return "Approved and locked."+(S.rec[C.sub]?" Sub Source ID: "+S.rec[C.sub]:"");
-  if(s===ST.REJECTED) return "Rejected by "+(S.rec[C.rejBy]||"approver")+". Marketing is revising it.";
+  if(s===ST.APPROVED) return "Approved."+(S.rec[C.sub]?" Sub Source ID: "+S.rec[C.sub]:"");
+  if(s===ST.REJECTED) return "Rejected by "+(S.rec[C.rejBy]||"approver")+".";
   if(withZH()) return "With the ZH for approval.";
-  if(!t && (s===ST.DRAFT||s===ST.RESUBMITTED) && !raisedByGTM()) return "Proposal ready. Send it to the ZH when ready.";
-  if(s===ST.DRAFT) return raisedByGTM() ? "Pending on Marketing to complete the details." : "Draft.";
-  if(t===T.ZH_OK) return "Approved by the ZH. Marketing sends it to the BH.";
+  if(s===ST.DRAFT) return raisedByGTM() && t===T.MKT_PEND ? "Pending on Marketing to complete the details." : "Draft.";
+  if(t===T.ZH_OK) return "Approved by the ZH.";
   if(t===T.BH_SEND||t===T.BH_PEND) return "With the BH for approval.";
-  return "Read-only.";
+  return "View only.";
 }
 
 /* ================= RENDER ================= */
@@ -666,7 +534,7 @@ function render(){
   const ch = [`<span class="today">${new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>`];
   if(r[C.number]) ch.push(`<span class="chip"><b>${esc(r[C.number])}</b></span>`);
   if(r[C.status]) ch.push(`<span class="chip">${esc(r[C.status])}</span>`);
-  if(r[C.tag]) ch.push(`<span class="chip">${esc(r[C.tag])}</span>`);
+  if(S.recordId) ch.push(`<span class="chip">Tag: ${esc(tagOf(r))}</span>`);
   $("chips").innerHTML = ch.join("");
   const meta = []; if(S.zh) meta.push(["ZH", S.zh.name]); if(S.recordId && r.Modified_By) meta.push(["Last edit",(r.Modified_By.name||"")+(r.Modified_Time?", "+shortTime(r.Modified_Time):"")]);
   $("meta").innerHTML = meta.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
@@ -690,16 +558,15 @@ function render(){
   }
   renderCost(p);
   if(S.tab==="time") renderTimeline();
-  renderRemarks(p);
   renderBar(p);
 }
 /* Cost screens
-   A: Marketing raises it          → one set only (Initial). On first submit it is copied to Final.
+   A: Marketing raises it          → one set only (Initial). On submit it is copied to Final.
    B: Marketing completes GTM's    → GTM's Initial (read-only) + Final (Marketing fills) + counts
-   C: after the first submit       → Initial (read-only) + Final (editable only when Rejected) */
-const DETAIL_KEYS = ["gift","giftc","merch","merchc","broc"];
-const caseA = () => S.role==="MKT" && (isNew() || (st()===ST.DRAFT && !withZH() && !raisedByGTM()));
-const caseB = () => S.role==="MKT" && st()===ST.DRAFT && !withZH() && raisedByGTM() && !isNew();
+   C: after Submit to ZH           → Initial (read-only) + Final (editable only when Rejected / On hold) */
+const DETAIL_KEYS = ["gift","giftc","broq","broc"];
+const caseA = () => S.role==="MKT" && (isNew() || (openDraft() && !raisedByGTM()));
+const caseB = () => S.role==="MKT" && openDraft() && raisedByGTM() && !isNew();
 const activeSet = () => caseA() ? "init" : "final";
 function lockedField(f,p){
   if(f.sec==="init"){
@@ -708,7 +575,7 @@ function lockedField(f,p){
     if(caseB()) return !DETAIL_KEYS.includes(f.k);
     return true;
   }
-  if(f.sec==="final") return !(caseB() || (S.role==="MKT" && (st()===ST.REJECTED || st()===ST.HOLD || (st()===ST.RESUBMITTED && !tag()))));
+  if(f.sec==="final") return !(caseB() || (S.role==="MKT" && (st()===ST.REJECTED || st()===ST.HOLD)));
   if(f.k==="cat" && !isNew() && S.role==="MKT" && st()!==ST.DRAFT) return true;
   return false;
 }
@@ -783,8 +650,7 @@ function field(f, edit){
   return `<div class="${cls}">${label}${ctrl}${help?`<p class="cellnote">${esc(help)}</p>`:""}</div>`;
 }
 function shareCtrl(f, edit){
-  const set = f.set, sh = V[f.k]||{}, amtMode = S.share[set]==="₹", spons = num(V[set==="init"?"spons":"fspons"]), ours = tmSponsorship(set);
-  const note = spons ? "Teachmint bears "+inr(ours) : "Enter sponsorship first";
+  const set = f.set, sh = V[f.k]||{}, amtMode = S.share[set]==="₹";
   if(!edit) return `<span class="f">${esc(f.label)}</span><div class="static">${amtMode ? (has(sh.amt)?inr(num(sh.amt)):"–") : (has(sh.pct)?(+num(sh.pct).toFixed(2))+"%":"–")}</div>`;
   const val = amtMode ? (has(sh.amt)?money(sh.amt):"") : (has(sh.pct)?String(+num(sh.pct).toFixed(2)):"");
   return `<label class="f" for="f_${f.k}">${esc(f.label)} <i aria-hidden="true">*</i></label><div class="sharerow"><div class="${amtMode?"money":"pct"}"><input class="in" id="f_${f.k}" data-share="${f.k}" inputmode="decimal" value="${esc(val)}" placeholder="${amtMode?"Amount":"e.g. 50"}"></div><span class="mini" role="group" aria-label="Contribution as"><button type="button" data-smode="${set}|%" aria-pressed="${!amtMode}">%</button><button type="button" data-smode="${set}|₹" aria-pressed="${amtMode}">₹</button></span></div>`;
@@ -801,35 +667,17 @@ function renderSheet(c, set){
   h += `</tbody><tfoot><tr><td colspan="4">*GST &amp; Transportation charges at actuals</td><td></td><td class="num">${c.total?Math.round(c.total).toLocaleString("en-IN"):"–"}</td></tr></tfoot></table>`;
   $("sheet").innerHTML = h;
 }
-function renderRemarks(p){
-  const rej = p.actions.find(a=>/(Reject|Hold)$/.test(a));
-  const founderRejected = S.role==="MKT" && st()===ST.REJECTED && S.rec[C.rejBy]==="Founder";
-  $("remarksPanel").classList.toggle("hidden", !rej && !founderRejected);
-  $("remarks").classList.toggle("hidden", !rej); $("remH").textContent = rej ? "Remarks" : "Resubmit to";
-  $("remHint").textContent = rej==="zhReject"||rej==="zhHold" ? "Paste what the ZH wrote in their email reply. Required to reject or hold." : rej ? "Required to reject or put on hold. Marketing will see this." : "The Founder rejected it. Choose where the resubmission goes.";
-  $("routeBox").innerHTML = founderRejected ? `<div class="routes" role="radiogroup" aria-label="Resubmit route"><label class="check"><input type="radio" name="route" value="zh" ${S.route==="zh"?"checked":""}> ZH, then BH</label><label class="check"><input type="radio" name="route" value="bh" ${S.route==="bh"?"checked":""}> BH only</label></div>` : "";
-}
 function renderBar(p){
-  const onLast = S.tab==="cost", b = [];
-  const formActs = p.actions.filter(a=>["save","submit","gtmSubmit"].includes(a));
-  const toBHroute = S.rec[C.rejBy]==="Founder" && S.route==="bh" && st()===ST.RESUBMITTED;
-  const decisionActs = p.actions.filter(a=>!formActs.includes(a) && a!=="sendZH");
-  if(formActs.length){
-    if(!onLast) b.push(`<button class="btn primary" data-act="next">Next →</button>`);
+  const b = [];
+  if(p.actions.length){
+    if(S.tab!=="cost") b.push(`<button class="btn primary" data-act="next">Next →</button>`);
     else {
       b.push(`<button class="btn" data-act="back">← Back</button>`);
-      if(formActs.includes("save")) b.push(`<button class="btn" data-act="save">Save draft</button>`);
-      if(formActs.includes("submit")) b.push(`<button class="btn primary" data-act="submit">${st()===ST.REJECTED||st()===ST.HOLD?"Resubmit":"Submit"}</button>`);
-      if(formActs.includes("gtmSubmit")) b.push(`<button class="btn primary" data-act="gtmSubmit">Submit</button>`);
+      if(p.actions.includes("submit")) b.push(`<button class="btn" data-act="submit">Submit</button>`);
+      if(p.actions.includes("submitZH")) b.push(`<button class="btn primary" data-act="submitZH">Submit to ZH</button>`);
+      if(p.actions.includes("gtmSubmit")) b.push(`<button class="btn primary" data-act="gtmSubmit">Submit</button>`);
     }
   }
-  const hb = a => `<button class="btn" data-act="${a}">On hold</button>`;
-  if(p.actions.includes("sendZH")) b.push(`<button class="btn approve" data-act="sendZH">${toBHroute?"Send to BH":"Send to ZH"}</button>`);
-  const map = {zhHold:hb("zhHold"), bhHold:hb("bhHold"), fdHold:hb("fdHold"), zhReject:`<button class="btn reject" data-act="zhReject">ZH rejected</button>`, zhApprove:`<button class="btn approve" data-act="zhApprove">ZH approved</button>`,
-    sendBH:`<button class="btn primary" data-act="sendBH">Send to BH</button>`,
-    bhReject:`<button class="btn reject" data-act="bhReject">Reject</button>`, bhApprove:`<button class="btn approve" data-act="bhApprove">Approve</button>`,
-    fdReject:`<button class="btn reject" data-act="fdReject">Reject</button>`, fdApprove:`<button class="btn approve" data-act="fdApprove">Approve</button>`};
-  decisionActs.forEach(a=>b.push(map[a]));
   $("btns").innerHTML = b.join("");
   $("btns").querySelectorAll("button").forEach(x=>x.disabled = S.busy);
   if(!$("msg").classList.contains("err")) $("msg").textContent = p.note;
@@ -915,60 +763,39 @@ function payload(){
   S.filesApi = files;
   return o;
 }
+/* Marketing's own proposal: the Initial cost is copied to Final on submit */
+function copyFinal(o){ if(isBR()) return;
+  o.Event_s_Sponsorship_Cost = has(V.spons)?num(V.spons):null; o.Event_s_Production_Cost = has(V.prod)?num(V.prod):null; o.Event_s_Procurement_Cost = has(V.proc)?num(V.proc):null;
+  if(isCO()){ const a = SHARE_API.final; o[a.type] = CFG.SHARE.AMT; o[a.pct] = null; o[a.amt] = tmSponsorship("init"); }
+  if(isPE()){ const a = SHARE_API.final, sh = V.ishare||{}, amt = S.share.init==="₹"; o[a.type] = amt?CFG.SHARE.AMT:CFG.SHARE.PCT; o[a.amt] = amt&&has(sh.amt)?num(sh.amt):null; o[a.pct] = !amt&&has(sh.pct)?+num(sh.pct).toFixed(2):null; }
+}
 async function commit(data, okText, done){
   S.busy = true; render();
   try{
     S.recordId = await API.save(data); S.files = {}; S.filesApi = null; S.ownerDirty = false;
-    await ensureLink(S.recordId);
     const fresh = await API.load(S.recordId); if(fresh && fresh.id) loadRecord(fresh);
     if(done) showDone(done); else toast(okText);
   }catch(err){ $("msg").textContent = "Couldn’t save: "+(err.message||err); $("msg").classList.add("err"); }
   S.busy = false; if(S.view==="form") render();
 }
-/* Direct CRM link for the email buttons (Record Link field). Never blocks a save. */
-async function ensureLink(id){
-  const url = CFG.RECORD_URL + id;
-  if(!S.live || !id || (S.rec && S.rec.id===id && S.rec[CFG.LINK_FIELD]===url)) return;
-  try{ await ZOHO.CRM.API.updateRecord({Entity:CFG.MODULE, APIData:{id, [CFG.LINK_FIELD]:url}, Trigger:[]}); }catch(_){}
+async function mktSubmit(toZH){
+  const e = missing(); if(e.length) return fail(e);
+  const re = st()===ST.REJECTED || st()===ST.HOLD, o = payload();
+  if(caseA()) copyFinal(o);
+  if(toZH){ o[C.status] = re ? ST.RESUBMITTED : ST.DRAFT; o[C.tag] = T.ZH_SEND; }
+  else { if(isNew()) o[C.status] = ST.DRAFT; o[C.tag] = null; }
+  await commit(o, "", toZH ? {title: re?"Request resubmitted":"Sent to the ZH", next:"The ZH approval mail has gone out."}
+                           : {title:"Request submitted", next:"Tag: None. Open it and click Submit to ZH when you’re ready."});
 }
-function needRemarks(){ const rm = $("remarks").value.trim(); if(!rm){ $("remarks").focus(); $("msg").textContent = "Add remarks to reject."; $("msg").classList.add("err"); return null; } return rm; }
 const ACT = {
   next(){ S.tab = "cost"; render(); window.scrollTo(0,0); },
   back(){ S.tab = "event"; render(); window.scrollTo(0,0); },
   async gtmSubmit(){ const e = missing(); if(e.length) return fail(e);
     const o = payload(); o[C.status] = ST.DRAFT; o[C.tag] = T.MKT_PEND; const first = isNew();
     await commit(o, "Saved.", {title: first?"Request submitted":"Request updated", next:"Marketing will complete the details and send it for approval."}); },
-  async save(){ if(!has(V.cat)) { S.firstMissing = byK("cat"); return fail(["event category"]); } if(!isBR() && !has(V.name)){ S.firstMissing = byK("name"); return fail(["event name"]); }
-    const o = payload(); if(isNew()) o[C.status] = ST.DRAFT; await commit(o, "Draft saved."); },
-  async submit(){ const e = missing(); if(e.length) return fail(e);
-    const re = [ST.REJECTED, ST.HOLD, ST.RESUBMITTED].includes(st()), o = payload();
-    o[C.status] = re ? ST.RESUBMITTED : ST.DRAFT; o[C.tag] = null;
-    await commit(o, "", {title: re?"Proposal resubmitted":"Proposal submitted", next:"Open it any time and click “Send to ZH” (or “Send to BH”) when you’re ready for approval."}); },
-  async sendZH(){ const e = missing(); if(e.length) return fail(e);
-    const o = {}, toBH = S.rec[C.rejBy]==="Founder" && S.route==="bh" && st()===ST.RESUBMITTED;
-    if(caseA() && !isBR()){   // first send: the proposal becomes the Final cost too
-      o.Event_s_Sponsorship_Cost = has(V.spons)?num(V.spons):null; o.Event_s_Production_Cost = has(V.prod)?num(V.prod):null; o.Event_s_Procurement_Cost = has(V.proc)?num(V.proc):null;
-      if(isCO()){ const a = SHARE_API.final; o[a.type] = CFG.SHARE.AMT; o[a.pct] = null; o[a.amt] = tmSponsorship("init"); }
-      if(isPE()){ const a = SHARE_API.final, sh = V.ishare||{}, amt = S.share.init==="₹"; o[a.type] = amt?CFG.SHARE.AMT:CFG.SHARE.PCT; o[a.amt] = amt&&has(sh.amt)?num(sh.amt):null; o[a.pct] = !amt&&has(sh.pct)?+num(sh.pct).toFixed(2):null; }
-    }
-    o[C.tag] = toBH ? T.BH_SEND : T.ZH_SEND;
-    await commit(o, "", {title: toBH?"Sent to the BH":"Sent to the ZH", next: toBH ? "The BH gets the approval mail." : "The ZH gets the approval mail. Record their reply here."}); },
-  async zhApprove(){ await commit({[C.status]:ST.SUBMITTED, [C.tag]:T.ZH_OK, [C.zhAck]:true, [C.zhOn]:zohoNow(), [C.remarks]:null}, "Recorded: approved by the ZH."); },
-  async zhReject(){ const rm = needRemarks(); if(!rm) return; await commit({[C.tag]:T.ZH_NO, [C.status]:ST.REJECTED, [C.rejBy]:"ZH", [C.remarks]:rm}, "Recorded: rejected by the ZH."); },
-  async sendBH(){ await commit({[C.tag]:T.BH_SEND}, "Sent to the BH."); },
-  async bhApprove(){   // tag is always "Approved by BH"; the workflow checks Founder Approval Needed and moves it on
-    const toFounder = costs("final").total > CFG.FOUNDER_LIMIT;
-    const o = {[C.bhAck]:true, [C.bhOn]:zohoNow(), [C.status]:ST.APPROVED, [C.tag]:T.BH_OK};
-    if(!toFounder) o[C.sub] = S.rec[C.sub] || newSubSourceId();
-    await commit(o, "", {title:"Approved", next: toFounder ? "Above ₹50,000, so the Founder approves next." : "The request is approved and locked."}); },
-  async bhReject(){ const rm = needRemarks(); if(!rm) return; await commit({[C.tag]:T.BH_NO, [C.status]:ST.REJECTED, [C.rejBy]:"BH", [C.remarks]:rm}, "Rejected. Marketing will be notified."); },
-  async fdApprove(){ await commit({[C.fdAck]:true, [C.fdOn]:zohoNow(), [C.tag]:T.FD_OK, [C.sub]:S.rec[C.sub]||newSubSourceId()}, "", {title:"Approved", next:"The request is approved and locked."}); },
-  async zhHold(){ await hold("ZHs"); },
-  async bhHold(){ await hold("BH"); },
-  async fdHold(){ await hold("Founders"); },
-  async fdReject(){ const rm = needRemarks(); if(!rm) return; await commit({[C.tag]:T.FD_NO, [C.status]:ST.REJECTED, [C.rejBy]:"Founder", [C.remarks]:rm}, "Rejected. Marketing will be notified."); }
+  async submit(){ await mktSubmit(false); },
+  async submitZH(){ await mktSubmit(true); }
 };
-async function hold(by){ const rm = needRemarks(); if(!rm) return; await commit({[C.status]:ST.HOLD, [C.holdBy]:by, [C.remarks]:rm, [C.tag]:null}, "Put on hold. Marketing will be notified."); }
 function showDone(d){
   S.view = "done"; show("done");
   $("doneTitle").textContent = d.title;
@@ -988,7 +815,7 @@ function recToV(rec){
   return v;
 }
 function loadRecord(rec){
-  S.recordId = rec.id; S.rec = rec; V = recToV(rec); S.finalTouched = has(rec.Event_s_Sponsorship_Cost);
+  S.recordId = rec.id; S.rec = rec; V = recToV(rec);
   S.share.init = rec[SHARE_API.init.type]===CFG.SHARE.AMT ? "₹" : "%";
   S.share.final = rec[SHARE_API.final.type]===CFG.SHARE.AMT ? "₹" : (rec[SHARE_API.final.type] ? "%" : S.share.init);
   if(V.cat==="Partner Event") V.sub = "Partner Enablement Event";
@@ -1001,14 +828,13 @@ function loadRecord(rec){
   S.zh = rec[C.zh] ? {id:rec[C.zh].id, name:rec[C.zh].name} : null;
   if(rec[C.district]){ S.districtId = rec[C.district].id; S.districtName = rec[C.district].name; }
   render(); loadTimeline(rec.id);
-  if(S.live && rec[CFG.LINK_FIELD]!==CFG.RECORD_URL+rec.id) ensureLink(rec.id);
 }
 
 /* ================= EVENTS ================= */
 document.addEventListener("click", e=>{
   const act = e.target.closest("[data-act]"); if(act && !act.disabled){ clearErr(); ACT[act.dataset.act](); return; }
   const tb = e.target.closest("[data-tab]"); if(tb){ S.tab = tb.dataset.tab; render(); return; }
-  const sm = e.target.closest("[data-smode]"); if(sm){ const [set,m] = sm.dataset.smode.split("|"); if(set==="final") S.finalTouched = true; S.share[set] = m; render(); return; }
+  const sm = e.target.closest("[data-smode]"); if(sm){ const [set,m] = sm.dataset.smode.split("|"); S.share[set] = m; render(); return; }
   if(e.target.closest("#tlToggle")){ S.tlAll = !S.tlAll; renderTimeline(); return; }
   if(e.target.closest("#locBtn")){ useMyLocation(); return; }
   const lp = e.target.closest("[data-lpick]"); if(lp){ lookupPick(lp.dataset.lpick, lp.dataset.id); return; }
@@ -1024,7 +850,7 @@ document.addEventListener("click", e=>{
 });
 document.addEventListener("input", e=>{
   const d = e.target.dataset||{};
-  if(d.share){ const f = byK(d.share), set = f.set, sh = V[f.k] = V[f.k]||{}; if(set==="final") S.finalTouched = true;
+  if(d.share){ const f = byK(d.share), set = f.set, sh = V[f.k] = V[f.k]||{};
     if(S.share[set]==="₹"){ const x = e.target.value.replace(/\D/g,""); sh.amt = x; sh.pct = ""; e.target.value = x?money(x):""; }
     else { let x = e.target.value.replace(/[^\d.]/g,""); if(num(x)>100) x = "100"; sh.pct = x; sh.amt = ""; e.target.value = x; }
     clearErr(); softEnd(); return; }
@@ -1033,7 +859,6 @@ document.addEventListener("input", e=>{
   if(e.target.id==="q"){ clearTimeout(qT); qT = setTimeout(()=>{ L.q = e.target.value; L.page = 1; loadList(); },350); return; }
   const k = d.k; if(!k || e.target.tagName==="SELECT") return;
   const f = byK(k);
-  if(f && f.sec==="final") S.finalTouched = true;
   if(f && f.type==="money"){ const x = e.target.value.replace(/\D/g,""); V[k] = x; e.target.value = x?money(x):""; clearErr(); softEnd(); return; }
   if(f && f.type==="count"){ e.target.value = e.target.value.replace(/\D/g,"").slice(0,6); }
   if(k==="pocm"){ e.target.value = e.target.value.replace(/[^\d+]/g,"").slice(0,13); }
@@ -1042,8 +867,7 @@ document.addEventListener("input", e=>{
 document.addEventListener("change", e=>{
   const d = e.target.dataset||{};
   if(d.file) S.files[d.file] = Array.from(e.target.files||[]);
-  if(d.chk){ V[d.chk] = e.target.checked; if(!e.target.checked){ if(d.chk==="gift") V.giftc = ""; if(d.chk==="merch") V.merchc = ""; } render(); }
-  if(e.target.name==="route"){ S.route = e.target.value; }
+  if(d.chk){ V[d.chk] = e.target.checked; if(!e.target.checked){ if(d.chk==="gift") V.giftc = ""; if(d.chk==="broq") V.broc = ""; } render(); }
   if(e.target.tagName==="SELECT" && d.k){ V[d.k] = e.target.value; if(d.k==="cat") resetForCategory(V.cat); else { clearErr(); soft(); } }
 });
 function soft(){ const el = document.activeElement, id = el&&el.id, pos = el&&el.selectionStart; render(); if(id && $(id)){ $(id).focus(); try{ if(pos!=null) $(id).setSelectionRange(pos,pos); }catch(_){} } }
@@ -1133,13 +957,13 @@ function renderList(){
   if(L.loading) body = `<tr><td colspan="6" class="empty">Loading requests…</td></tr>`;
   else if(L.error) body = `<tr><td colspan="6" class="empty">Couldn’t load requests: ${esc(L.error)}</td></tr>`;
   else if(!L.rows.length) body = `<tr><td colspan="6" class="empty">${L.filter==="all"&&!L.q?"No event requests yet. Click “+ New request” to raise one.":"No requests match this filter."}</td></tr>`;
-  else body = L.rows.map(r=>`<tr><td data-l="no">${esc(r.Event_Number||"–")}</td><td data-l="event" title="${esc(r.Name||"")}"><button type="button" class="open" data-open="${esc(r.id)}">${esc(r.Name||"Untitled")}</button></td><td data-l="date">${esc(ordinalDate(r.Event_Date)||"–")}</td><td data-l="owner">${esc((r.Owner&&r.Owner.name)||"–")}</td><td data-l="status">${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td data-l="tag" title="${esc(r.Event_Tag||"")}">${esc(r.Event_Tag||"")}</td></tr>`).join("");
+  else body = L.rows.map(r=>`<tr><td data-l="no">${esc(r.Event_Number||"–")}</td><td data-l="event" title="${esc(r.Name||"")}"><button type="button" class="open" data-open="${esc(r.id)}">${esc(r.Name||"Untitled")}</button></td><td data-l="date">${esc(ordinalDate(r.Event_Date)||"–")}</td><td data-l="owner">${esc((r.Owner&&r.Owner.name)||"–")}</td><td data-l="status">${r.Status?`<span class="chip">${esc(r.Status)}</span>`:"–"}</td><td data-l="tag" title="${esc(tagOf(r))}">${esc(tagOf(r))}</td></tr>`).join("");
   $("list").innerHTML = head+"<tbody>"+body+"</tbody>";
   $("pageInfo").textContent = L.rows.length ? "Page "+L.page : "";
   $("prevPg").disabled = L.page<=1||L.loading; $("nextPg").disabled = !L.more||L.loading;
 }
 function show(v){ S.view = v; ["list","form","done"].forEach(x=>$(x+"View").classList.toggle("hidden", x!==v)); $("bar").classList.toggle("hidden", v!=="form"); window.scrollTo(0,0); }
-function blank(){ S.recordId = null; S.rec = {}; V = {country:"India", ishare:{}, fshare:{}}; S.files = {}; S.owner = null; S.zh = null; S.districtId = null; S.districtName = ""; S.ownerDirty = false; S.share = {init:"%", final:"%"}; S.route = "zh"; S.tab = "event"; S.tl = null; S.finalTouched = false; clearErr(); }
+function blank(){ S.recordId = null; S.rec = {}; V = {country:"India", ishare:{}, fshare:{}}; S.files = {}; S.owner = null; S.zh = null; S.districtId = null; S.districtName = ""; S.ownerDirty = false; S.share = {init:"%", final:"%"}; S.tab = "event"; S.tl = null; clearErr(); }
 function showList(){ show("list"); loadList(); }
 function newRecord(){ blank(); show("form"); render(); }
 async function openRecord(id){
